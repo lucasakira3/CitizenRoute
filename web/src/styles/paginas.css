@@ -1,0 +1,937 @@
+/* ==========================================================================
+   Layout de cada página
+   ========================================================================== */
+
+.cabeca-pagina {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin: 0.3rem 0 1.6rem;
+}
+
+.cabeca-pagina h1 {
+  margin-bottom: 0.5rem;
+}
+
+.cabeca-pagina__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.cabeca-pagina--detalhe h1 {
+  max-width: 24ch;
+}
+
+.sobretitulo {
+  margin: 0 0 0.45rem;
+  font-family: var(--fonte-placa);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--placa);
+}
+
+.lead {
+  max-width: 64ch;
+  font-size: 1.06rem;
+  color: var(--texto-suave);
+}
+
+.secao {
+  margin-block: 2rem;
+}
+
+.secao__cabeca {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem 1.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.secao__cabeca h2 {
+  margin: 0;
+}
+
+.contagem {
+  margin: 0 0 0.8rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--texto-suave);
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.8rem 1rem;
+  margin-bottom: 1.2rem;
+  padding: 1rem;
+  background: var(--papel);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-grande);
+}
+
+.filtros .campo {
+  flex: 1 1 170px;
+  max-width: 320px;
+}
+
+.filtros--compactos {
+  padding: 0;
+  background: none;
+  border: none;
+}
+
+/* ------------------------------------------------------------- Painel */
+
+.tese {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 560px);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: center;
+  margin: 0.5rem 0 2rem;
+}
+
+/* Prévia do mapa 3D: uma janela para a cidade, com atalho para a tela cheia */
+.tese__mapa {
+  position: relative;
+  height: clamp(380px, 46vw, 540px);
+  border-radius: var(--raio-grande);
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--linha), var(--sombra);
+}
+
+.tese__mapa > .aviso {
+  margin: 1rem;
+}
+
+.tese__abrir-mapa {
+  position: absolute;
+  z-index: 3;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: var(--asfalto);
+  color: #fff;
+  font-family: var(--fonte-placa);
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 8px 20px -10px rgb(0 0 0 / 0.6), inset 0 -3px 0 var(--sinal);
+  transition: transform 0.18s ease, background-color 0.18s ease;
+}
+
+.tese__abrir-mapa:hover {
+  color: #fff;
+  background: var(--asfalto-2);
+  transform: translateY(-1px);
+}
+
+.tese__abrir-mapa .icone {
+  color: var(--sinal);
+}
+
+.tese__titulo {
+  max-width: 12ch;
+  margin: 0 0 1rem;
+  font-size: clamp(2.3rem, 1.1rem + 3.6vw, 3.9rem);
+  line-height: 0.98;
+  letter-spacing: -0.025em;
+}
+
+.filtro-zona {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.9rem;
+  padding: 0.55rem 0.6rem 0.55rem 1rem;
+  background: var(--placa-clara);
+  border-left: 4px solid var(--placa);
+  border-radius: var(--raio);
+  animation: entrada 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.tese__conclusao {
+  margin-top: 1.1rem;
+  font-size: 1.08rem;
+}
+
+.tese__conclusao strong {
+  font-family: var(--fonte-placa);
+  font-weight: 800;
+  font-size: 1.12em;
+  padding: 0 0.15rem;
+  background: linear-gradient(transparent 62%, rgb(245 179 1 / 0.55) 62%);
+}
+
+/* Painel escuro com números em amarelo, como os painéis de mensagem das marginais */
+.situacao {
+  position: relative;
+  margin-bottom: 2rem;
+  padding: 1.5rem 1.6rem 1.4rem;
+  background: var(--asfalto);
+  color: #e8edf0;
+  border-radius: var(--raio-grande);
+  overflow: hidden;
+}
+
+.situacao::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--faixa-pista);
+}
+
+.situacao__titulo {
+  margin: 0 0 1.1rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #a9b6bf;
+}
+
+.situacao__lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1.1rem 1.4rem;
+  margin: 0;
+}
+
+.situacao__item {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+}
+
+.situacao__item dd {
+  margin: 0;
+  font-family: var(--fonte-dado);
+  font-weight: 600;
+  font-size: 2.1rem;
+  line-height: 1;
+  color: var(--sinal);
+}
+
+.situacao__item dt {
+  margin-top: 0.35rem;
+  font-size: 0.83rem;
+  color: #c4ced5;
+}
+
+.situacao__item + .situacao__item {
+  padding-left: 1.2rem;
+  border-left: 1px dashed #4a5966;
+}
+
+.situacao .aviso {
+  margin: 0;
+}
+
+.situacao .carregando {
+  color: #c4ced5;
+}
+
+.papeis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.papel {
+  padding: 1.3rem 1.4rem;
+  background: var(--papel);
+  border: 1px solid var(--linha);
+  border-top: 5px solid var(--placa);
+  border-radius: var(--raio-grande);
+}
+
+.papel + .papel {
+  border-top-color: var(--asfalto);
+}
+
+.papel__titulo {
+  font-size: 1.3rem;
+}
+
+.papel p {
+  color: var(--texto-suave);
+  margin-bottom: 1rem;
+}
+
+/* ---------------------------------------------------- Detalhe da ocorrência */
+
+.detalhe {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(260px, 1fr);
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.detalhe__principal {
+  display: grid;
+  gap: 1.2rem;
+}
+
+.relato {
+  font-size: 1.08rem;
+  white-space: pre-line;
+}
+
+.ficha {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.8rem 1.2rem;
+  margin: 1.2rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--linha);
+}
+
+.ficha dt {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--texto-suave);
+}
+
+.ficha dd {
+  margin: 0.1rem 0 0;
+  font-weight: 600;
+}
+
+.cartao--gestao {
+  border-top: 5px solid var(--sinal);
+  display: grid;
+  gap: 1.1rem;
+}
+
+.cartao--gestao h2 {
+  margin: 0;
+}
+
+.alterar-status {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.alterar-status__botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.risco-modais {
+  position: sticky;
+  top: 1rem;
+}
+
+.risco-modais__formula {
+  font-family: var(--fonte-dado);
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+.risco-modais__lista {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.risco-modais__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.15rem 0.5rem 0.15rem 0.25rem;
+  border-radius: var(--raio);
+}
+
+.risco-modais__item--voce {
+  background: var(--placa-clara);
+  box-shadow: inset 0 0 0 2px var(--placa);
+}
+
+.risco-modais__modal {
+  font-weight: 600;
+}
+
+.risco-modais__voce {
+  margin-left: 0.45rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--placa);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  vertical-align: 0.1em;
+}
+
+.risco-modais__nivel {
+  font-size: 0.82rem;
+  color: var(--texto-suave);
+  text-align: right;
+}
+
+/* Linha do tempo com marcos em losango */
+.linha-tempo {
+  position: relative;
+  margin: 0.4rem 0 0;
+  padding: 0 0 0 0.4rem;
+  list-style: none;
+}
+
+.linha-tempo::before {
+  content: "";
+  position: absolute;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  left: calc(0.4rem + 5px);
+  width: 2px;
+  background: repeating-linear-gradient(180deg, var(--linha-forte) 0 8px, transparent 8px 13px);
+}
+
+.linha-tempo__item {
+  position: relative;
+  padding: 0 0 1.15rem 1.7rem;
+}
+
+.linha-tempo__item:last-child {
+  padding-bottom: 0;
+}
+
+.linha-tempo__item::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.3rem;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--asfalto);
+  border-radius: 2px;
+  background: var(--papel);
+  transform: rotate(45deg);
+}
+
+.linha-tempo__item--CONFIRMADA::before {
+  background: var(--placa);
+}
+
+.linha-tempo__item--EM_ATENDIMENTO::before {
+  background: var(--risco-ALTO);
+}
+
+.linha-tempo__item--RESOLVIDA::before {
+  background: var(--risco-BAIXO);
+}
+
+.linha-tempo__item--DESCARTADA::before {
+  background: var(--linha-forte);
+}
+
+.linha-tempo__quando {
+  margin: 0;
+  font-family: var(--fonte-dado);
+  font-size: 0.78rem;
+  color: var(--texto-suave);
+}
+
+.linha-tempo__quem {
+  margin: 0.1rem 0 0.15rem;
+  font-weight: 600;
+}
+
+.linha-tempo__texto {
+  margin: 0;
+}
+
+.linha-tempo .formulario {
+  margin-top: 0.5rem;
+}
+
+/* ------------------------------------------------- Formulário de ocorrência */
+
+.formulario.cartao {
+  max-width: 760px;
+}
+
+.linhas-vias {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.3rem 0 0.4rem;
+  padding: 0;
+  list-style: none;
+}
+
+.linhas-vias__linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.campo--grupo > .botao {
+  justify-self: start;
+}
+
+/* --------------------------------------------------------- Meu trajeto */
+
+.trajeto {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(290px, 1fr);
+  grid-template-areas:
+    "alertas vias"
+    "alertas perfil";
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.trajeto .secao {
+  margin: 0;
+}
+
+.trajeto__alertas {
+  grid-area: alertas;
+}
+
+.trajeto__vias {
+  grid-area: vias;
+}
+
+.trajeto__perfil {
+  grid-area: perfil;
+}
+
+.alerta {
+  --cor: var(--risco-MODERADO);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 0.8rem;
+  padding: 1rem 1.15rem;
+  background: var(--papel);
+  border: 1px solid var(--linha);
+  border-left: 6px solid var(--cor);
+  border-radius: var(--raio-grande);
+  box-shadow: var(--sombra);
+}
+
+.alerta--ALTO {
+  --cor: var(--risco-ALTO);
+}
+
+.alerta--CRITICO {
+  --cor: var(--risco-CRITICO);
+}
+
+.alerta__nivel {
+  margin: 0 0 0.2rem;
+  font-family: var(--fonte-placa);
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.alerta__titulo {
+  margin: 0 0 0.7rem;
+  font-size: 1.2rem;
+}
+
+.alerta__titulo a {
+  color: var(--texto);
+}
+
+.alerta__rodape {
+  margin-top: 0.7rem;
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
+
+.alertas-baixos ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.alertas-baixos li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.8rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--linha);
+}
+
+.alertas-baixos__via {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.vias-monitoradas {
+  margin: 0 0 0.6rem;
+  padding: 0;
+  list-style: none;
+}
+
+.vias-monitoradas__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--linha);
+}
+
+.vias-monitoradas__info {
+  display: grid;
+  gap: 0.3rem;
+  justify-items: start;
+}
+
+.vias-monitoradas__apelido {
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------- Gestão */
+
+.fila__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem 1.2rem;
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed var(--linha);
+}
+
+.fila__acoes .alterar-status {
+  flex: 1 1 320px;
+}
+
+/* ------------------------------------------------------------ Relatórios */
+
+.relatorios {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.relatorio--largo {
+  grid-column: 1 / -1;
+}
+
+.relatorio__descricao {
+  margin-top: -0.2rem;
+  font-size: 0.92rem;
+  color: var(--texto-suave);
+}
+
+.celula-barra {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 150px;
+}
+
+.barras {
+  display: grid;
+  gap: 1rem;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.barras__item {
+  display: grid;
+  grid-template-columns: minmax(7rem, 10rem) minmax(0, 1fr) 6.8rem;
+  grid-template-areas:
+    "rotulo barra valor"
+    ". detalhe detalhe";
+  gap: 0.15rem 0.7rem;
+  align-items: center;
+}
+
+.barras__rotulo {
+  grid-area: rotulo;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.barras__item .barra {
+  grid-area: barra;
+}
+
+.barras__valor {
+  grid-area: valor;
+  font-family: var(--fonte-dado);
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.barras__detalhe {
+  grid-area: detalhe;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+.tabela--matriz td {
+  text-align: center;
+  font-family: var(--fonte-dado);
+  font-weight: 600;
+}
+
+.tabela--matriz thead th {
+  white-space: normal;
+  min-width: 6.5rem;
+}
+
+.matriz__celula {
+  background: color-mix(in srgb, var(--placa) calc(var(--intensidade) * 88%), var(--papel));
+}
+
+.matriz__celula--escura {
+  color: #fff;
+}
+
+.matriz__ativas {
+  font-size: 0.8em;
+  font-weight: 500;
+}
+
+.matriz__vazio {
+  color: var(--linha-forte);
+}
+
+.exposicao {
+  display: grid;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.exposicao__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "sinal modal"
+    "sinal detalhe";
+  align-items: center;
+  column-gap: 0.8rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--linha);
+}
+
+.exposicao__item .sinal {
+  grid-area: sinal;
+}
+
+.exposicao__modal {
+  grid-area: modal;
+  align-self: end;
+}
+
+.exposicao__detalhe {
+  grid-area: detalhe;
+  align-self: start;
+}
+
+.exposicao__modal {
+  font-weight: 700;
+}
+
+.exposicao__detalhe {
+  font-size: 0.84rem;
+  color: var(--texto-suave);
+}
+
+/* ------------------------------------------------------------- Cadastros */
+
+.painel-aba {
+  margin-top: 1.3rem;
+}
+
+.cadastro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.cadastro__formulario {
+  position: sticky;
+  top: 1rem;
+}
+
+.cadastro .tabela-rolagem {
+  background: var(--papel);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-grande);
+}
+
+.cadastro .tabela tbody tr:last-child > * {
+  border-bottom: none;
+}
+
+/* ------------------------------------------------------------- Entrar */
+
+.entrar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem;
+  align-items: start;
+}
+
+.entrar__bloco h2 {
+  margin-bottom: 1rem;
+}
+
+.demo {
+  margin-top: 1.6rem;
+  padding-top: 1.1rem;
+  border-top: 1px dashed var(--linha-forte);
+}
+
+.demo .subtitulo {
+  margin-top: 0;
+}
+
+.demo__lista {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.8rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.demo__conta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.2rem 1rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.8rem;
+  background: var(--concreto);
+  border: 1.5px solid var(--linha);
+  border-radius: var(--raio);
+  font: inherit;
+  text-align: left;
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.demo__conta:hover {
+  border-color: var(--placa);
+  background: var(--placa-clara);
+}
+
+.demo__nome {
+  font-weight: 700;
+}
+
+.demo__papel {
+  font-size: 0.88rem;
+  color: var(--texto-suave);
+}
+
+.sessao-atual {
+  max-width: 620px;
+}
+
+.nao-encontrada {
+  padding: 2rem 0 3rem;
+}
+
+/* ------------------------------------------------------------ Responsivo */
+
+@media (max-width: 960px) {
+  .tese,
+  .detalhe,
+  .cadastro,
+  .entrar,
+  .relatorios {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .trajeto {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "alertas"
+      "vias"
+      "perfil";
+  }
+
+  .risco-modais,
+  .cadastro__formulario {
+    position: static;
+  }
+
+  .cadastro__formulario {
+    order: -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .papeis {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .item-ocorrencia {
+    padding: 0.9rem;
+    gap: 0.8rem;
+  }
+
+  .linhas-vias__linha {
+    grid-template-columns: minmax(0, 1fr);
+    padding-bottom: 0.6rem;
+    border-bottom: 1px dashed var(--linha);
+  }
+
+  .escala__rotulo {
+    font-size: 0.68rem;
+  }
+
+  .barras__item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "rotulo valor"
+      "barra barra"
+      "detalhe detalhe";
+  }
+
+  .situacao__item dd {
+    font-size: 1.75rem;
+  }
+
+  .situacao__lista {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .situacao__item + .situacao__item {
+    padding-left: 0;
+    border-left: none;
+  }
+}

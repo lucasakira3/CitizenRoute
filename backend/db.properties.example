@@ -1,0 +1,11 @@
+# Copie este arquivo para "db.properties" (na mesma pasta) e preencha com os seus dados.
+# O db.properties está no .gitignore: a senha nunca vai para o repositório.
+# Variáveis de ambiente com os mesmos nomes têm prioridade sobre este arquivo.
+
+# Oracle da FIAP
+ORACLE_JDBC_URL=jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL
+ORACLE_DB_USER=rm000000
+ORACLE_DB_PASSWORD=sua_senha
+
+# Oracle local (por exemplo, Oracle Database Free em um contêiner)
+# ORACLE_JDBC_URL=jdbc:oracle:thin:@//localhost:1521/FREEPDB1

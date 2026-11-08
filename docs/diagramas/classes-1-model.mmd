@@ -1,0 +1,238 @@
+---
+title: "Pacote model: entidades, enums e interface (getters e setters omitidos)"
+---
+classDiagram
+    class Acao {
+        -Long id
+        -Long idOcorrencia
+        -Gestor gestor
+        -String descricao
+        -StatusOcorrencia statusNovo
+        -LocalDateTime dataAcao
+        +Acao()
+        +Acao(Long, Gestor, String, StatusOcorrencia)
+        +isMudancaDeStatus() boolean
+    }
+    class Alerta {
+        -Ocorrencia ocorrencia
+        -List~ViaMonitorada~ viasAfetadas
+        -double risco
+        -NivelRisco nivel
+        -boolean acimaDoLimite
+        +Alerta(Ocorrencia, List~ViaMonitorada~, double, NivelRisco, boolean)
+    }
+    class AvaliavelRisco {
+        <<interface>>
+        +calcularRisco(Modal) double
+    }
+    class Cidadao {
+        -Modal modal
+        +Cidadao()
+        +Cidadao(Long, String, String, Modal)
+        +getTipo() TipoUsuario
+        +getDescricaoPerfil() String
+    }
+    class Gestor {
+        -Orgao orgao
+        -String matricula
+        +Gestor()
+        +Gestor(Long, String, String, Orgao, String)
+        +getTipo() TipoUsuario
+        +getDescricaoPerfil() String
+    }
+    class Modal {
+        <<enumeration>>
+        CARRO
+        MOTO
+        ONIBUS
+        APP
+        PEDESTRE
+        BIKE
+        -String rotulo
+    }
+    class NivelImpacto {
+        <<enumeration>>
+        BLOQUEIO_TOTAL
+        PARCIAL
+        LENTIDAO
+        SEM_INTERDICAO
+        -String rotulo
+    }
+    class NivelRisco {
+        <<enumeration>>
+        BAIXO
+        MODERADO
+        ALTO
+        CRITICO
+        -String rotulo
+    }
+    class Ocorrencia {
+        -Long id
+        -String titulo
+        -String descricao
+        -TipoOcorrencia tipo
+        -int gravidade
+        -StatusOcorrencia status
+        -LocalDateTime dataRegistro
+        -LocalDateTime dataAtualizacao
+        -Cidadao autor
+        -List~OcorrenciaVia~ vias
+        +Ocorrencia()
+        +calcularRisco(Modal) double
+        +isAtiva() boolean
+        +afetaVia(Long) boolean
+    }
+    class OcorrenciaVia {
+        -Via via
+        -NivelImpacto nivelImpacto
+        +OcorrenciaVia()
+        +OcorrenciaVia(Via, NivelImpacto)
+    }
+    class Orgao {
+        <<enumeration>>
+        CET
+        DEFESA_CIVIL
+        SPTRANS
+        SUBPREFEITURA
+        GCM
+        -String rotulo
+        -String atribuicao
+    }
+    class Regiao {
+        -Long id
+        -String nome
+        +Regiao()
+        +Regiao(Long, String)
+    }
+    class StatusOcorrencia {
+        <<enumeration>>
+        ABERTA
+        CONFIRMADA
+        EM_ATENDIMENTO
+        RESOLVIDA
+        DESCARTADA
+        -String rotulo
+        -boolean ativa
+    }
+    class TipoOcorrencia {
+        <<enumeration>>
+        ACIDENTE
+        ALAGAMENTO
+        QUEDA_ARVORE
+        SEMAFORO_APAGADO
+        DESLIZAMENTO
+        VIA_BLOQUEADA
+        INSEGURANCA
+        -String rotulo
+        -double peso
+        -Orgao orgaoResponsavel
+        -Map~Modal‚Double~ fatorPorModal
+        +fatorExposicao(Modal) double
+    }
+    class TipoUsuario {
+        <<enumeration>>
+        CIDADAO
+        GESTOR
+    }
+    class Usuario {
+        <<abstract>>
+        -Long id
+        -String nome
+        -String email
+        -String senhaHash
+        -LocalDateTime dataCadastro
+        #Usuario()
+        #Usuario(Long, String, String)
+        +getTipo()* TipoUsuario
+        +getDescricaoPerfil()* String
+    }
+    class Via {
+        -Long id
+        -String nome
+        -Regiao regiao
+        +Via()
+        +Via(Long, String, Regiao)
+    }
+    class ViaMonitorada {
+        -Long idCidadao
+        -Via via
+        -String apelido
+        -LocalDateTime dataInclusao
+        +ViaMonitorada()
+        +ViaMonitorada(Long, Via, String)
+    }
+    class ExposicaoModal {
+        <<record>>
+        -Modal modal
+        -int cidadaos
+        -int viasMonitoradas
+        -int ocorrenciasAtivasNasVias
+        -double riscoMedioAtual
+        +ExposicaoModal(Modal, int, int, int, double)
+        +comRiscoMedio(double) ExposicaoModal
+    }
+    class OcorrenciasPorRegiao {
+        <<record>>
+        -String regiao
+        -TipoOcorrencia tipo
+        -int total
+        -int ativas
+        +OcorrenciasPorRegiao(String, TipoOcorrencia, int, int)
+    }
+    class ResumoPainel {
+        <<record>>
+        -int ocorrenciasAtivas
+        -int aguardandoConfirmacao
+        -int emAtendimento
+        -int gravesAtivas
+        -int resolvidasUltimos30Dias
+        -Double tempoMedioRespostaMinutos
+        -int cidadaos
+        -int viasMonitoradas
+        +ResumoPainel(int, int, int, int, int, Double, int, int)
+    }
+    class TempoRespostaOrgao {
+        <<record>>
+        -Orgao orgao
+        -int ocorrenciasAtendidas
+        -double minutosMedios
+        -int resolvidas
+        +TempoRespostaOrgao(Orgao, int, double, int)
+    }
+    class ViaCritica {
+        <<record>>
+        -long idVia
+        -String via
+        -String regiao
+        -int totalOcorrencias
+        -int ocorrenciasAtivas
+        -double gravidadeMedia
+        -int gravidadeMaxima
+        +ViaCritica(long, String, String, int, int, double, int)
+    }
+    Acao --> Gestor : gestor
+    Acao --> StatusOcorrencia : statusNovo
+    Alerta --> Ocorrencia : ocorrencia
+    Alerta --> "*" ViaMonitorada : viasAfetadas
+    Alerta --> NivelRisco : nivel
+    Usuario <|-- Cidadao
+    Cidadao --> Modal : modal
+    Usuario <|-- Gestor
+    Gestor --> Orgao : orgao
+    AvaliavelRisco <|.. Ocorrencia
+    Ocorrencia --> TipoOcorrencia : tipo
+    Ocorrencia --> StatusOcorrencia : status
+    Ocorrencia --> Cidadao : autor
+    Ocorrencia --> "*" OcorrenciaVia : vias
+    OcorrenciaVia --> Via : via
+    OcorrenciaVia --> NivelImpacto : nivelImpacto
+    TipoOcorrencia --> Orgao : orgaoResponsavel
+    TipoOcorrencia --> "*" Modal : fatorPorModal
+    Via --> Regiao : regiao
+    ViaMonitorada --> Via : via
+    ExposicaoModal --> Modal : modal
+    OcorrenciasPorRegiao --> TipoOcorrencia : tipo
+    TempoRespostaOrgao --> Orgao : orgao
+    AvaliavelRisco ..> Modal
+    Cidadao ..> TipoUsuario
+    Gestor ..> TipoUsuario

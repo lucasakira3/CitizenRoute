@@ -1,0 +1,949 @@
+/* ==========================================================================
+   Mapa da cidade (componente MapaCidade)
+   O chão é um canvas (utils/desenhoMapa.js). As placas das ocorrências ficam
+   num plano CSS 3D com a mesma câmera: rotateX, scale3d, rotateZ e translate a
+   partir das variáveis --cx, --cy, --zoom, --giro e --incl, escritas pelo hook
+   useCameraMapa a cada quadro.
+   ========================================================================== */
+
+.mapa3d__moldura {
+  --cx: 800;
+  --cy: 750;
+  --zoom: 0.6;
+  --giro: 0;
+  --incl: 0;
+  --ox: 50%;
+  --oy: 50%;
+  /* Escala das placas, escrita pela câmera: ficam quase do mesmo tamanho na tela em qualquer zoom */
+  --k: 1;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  isolation: isolate;
+}
+
+.mapa3d {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  perspective: 1500px;
+  perspective-origin: var(--ox) var(--oy);
+  background: #e7eae8;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+
+.mapa3d:focus-visible {
+  outline: 3px solid var(--placa);
+  outline-offset: -3px;
+}
+
+.mapa3d--arrastando {
+  cursor: grabbing;
+}
+
+.mapa3d--previa {
+  cursor: default;
+  touch-action: pan-y;
+}
+
+.mapa3d__palco {
+  position: absolute;
+  left: var(--ox);
+  top: var(--oy);
+  transform-origin: 0 0;
+  transform-style: preserve-3d;
+  transform: rotateX(calc(var(--incl) * 1deg)) scale3d(var(--zoom), var(--zoom), var(--zoom))
+    rotateZ(calc(var(--giro) * 1deg)) translate(calc(var(--cx) * -1px), calc(var(--cy) * -1px));
+}
+
+.mapa3d__nevoa {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(213 223 228 / 0.92) 0%, rgb(213 223 228 / 0.4) 12%, transparent 28%);
+  transition: opacity 0.4s ease;
+}
+
+.mapa3d--plano .mapa3d__nevoa {
+  opacity: 0;
+}
+
+/* ---------------------------------------------------------- Chão (canvas) */
+
+.mapa3d__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.mapa3d__sinais {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.mapa3d__carregando {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 0.6rem;
+  padding: 1rem;
+  text-align: center;
+  color: var(--texto-suave);
+  font-weight: 600;
+}
+
+.mapa3d__carregando p {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.mapa3d__creditos {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 0.15rem 0.5rem;
+  border-top-right-radius: 6px;
+  background: rgb(255 255 255 / 0.8);
+  font-size: 0.7rem;
+  color: var(--texto-suave);
+}
+
+.mapa3d__creditos a {
+  color: inherit;
+}
+
+/* Créditos sempre no canto inferior direito; a legenda fica logo acima ou à esquerda */
+.mapa3d__creditos {
+  left: auto;
+  right: 0;
+  border-top-right-radius: 0;
+  border-top-left-radius: 6px;
+}
+
+@media (min-width: 701px) {
+  .mapa3d__moldura--tela .mapa3d__legenda {
+    bottom: 26px;
+  }
+}
+
+/* ---------------------------------------------- Placas de advertência (ocorrências) */
+
+.sinal3d {
+  --cor: var(--risco-MODERADO);
+  --tinta: #fff;
+  --filete: #fff;
+  position: absolute;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+}
+
+.sinal3d--BAIXO { --cor: var(--risco-BAIXO); }
+.sinal3d--MODERADO { --cor: var(--risco-MODERADO); --tinta: var(--asfalto); --filete: var(--asfalto); }
+.sinal3d--ALTO { --cor: var(--risco-ALTO); }
+.sinal3d--CRITICO { --cor: var(--risco-CRITICO); }
+
+/* "Billboard": desfaz o giro e a inclinação da câmera para a placa ficar de pé e de frente */
+.sinal3d__painel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-style: preserve-3d;
+  transform: rotateZ(calc(var(--giro) * -1deg)) rotateX(calc(var(--incl) * -1deg)) scale3d(var(--k), var(--k), var(--k));
+}
+
+/* No chão: área de impacto (maior quanto mais grave), sombra e pulso, na escala das placas */
+.sinal3d__chao {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  transform: scale(var(--k));
+}
+
+.sinal3d__anel,
+.sinal3d__pulso {
+  position: absolute;
+  left: calc(var(--raio) * -1);
+  top: calc(var(--raio) * -1);
+  width: calc(var(--raio) * 2);
+  height: calc(var(--raio) * 2);
+  border-radius: 50%;
+}
+
+.sinal3d__anel {
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--cor) 42%, transparent) 0 30%,
+    color-mix(in srgb, var(--cor) 12%, transparent) 72%
+  );
+  border: 1.5px solid color-mix(in srgb, var(--cor) 75%, transparent);
+  animation: anel-abre 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(700ms + var(--i) * 80ms);
+}
+
+.sinal3d__pulso {
+  border: 2px solid var(--cor);
+  opacity: 0;
+  animation: pulso-chao 1.6s ease-out 3;
+  animation-delay: calc(1300ms + var(--i) * 80ms);
+}
+
+.sinal3d__sombra {
+  position: absolute;
+  left: -3px;
+  top: -4px;
+  width: 36px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(29 39 48 / 0.38), transparent);
+  transform-origin: 3px 4px;
+  transform: rotate(28deg);
+}
+
+.sinal3d__ergue {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-style: preserve-3d;
+  transform-origin: 0 0;
+  animation: sinal-ergue 560ms cubic-bezier(0.34, 1.5, 0.64, 1) both;
+  animation-delay: calc(700ms + var(--i) * 80ms);
+}
+
+.mapa3d--pronto .sinal3d__ergue,
+.mapa3d--pronto .sinal3d__anel {
+  animation-delay: calc(var(--i) * 30ms);
+}
+
+.sinal3d__haste {
+  position: absolute;
+  left: -1.8px;
+  top: -42px;
+  width: 3.6px;
+  height: 42px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #5d6971, #e2e8ec 45%, #76838c);
+  box-shadow: 0 0 0 0.5px rgb(29 39 48 / 0.3);
+}
+
+.sinal3d__placa {
+  position: absolute;
+  left: -15px;
+  top: -74px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  transform-style: preserve-3d;
+  transform: rotate(45deg);
+  transition: transform 0.35s cubic-bezier(0.34, 1.5, 0.64, 1), opacity 0.25s ease;
+  pointer-events: auto;
+  cursor: pointer;
+  outline: none;
+}
+
+.sinal3d__placa:hover,
+.sinal3d__placa:focus-visible {
+  transform: rotateY(-28deg) rotate(45deg) scale(1.14);
+}
+
+.sinal3d--ativo .sinal3d__placa {
+  transform: rotate(45deg) scale(1.2);
+  animation: placa-gira 720ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.mapa3d--com-selecao .sinal3d:not(.sinal3d--ativo) .sinal3d__placa {
+  opacity: 0.5;
+}
+
+.sinal3d__chapa {
+  position: absolute;
+  inset: 0;
+  border-radius: 3px;
+}
+
+/* Verso cinza de chapa de metal, como nas placas de verdade */
+.sinal3d__chapa--verso {
+  transform: translateZ(-1.6px);
+  background: linear-gradient(135deg, #b2bbc1, #7c878f);
+}
+
+.sinal3d__chapa--miolo {
+  background: #4f5a62;
+}
+
+.sinal3d__chapa--frente {
+  display: grid;
+  place-items: center;
+  transform: translateZ(1.6px);
+  color: var(--tinta);
+  background: linear-gradient(135deg, rgb(255 255 255 / 0.42), transparent 55%), var(--cor);
+  box-shadow: inset 0 0 0 2px var(--cor), inset 0 0 0 3.4px var(--filete), 0 0 0 0.8px rgb(29 39 48 / 0.55);
+}
+
+.sinal3d__placa:focus-visible .sinal3d__chapa--frente {
+  box-shadow: inset 0 0 0 2px var(--cor), inset 0 0 0 3.4px var(--filete), 0 0 0 3px var(--placa);
+}
+
+.sinal3d__icone {
+  transform: rotate(-45deg);
+  stroke-width: 2.4;
+}
+
+/* Balão com o título, por cima da placa */
+.sinal3d__balao {
+  position: absolute;
+  left: 0;
+  top: -86px;
+  display: grid;
+  gap: 1px;
+  width: max-content;
+  max-width: 200px;
+  padding: 6px 9px;
+  border-radius: 7px;
+  background: var(--asfalto);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.25;
+  box-shadow: 0 8px 18px -8px rgb(0 0 0 / 0.55);
+  transform: translate(-50%, -100%) translateY(6px) scale(0.9);
+  transform-origin: 50% 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.16s ease, transform 0.2s ease, visibility 0.16s;
+  pointer-events: none;
+}
+
+.sinal3d__balao strong {
+  font-family: var(--fonte-placa);
+  font-size: 12px;
+}
+
+.sinal3d__balao span {
+  font-weight: 700;
+  color: var(--sinal);
+}
+
+.sinal3d--BAIXO .sinal3d__balao span {
+  color: #7fd6a2;
+}
+
+.sinal3d--CRITICO .sinal3d__balao span {
+  color: #ff9a9a;
+}
+
+.sinal3d:hover .sinal3d__balao,
+.sinal3d--ativo .sinal3d__balao,
+.sinal3d__placa:focus-visible + .sinal3d__balao {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -100%);
+}
+
+/* ---------------------------------------------------------- Controles e legenda */
+
+.mapa3d__controles {
+  position: absolute;
+  z-index: 3;
+  right: 16px;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mapa3d__botao {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: var(--papel);
+  color: var(--asfalto);
+  font-family: var(--fonte-placa);
+  font-weight: 800;
+  font-size: 0.95rem;
+  box-shadow: 0 0 0 1px rgb(29 39 48 / 0.12), 0 6px 16px -8px rgb(29 39 48 / 0.45);
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.mapa3d__botao:hover {
+  background: var(--concreto);
+}
+
+.mapa3d__botao:active {
+  transform: scale(0.94);
+}
+
+.mapa3d__botao[aria-pressed="false"] {
+  background: var(--asfalto);
+  color: var(--sinal);
+}
+
+.mapa3d__agulha {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--asfalto);
+  transform: rotate(calc(var(--giro) * 1deg));
+}
+
+.mapa3d__agulha::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  border: 5px solid transparent;
+  border-bottom: 7px solid var(--risco-CRITICO);
+  border-top: 0;
+  transform: translateX(-50%);
+}
+
+.mapa3d__agulha span {
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.mapa3d__legenda {
+  position: absolute;
+  z-index: 2;
+  right: 16px;
+  bottom: 16px;
+  max-width: min(440px, calc(100% - 32px));
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.92);
+  box-shadow: 0 0 0 1px rgb(29 39 48 / 0.1), 0 6px 16px -10px rgb(29 39 48 / 0.4);
+  font-size: 0.78rem;
+  pointer-events: none;
+}
+
+.mapa3d__niveis {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.9rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 600;
+}
+
+.mapa3d__niveis li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.mapa3d__amostra {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--asfalto);
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+
+.mapa3d__amostra--BAIXO { background: var(--risco-BAIXO); }
+.mapa3d__amostra--MODERADO { background: var(--risco-MODERADO); }
+.mapa3d__amostra--ALTO { background: var(--risco-ALTO); }
+.mapa3d__amostra--CRITICO { background: var(--risco-CRITICO); }
+
+.mapa3d__amostra-trajeto {
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+  background: #2d6fd0;
+}
+
+.mapa3d__aviso {
+  margin: 0.3rem 0 0;
+  color: var(--texto-suave);
+}
+
+.mapa3d__moldura--previa .mapa3d__legenda {
+  left: 12px;
+  right: auto;
+  bottom: 12px;
+}
+
+/* ------------------------------------------------------------------ Animações */
+
+@keyframes aparece {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes sinal-ergue {
+  from {
+    transform: rotateX(-90deg) scale(0.5);
+  }
+}
+
+@keyframes anel-abre {
+  from {
+    transform: scale(0);
+  }
+}
+
+@keyframes pulso-chao {
+  0% {
+    opacity: 0.85;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.5);
+  }
+}
+
+@keyframes placa-gira {
+  from {
+    transform: rotateY(-360deg) rotate(45deg) scale(1.2);
+  }
+}
+
+@media (max-width: 700px) {
+  .mapa3d__controles {
+    right: 10px;
+    top: 10px;
+    gap: 5px;
+  }
+
+  .mapa3d__botao {
+    width: 40px;
+    height: 40px;
+  }
+
+  .mapa3d__legenda {
+    right: auto;
+    left: 10px;
+    top: 10px;
+    bottom: auto;
+    max-width: calc(100% - 70px);
+    padding: 0.35rem 0.6rem;
+    font-size: 0.72rem;
+  }
+}
+
+/* ==========================================================================
+   Página Mapa (tela cheia): o mapa ocupa tudo abaixo do cabeçalho e o painel
+   flutua por cima. No celular o painel vira uma gaveta presa embaixo.
+   ========================================================================== */
+
+body:has(.conteudo--tela-cheia) {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.conteudo--tela-cheia {
+  position: relative;
+  display: flex;
+  max-width: none;
+  min-height: 0;
+  padding: 0;
+}
+
+.mapa-tela {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #e4e8e6;
+}
+
+.mapa-tela > .mapa3d__moldura {
+  position: absolute;
+  inset: 0;
+}
+
+.mapa-tela__erro {
+  position: absolute;
+  inset: auto 16px 16px auto;
+  max-width: 420px;
+  z-index: 5;
+}
+
+.mapa-painel {
+  position: absolute;
+  z-index: 4;
+  left: 16px;
+  top: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  width: 380px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--papel);
+  box-shadow: 0 0 0 1px rgb(29 39 48 / 0.1), 0 22px 44px -20px rgb(29 39 48 / 0.6);
+  animation: entrada 460ms cubic-bezier(0.2, 0.8, 0.2, 1) both 120ms;
+}
+
+.mapa-painel__cabeca {
+  position: relative;
+  padding: 1.05rem 1.1rem 0.95rem;
+  border-bottom: 1px solid var(--linha);
+}
+
+/* Faixa de pista no topo do painel, como no cabeçalho */
+.mapa-painel__cabeca::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4px;
+  background: var(--asfalto);
+  box-shadow: inset 0 -1.5px 0 var(--sinal);
+}
+
+.mapa-painel .sobretitulo {
+  margin-top: 0.2rem;
+}
+
+.mapa-painel__titulo {
+  margin: 0.15rem 0 0;
+  font-size: 1.45rem;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+
+.mapa-painel .segmentos {
+  margin-top: 0.85rem;
+}
+
+.mapa-painel .segmentos__legenda {
+  margin-bottom: 0.4rem;
+  font-size: 0.72rem;
+}
+
+.mapa-painel .segmentos__opcoes {
+  gap: 0.3rem;
+}
+
+.mapa-painel .segmentos__opcao span {
+  min-height: 38px;
+  padding: 0.3rem 0.65rem 0.3rem 0.55rem;
+  font-size: 0.88rem;
+  gap: 0.3rem;
+}
+
+.mapa-painel__resumo {
+  margin: 0.75rem 0 0;
+  font-size: 0.95rem;
+}
+
+.mapa-painel__resumo strong {
+  font-family: var(--fonte-placa);
+  font-weight: 800;
+  padding: 0 0.15rem;
+  background: linear-gradient(transparent 62%, rgb(245 179 1 / 0.55) 62%);
+}
+
+.mapa-painel__corpo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.55rem 0.55rem 1rem;
+}
+
+.mapa-painel .filtro-zona {
+  margin: 0.2rem 0.2rem 0.5rem;
+}
+
+.mapa-zonas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.25rem 0.2rem 0.4rem;
+}
+
+.mapa-zonas button {
+  min-height: 34px;
+  padding: 0.2rem 0.7rem;
+  border: 1.5px solid var(--linha-forte);
+  border-radius: 999px;
+  background: var(--papel);
+  color: var(--texto);
+  font-family: var(--fonte-placa);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.mapa-zonas button:hover {
+  border-color: var(--asfalto);
+}
+
+.mapa-zonas button[aria-pressed="true"] {
+  border-color: var(--placa);
+  background: var(--placa);
+  color: #fff;
+}
+
+.mapa-zonas__conta {
+  margin: 0 0.4rem 0.3rem;
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.mapa-painel__carregando {
+  margin: 0.8rem;
+  color: var(--texto-suave);
+}
+
+.mapa-painel__dica {
+  margin: 0.9rem 0.6rem 0;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+.mapa-lista {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mapa-lista li {
+  animation: entrada 400ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(260ms + var(--i, 0) * 45ms);
+}
+
+.mapa-lista__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  padding: 0.65rem 0.6rem;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.mapa-lista__item:hover {
+  background: var(--concreto);
+}
+
+.mapa-lista__texto {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.mapa-lista__tipo {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.mapa-lista__titulo {
+  font-family: var(--fonte-placa);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.mapa-lista__vias {
+  overflow: hidden;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Detalhe da ocorrência escolhida no mapa */
+.mapa-detalhe {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.3rem 0.55rem 0.4rem;
+  animation: entrada 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.mapa-detalhe__voltar {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 40px;
+  padding: 0.3rem 0.6rem 0.3rem 0.4rem;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--placa);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mapa-detalhe__voltar:hover {
+  background: var(--placa-clara);
+}
+
+.mapa-detalhe__topo {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.mapa-detalhe__tipo {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-suave);
+}
+
+.mapa-detalhe__titulo {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.mapa-detalhe__risco,
+.mapa-detalhe__descricao,
+.mapa-detalhe__quando {
+  margin: 0;
+}
+
+.mapa-detalhe__descricao {
+  color: var(--texto-suave);
+}
+
+.mapa-detalhe__quando {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.mapa-detalhe__etiquetas,
+.mapa-detalhe__vias {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.8rem;
+}
+
+.mapa-detalhe .botao {
+  justify-self: start;
+}
+
+.mapa-painel__puxador {
+  display: block;
+  width: 100%;
+  height: 26px;
+  margin: -0.2rem 0 0.1rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.mapa-painel__puxador::before {
+  content: "";
+  display: block;
+  width: 44px;
+  height: 5px;
+  margin: 0 auto;
+  border-radius: 3px;
+  background: var(--linha-forte);
+}
+
+@media (max-width: 860px) {
+  .mapa-painel {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 0;
+    width: auto;
+    max-height: 64%;
+    border-radius: 16px 16px 0 0;
+    animation-name: gaveta-sobe;
+  }
+
+  .mapa-painel__cabeca {
+    padding: 0.55rem 0.9rem 0.75rem;
+  }
+
+  .mapa-painel .sobretitulo {
+    display: none;
+  }
+
+  .mapa-painel__titulo {
+    font-size: 1.12rem;
+  }
+
+  .mapa-painel .segmentos {
+    margin-top: 0.55rem;
+  }
+
+  .mapa-painel .segmentos__legenda {
+    display: none;
+  }
+
+  /* Os seis modais numa linha que rola de lado */
+  .mapa-painel .segmentos__opcoes {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 -0.9rem;
+    padding: 0.15rem 0.9rem;
+  }
+
+  .mapa-painel__resumo {
+    margin-top: 0.5rem;
+    font-size: 0.88rem;
+  }
+
+  .mapa-painel__dica {
+    display: none;
+  }
+}
+
+@keyframes gaveta-sobe {
+  from {
+    transform: translateY(100%);
+  }
+}

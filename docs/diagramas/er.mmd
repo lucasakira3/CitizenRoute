@@ -1,0 +1,71 @@
+---
+title: CitizenRoute · Modelo entidade-relacionamento (Oracle)
+---
+erDiagram
+    CR_REGIAO ||--o{ CR_VIA : "possui"
+    CR_USUARIO ||--o| CR_CIDADAO : "é um"
+    CR_USUARIO ||--o| CR_GESTOR : "é um"
+    CR_CIDADAO ||--o{ CR_OCORRENCIA : "reporta"
+    CR_OCORRENCIA ||--|{ CR_OCORRENCIA_VIA : "atinge"
+    CR_VIA ||--o{ CR_OCORRENCIA_VIA : "é atingida em"
+    CR_CIDADAO ||--o{ CR_VIA_MONITORADA : "monitora"
+    CR_VIA ||--o{ CR_VIA_MONITORADA : "é monitorada em"
+    CR_OCORRENCIA ||--o{ CR_ACAO : "recebe"
+    CR_GESTOR ||--o{ CR_ACAO : "registra"
+
+    CR_REGIAO {
+        NUMBER(10) id_regiao PK "IDENTITY"
+        VARCHAR2(60) nome UK "NOT NULL"
+    }
+    CR_VIA {
+        NUMBER(10) id_via PK "IDENTITY"
+        VARCHAR2(120) nome "NOT NULL, UK com id_regiao"
+        NUMBER(10) id_regiao FK "NOT NULL"
+    }
+    CR_USUARIO {
+        NUMBER(10) id_usuario PK "IDENTITY"
+        VARCHAR2(100) nome "NOT NULL"
+        VARCHAR2(120) email UK "NOT NULL"
+        VARCHAR2(200) senha_hash "NOT NULL, PBKDF2"
+        VARCHAR2(10) tipo "CHECK CIDADAO ou GESTOR"
+        DATE dt_cadastro "NOT NULL"
+    }
+    CR_CIDADAO {
+        NUMBER(10) id_usuario PK, FK "ON DELETE CASCADE"
+        VARCHAR2(10) modal "CHECK CARRO, MOTO, ONIBUS, APP, PEDESTRE, BIKE"
+    }
+    CR_GESTOR {
+        NUMBER(10) id_usuario PK, FK "ON DELETE CASCADE"
+        VARCHAR2(15) orgao "CHECK CET, DEFESA_CIVIL, SPTRANS, SUBPREFEITURA, GCM"
+        VARCHAR2(20) matricula UK "NOT NULL"
+    }
+    CR_OCORRENCIA {
+        NUMBER(10) id_ocorrencia PK "IDENTITY"
+        VARCHAR2(100) titulo "NOT NULL"
+        VARCHAR2(500) descricao "NOT NULL"
+        VARCHAR2(20) tipo "CHECK 7 tipos"
+        NUMBER(1) gravidade "CHECK 1 a 5"
+        VARCHAR2(15) status "CHECK, DEFAULT ABERTA"
+        DATE dt_registro "NOT NULL"
+        DATE dt_atualizacao
+        NUMBER(10) id_cidadao_autor FK "NOT NULL"
+    }
+    CR_OCORRENCIA_VIA {
+        NUMBER(10) id_ocorrencia PK, FK "ON DELETE CASCADE"
+        NUMBER(10) id_via PK, FK
+        VARCHAR2(15) nivel_impacto "CHECK 4 níveis"
+    }
+    CR_VIA_MONITORADA {
+        NUMBER(10) id_cidadao PK, FK "ON DELETE CASCADE"
+        NUMBER(10) id_via PK, FK "ON DELETE CASCADE"
+        VARCHAR2(60) apelido "NOT NULL"
+        DATE dt_inclusao "NOT NULL"
+    }
+    CR_ACAO {
+        NUMBER(10) id_acao PK "IDENTITY"
+        NUMBER(10) id_ocorrencia FK "ON DELETE CASCADE"
+        NUMBER(10) id_gestor FK "NOT NULL"
+        VARCHAR2(500) descricao "NOT NULL"
+        VARCHAR2(15) status_novo "CHECK, nulo se for só andamento"
+        DATE dt_acao "NOT NULL"
+    }

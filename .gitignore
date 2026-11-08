@@ -1,0 +1,20 @@
+# Credenciais do banco (use backend/db.properties.example como modelo)
+backend/db.properties
+.env
+.env.*
+!.env.example
+
+# Build do Java
+backend/target/
+
+# Front-end
+web/node_modules/
+web/dist/
+
+# IDEs e sistema
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+*.log

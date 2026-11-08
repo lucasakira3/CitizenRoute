@@ -1,0 +1,297 @@
+---
+title: "Pacotes api, exception e aplicação: interface HTTP e erros (getters e setters omitidos)"
+---
+classDiagram
+    class CitizenRouteApplication {
+        -int PORTA_PADRAO$
+        -CitizenRouteApplication()
+        +main(String[])$ void
+        -lerPorta()$ int
+    }
+    class Conversor {
+        -Conversor()
+        +lista(List~T~, Function~T‚Map‹String‚Object›~)$ List~Map‹String‚Object›~
+        +usuario(Usuario)$ Map~String‚Object~
+        +regiao(Regiao)$ Map~String‚Object~
+        +via(Via)$ Map~String‚Object~
+        +ocorrencia(Ocorrencia)$ Map~String‚Object~
+        -ocorrenciaVia(OcorrenciaVia)$ Map~String‚Object~
+        +risco(double, NivelRisco, boolean)$ Map~String‚Object~
+        +acao(Acao)$ Map~String‚Object~
+        +viaMonitorada(ViaMonitorada)$ Map~String‚Object~
+        +alerta(Alerta)$ Map~String‚Object~
+    }
+    class CorpoJson {
+        -Map~String‚Object~ dados
+        -CorpoJson(Map~String‚Object~)
+        +de(String)$ CorpoJson
+        +texto(String) String
+        +inteiro(String) Integer
+        +longo(String) Long
+        +opcao(String, Class~E~) E
+        +lista(String) List~CorpoJson~
+        -erro(String, String) ValidacaoException
+    }
+    class Json {
+        -DateTimeFormatter FORMATO_DATA$
+        -Json()
+        +escrever(Object)$ String
+        -escrever(Object, StringBuilder)$ void
+        -escreverTexto(String, StringBuilder)$ void
+        +ler(String)$ Object
+    }
+    class Json_Leitor["Json.Leitor"] {
+        -String texto
+        -int posicao
+        ~Leitor(String)
+        ~fim() boolean
+        ~pularEspacos() void
+        ~lerValor() Object
+        ~lerObjeto() Map~String‚Object~
+        ~lerLista() List~Object~
+        ~lerTexto() String
+        ~lerNumero() Number
+        ~lerPalavra(String, Object) Object
+        ~consumir(char) boolean
+        ~erro(String) ValidacaoException
+    }
+    class Requisicao {
+        +String CABECALHO_USUARIO$
+        -int TAMANHO_MAXIMO_CORPO$
+        -HttpExchange troca
+        -Map~String‚String~ parametrosRota
+        -Map~String‚String~ parametrosUrl
+        -CorpoJson corpo
+        ~Requisicao(HttpExchange, Map~String‚String~)
+        +id(String) long
+        +parametro(String) String
+        +parametroLong(String) Long
+        +parametroBooleano(String) boolean
+        +parametroOpcao(String, Class~E~) E
+        +corpo() CorpoJson
+        +idUsuario() Long
+        -lerCorpo() String
+        -lerParametrosUrl(String)$ Map~String‚String~
+    }
+    class Resposta {
+        <<record>>
+        -int status
+        -Object corpo
+        +Resposta(int, Object)
+        +ok(Object)$ Resposta
+        +criado(Object)$ Resposta
+        +semConteudo()$ Resposta
+    }
+    class Roteador {
+        -Pattern PARAMETRO$
+        -DateTimeFormatter HORA$
+        -List~Roteador.Rota~ rotas
+        +Roteador()
+        +get(String, Roteador.Manipulador) Roteador
+        +post(String, Roteador.Manipulador) Roteador
+        +put(String, Roteador.Manipulador) Roteador
+        +patch(String, Roteador.Manipulador) Roteador
+        +delete(String, Roteador.Manipulador) Roteador
+        -adicionar(String, String, Roteador.Manipulador) Roteador
+        +handle(HttpExchange) void
+        -despachar(HttpExchange) Resposta
+        -erro(int, String, Map~String‚String~)$ Resposta
+        -enviar(HttpExchange, Resposta) void
+        -liberarOrigemLocal(HttpExchange) void
+        -registrarFalha(HttpExchange, Exception) void
+    }
+    class Roteador_Manipulador["Roteador.Manipulador"] {
+        <<interface>>
+        +tratar(Requisicao) Resposta
+    }
+    class Roteador_Rota["Roteador.Rota"] {
+        <<record>>
+        -String metodo
+        -Pattern padrao
+        -List~String~ nomes
+        -Roteador.Manipulador manipulador
+        -Rota(String, Pattern, List~String~, Roteador.Manipulador)
+    }
+    class AutenticacaoController {
+        -AutenticacaoService autenticacaoService
+        +AutenticacaoController(AutenticacaoService)
+        +registrar(Roteador) void
+        -entrar(Requisicao) Resposta
+        -sessao(Requisicao) Resposta
+    }
+    class CidadaoController {
+        -CidadaoService cidadaoService
+        -ViaMonitoradaService viaMonitoradaService
+        -AlertaService alertaService
+        +CidadaoController(CidadaoService, ViaMonitoradaService, AlertaService)
+        +registrar(Roteador) void
+        -listar(Requisicao) Resposta
+        -buscar(Requisicao) Resposta
+        -cadastrar(Requisicao) Resposta
+        -atualizar(Requisicao) Resposta
+        -excluir(Requisicao) Resposta
+        -listarVias(Requisicao) Resposta
+        -adicionarVia(Requisicao) Resposta
+        -atualizarVia(Requisicao) Resposta
+        -removerVia(Requisicao) Resposta
+        -alertas(Requisicao) Resposta
+    }
+    class DominioController {
+        +DominioController()
+        +registrar(Roteador) void
+        -dominio(Requisicao) Resposta
+        -opcao(Enum~?~, String) Map~String‚Object~
+    }
+    class GestorController {
+        -GestorService gestorService
+        +GestorController(GestorService)
+        +registrar(Roteador) void
+        -listar(Requisicao) Resposta
+        -buscar(Requisicao) Resposta
+        -cadastrar(Requisicao) Resposta
+        -atualizar(Requisicao) Resposta
+        -excluir(Requisicao) Resposta
+    }
+    class OcorrenciaController {
+        -OcorrenciaService ocorrenciaService
+        -AcaoService acaoService
+        -RiscoService riscoService
+        +OcorrenciaController(OcorrenciaService, AcaoService, RiscoService)
+        +registrar(Roteador) void
+        -listar(Requisicao) Resposta
+        -detalhar(Requisicao) Resposta
+        -registrarOcorrencia(Requisicao) Resposta
+        -atualizar(Requisicao) Resposta
+        -excluir(Requisicao) Resposta
+        -alterarStatus(Requisicao) Resposta
+        -listarAcoes(Requisicao) Resposta
+        -registrarAcao(Requisicao) Resposta
+        -atualizarAcao(Requisicao) Resposta
+        -excluirAcao(Requisicao) Resposta
+        -risco(Ocorrencia, Modal) Map~String‚Object~
+        -lerOcorrencia(CorpoJson) Ocorrencia
+    }
+    class RegiaoController {
+        -RegiaoService regiaoService
+        +RegiaoController(RegiaoService)
+        +registrar(Roteador) void
+        -listar(Requisicao) Resposta
+        -buscar(Requisicao) Resposta
+        -cadastrar(Requisicao) Resposta
+        -atualizar(Requisicao) Resposta
+        -excluir(Requisicao) Resposta
+    }
+    class RelatorioController {
+        -RelatorioService relatorioService
+        +RelatorioController(RelatorioService)
+        +registrar(Roteador) void
+        -resumo(Requisicao) Resposta
+        -viasCriticas(Requisicao) Resposta
+        -porRegiao(Requisicao) Resposta
+        -tempoResposta(Requisicao) Resposta
+        -exposicaoModal(Requisicao) Resposta
+        -viaCritica(ViaCritica) Map~String‚Object~
+        -ocorrenciasPorRegiao(OcorrenciasPorRegiao) Map~String‚Object~
+        -tempoRespostaOrgao(TempoRespostaOrgao) Map~String‚Object~
+        -exposicao(ExposicaoModal) Map~String‚Object~
+    }
+    class SaudeController {
+        -SaudeService saudeService
+        +SaudeController(SaudeService)
+        +registrar(Roteador) void
+        -verificar() Resposta
+    }
+    class ViaController {
+        -ViaService viaService
+        +ViaController(ViaService)
+        +registrar(Roteador) void
+        -listar(Requisicao) Resposta
+        -buscar(Requisicao) Resposta
+        -cadastrar(Requisicao) Resposta
+        -atualizar(Requisicao) Resposta
+        -excluir(Requisicao) Resposta
+    }
+    class AcessoNegadoException {
+        -boolean naoAutenticado
+        +AcessoNegadoException(String)
+        +AcessoNegadoException(String, boolean)
+    }
+    class CitizenRouteException {
+        <<abstract>>
+        #CitizenRouteException(String)
+        #CitizenRouteException(String, Throwable)
+    }
+    class PersistenciaException {
+        -boolean bancoIndisponivel
+        -boolean conflitoDeDados
+        +PersistenciaException(String, Throwable)
+        +PersistenciaException(String, Throwable, boolean, boolean)
+        +indisponivel(String, Throwable)$ PersistenciaException
+        +conflito(String, Throwable)$ PersistenciaException
+    }
+    class RecursoNaoEncontradoException {
+        +RecursoNaoEncontradoException(String)
+    }
+    class RegraNegocioException {
+        +RegraNegocioException(String)
+    }
+    class ValidacaoException {
+        -Map~String‚String~ erros
+        +ValidacaoException(String)
+        +ValidacaoException(String, Map~String‚String~)
+    }
+    Json *-- Json_Leitor : interna
+    Requisicao --> CorpoJson : corpo
+    Roteador --> "*" Roteador_Rota : rotas
+    Roteador *-- Roteador_Manipulador : interna
+    Roteador *-- Roteador_Rota : interna
+    Roteador_Rota --> Roteador_Manipulador : manipulador
+    AutenticacaoController --> AutenticacaoService : autenticacaoService
+    CidadaoController --> CidadaoService : cidadaoService
+    CidadaoController --> ViaMonitoradaService : viaMonitoradaService
+    CidadaoController --> AlertaService : alertaService
+    GestorController --> GestorService : gestorService
+    OcorrenciaController --> OcorrenciaService : ocorrenciaService
+    OcorrenciaController --> AcaoService : acaoService
+    OcorrenciaController --> RiscoService : riscoService
+    RegiaoController --> RegiaoService : regiaoService
+    RelatorioController --> RelatorioService : relatorioService
+    SaudeController --> SaudeService : saudeService
+    ViaController --> ViaService : viaService
+    CitizenRouteException <|-- AcessoNegadoException
+    CitizenRouteException <|-- PersistenciaException
+    CitizenRouteException <|-- RecursoNaoEncontradoException
+    CitizenRouteException <|-- RegraNegocioException
+    CitizenRouteException <|-- ValidacaoException
+    CorpoJson ..> ValidacaoException
+    Json_Leitor ..> ValidacaoException
+    Roteador ..> Resposta
+    Roteador_Manipulador ..> Requisicao
+    Roteador_Manipulador ..> Resposta
+    AutenticacaoController ..> Roteador
+    AutenticacaoController ..> Requisicao
+    AutenticacaoController ..> Resposta
+    CidadaoController ..> Roteador
+    CidadaoController ..> Requisicao
+    CidadaoController ..> Resposta
+    DominioController ..> Roteador
+    DominioController ..> Requisicao
+    DominioController ..> Resposta
+    GestorController ..> Roteador
+    GestorController ..> Requisicao
+    GestorController ..> Resposta
+    OcorrenciaController ..> Roteador
+    OcorrenciaController ..> Requisicao
+    OcorrenciaController ..> Resposta
+    OcorrenciaController ..> CorpoJson
+    RegiaoController ..> Roteador
+    RegiaoController ..> Requisicao
+    RegiaoController ..> Resposta
+    RelatorioController ..> Roteador
+    RelatorioController ..> Requisicao
+    RelatorioController ..> Resposta
+    SaudeController ..> Roteador
+    SaudeController ..> Resposta
+    ViaController ..> Roteador
+    ViaController ..> Requisicao
+    ViaController ..> Resposta

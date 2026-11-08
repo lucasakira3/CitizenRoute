@@ -1,0 +1,440 @@
+/* ==========================================================================
+   Tokens, base e estrutura da página
+   Vocabulário visual: placas de rua azuis de São Paulo, placas de advertência
+   amarelas, faixas de asfalto e a tipografia Overpass (derivada da fonte das
+   placas rodoviárias).
+   ========================================================================== */
+
+:root {
+  --asfalto: #1d2730;
+  --asfalto-2: #2b3741;
+  --asfalto-3: #44525e;
+  --texto: #1d2730;
+  --texto-suave: #4f5d68;
+  --concreto: #e9ecec;
+  --concreto-2: #dde2e3;
+  --papel: #ffffff;
+  --linha: #ccd3d7;
+  --linha-forte: #97a3ab;
+
+  --placa: #0f4c9b;
+  --placa-escura: #0a3a78;
+  --placa-clara: #e2ebf7;
+  --sinal: #f5b301;
+
+  --risco-BAIXO: #2f7d4e;
+  --risco-MODERADO: #f5b301;
+  --risco-ALTO: #e2681c;
+  --risco-CRITICO: #c42b2b;
+
+  --sucesso: #1f6b3e;
+  --sucesso-fundo: #e2f2e7;
+  --erro: #a3231f;
+  --erro-fundo: #fbe8e6;
+  --info-fundo: #e2ebf7;
+
+  --fonte-placa: "Overpass", "Arial Narrow", "Segoe UI", system-ui, sans-serif;
+  --fonte-texto: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --fonte-dado: "Overpass Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  --raio: 6px;
+  --raio-grande: 10px;
+  --sombra: 0 1px 2px rgb(29 39 48 / 0.06), 0 8px 20px -12px rgb(29 39 48 / 0.25);
+  --largura: 1200px;
+  --margem: clamp(16px, 4vw, 40px);
+
+  /* Faixa tracejada amarela, como a sinalização que divide as pistas */
+  --faixa-pista: repeating-linear-gradient(90deg, var(--sinal) 0 30px, transparent 30px 54px);
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--concreto);
+  color: var(--texto);
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--fonte-placa);
+  line-height: 1.1;
+  margin: 0 0 0.6rem;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+
+h2 {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+p {
+  margin: 0 0 0.8rem;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+a {
+  color: var(--placa);
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  color: var(--placa-escura);
+}
+
+:focus-visible {
+  outline: 3px solid var(--placa);
+  outline-offset: 2px;
+}
+
+code {
+  font-family: var(--fonte-dado);
+  font-size: 0.9em;
+  background: var(--concreto-2);
+  padding: 0.08rem 0.35rem;
+  border-radius: 3px;
+}
+
+.visualmente-oculto {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pular {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 100;
+  padding: 0.6rem 1rem;
+  background: var(--sinal);
+  color: var(--asfalto);
+  font-weight: 700;
+  border-radius: var(--raio);
+}
+
+.pular:focus {
+  top: 0.6rem;
+}
+
+/* ------------------------------------------------------------- Cabeçalho */
+
+.cabecalho {
+  position: relative;
+  background: var(--asfalto);
+  color: #e8edf0;
+}
+
+.cabecalho::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: var(--faixa-pista);
+}
+
+.cabecalho__interno {
+  max-width: var(--largura);
+  margin: 0 auto;
+  padding: 0.85rem var(--margem) 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #fff;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.marca:hover {
+  color: #fff;
+}
+
+.marca__sinal {
+  width: 1.35rem;
+  height: 1.35rem;
+  background: var(--sinal);
+  border-radius: 3px;
+  transform: rotate(45deg);
+  box-shadow: inset 0 0 0 2px var(--sinal), inset 0 0 0 3.5px var(--asfalto);
+}
+
+.marca__nome {
+  font-family: var(--fonte-placa);
+  font-weight: 800;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
+}
+
+.menu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex: 1;
+}
+
+.menu__lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.menu__link {
+  display: block;
+  padding: 0.45rem 0.7rem;
+  border-radius: var(--raio);
+  color: #c9d3da;
+  font-family: var(--fonte-placa);
+  font-weight: 700;
+  font-size: 0.97rem;
+  text-decoration: none;
+}
+
+.menu__link:hover {
+  color: #fff;
+  background: var(--asfalto-2);
+}
+
+.menu__link[aria-current="page"] {
+  color: #fff;
+  box-shadow: inset 0 -3px 0 var(--sinal);
+  border-radius: var(--raio) var(--raio) 0 0;
+}
+
+.menu a:focus-visible,
+.menu button:focus-visible,
+.menu-botao:focus-visible,
+.marca:focus-visible {
+  outline-color: var(--sinal);
+}
+
+.sessao {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.sessao__quem {
+  display: grid;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.sessao__nome {
+  font-weight: 700;
+  color: #fff;
+}
+
+.sessao__perfil {
+  font-size: 0.78rem;
+  color: #aebac3;
+}
+
+.sessao__sair {
+  background: none;
+  border: 1.5px solid var(--asfalto-3);
+  color: #e8edf0;
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: var(--raio);
+  cursor: pointer;
+}
+
+.sessao__sair:hover {
+  border-color: #c9d3da;
+}
+
+.menu-botao {
+  display: none;
+  margin-left: auto;
+  background: var(--asfalto-2);
+  color: #fff;
+  border: 1.5px solid var(--asfalto-3);
+  border-radius: var(--raio);
+  padding: 0.5rem 0.9rem;
+  font-family: var(--fonte-placa);
+  font-weight: 700;
+  font-size: 0.95rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+@media (max-width: 920px) {
+  .cabecalho__interno {
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+
+  .menu-botao {
+    display: block;
+  }
+
+  .menu {
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.4rem 0 0.6rem;
+  }
+
+  .menu--aberto {
+    display: flex;
+  }
+
+  .menu__lista {
+    flex-direction: column;
+  }
+
+  .menu__link {
+    padding: 0.75rem 0.6rem;
+    font-size: 1.05rem;
+  }
+
+  .menu__link[aria-current="page"] {
+    box-shadow: inset 4px 0 0 var(--sinal);
+    border-radius: var(--raio);
+  }
+
+  .sessao {
+    justify-content: space-between;
+    border-top: 1px solid var(--asfalto-3);
+    padding-top: 0.8rem;
+  }
+
+  .sessao__quem {
+    text-align: left;
+  }
+}
+
+/* ------------------------------------------------------- Faixa de status */
+
+.faixa-status {
+  position: relative;
+  background: #fff6d4;
+  border-bottom: 1px solid #e6cf7a;
+}
+
+.faixa-status::before {
+  content: "";
+  display: block;
+  height: 8px;
+  background: repeating-linear-gradient(-45deg, var(--sinal) 0 12px, var(--asfalto) 12px 24px);
+}
+
+.faixa-status__interno {
+  max-width: var(--largura);
+  margin: 0 auto;
+  padding: 0.8rem var(--margem);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1.2rem;
+}
+
+.faixa-status p {
+  margin: 0;
+  max-width: 80ch;
+}
+
+/* ------------------------------------------------------ Conteúdo e rodapé */
+
+.conteudo {
+  flex: 1;
+  width: 100%;
+  max-width: var(--largura);
+  margin: 0 auto;
+  padding: clamp(1.25rem, 3vw, 2.25rem) var(--margem) 3rem;
+}
+
+.conteudo:focus {
+  outline: none;
+}
+
+.rodape {
+  border-top: 1px solid var(--linha);
+  background: var(--concreto-2);
+  color: var(--texto-suave);
+  font-size: 0.88rem;
+}
+
+.rodape__interno {
+  max-width: var(--largura);
+  margin: 0 auto;
+  padding: 1.2rem var(--margem);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.4rem 1.5rem;
+}
+
+.rodape p {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
