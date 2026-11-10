@@ -136,6 +136,46 @@ const DESENHOS = {
     </>
   ),
   VOLTAR: <path d="M15 5l-7 7 7 7" />,
+
+  // ------------------------------------------------------------------ rotas
+  ALVO: (
+    <>
+      <circle cx="12" cy="12" r="7" />
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+    </>
+  ),
+  TROCAR: (
+    <>
+      <path d="M7 4v15M3.5 7.5L7 4l3.5 3.5" />
+      <path d="M17 20V5M13.5 16.5L17 20l3.5-3.5" />
+    </>
+  ),
+  VIA: (
+    <>
+      <path d="M8 3L5 21M16 3l3 18" />
+      <path d="M12 4v3M12 10.5v3M12 17v3" />
+    </>
+  ),
+  BAIRRO: (
+    <>
+      <path d="M4 20V10l5-4 5 4v10" />
+      <path d="M14 20v-7l3-2.5 3 2.5v7" />
+      <path d="M3 20h18M8 20v-4h2v4" />
+    </>
+  ),
+  ESCUDO: (
+    <>
+      <path d="M12 3l7 3v5.5c0 4.4-3 7.9-7 9.5-4-1.6-7-5.1-7-9.5V6z" />
+      <path d="M9 12l2.2 2.2L15.5 10" />
+    </>
+  ),
+  RELOGIO: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </>
+  ),
 };
 
 /** Ícone decorativo. O texto ao lado é quem dá o significado para leitores de tela. */

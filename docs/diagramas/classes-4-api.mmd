@@ -18,7 +18,9 @@ classDiagram
         -ocorrenciaVia(OcorrenciaVia)$ Map~String‚Object~
         +risco(double, NivelRisco, boolean)$ Map~String‚Object~
         +acao(Acao)$ Map~String‚Object~
-        +viaMonitorada(ViaMonitorada)$ Map~String‚Object~
+        +rota(Rota)$ Map~String‚Object~
+        -rotaResumo(Rota)$ Map~String‚Object~
+        -ponto(PontoRota)$ Map~String‚Object~
         +alerta(Alerta)$ Map~String‚Object~
     }
     class CorpoJson {
@@ -28,6 +30,9 @@ classDiagram
         +texto(String) String
         +inteiro(String) Integer
         +longo(String) Long
+        +decimal(String) Double
+        +objeto(String) CorpoJson
+        +listaDeNumeros(String) List~Long~
         +opcao(String, Class~E~) E
         +lista(String) List~CorpoJson~
         -erro(String, String) ValidacaoException
@@ -121,19 +126,14 @@ classDiagram
     }
     class CidadaoController {
         -CidadaoService cidadaoService
-        -ViaMonitoradaService viaMonitoradaService
         -AlertaService alertaService
-        +CidadaoController(CidadaoService, ViaMonitoradaService, AlertaService)
+        +CidadaoController(CidadaoService, AlertaService)
         +registrar(Roteador) void
         -listar(Requisicao) Resposta
         -buscar(Requisicao) Resposta
         -cadastrar(Requisicao) Resposta
         -atualizar(Requisicao) Resposta
         -excluir(Requisicao) Resposta
-        -listarVias(Requisicao) Resposta
-        -adicionarVia(Requisicao) Resposta
-        -atualizarVia(Requisicao) Resposta
-        -removerVia(Requisicao) Resposta
         -alertas(Requisicao) Resposta
     }
     class DominioController {
@@ -195,6 +195,20 @@ classDiagram
         -tempoRespostaOrgao(TempoRespostaOrgao) Map~String‚Object~
         -exposicao(ExposicaoModal) Map~String‚Object~
     }
+    class RotaController {
+        -RotaService rotaService
+        -AlertaService alertaService
+        +RotaController(RotaService, AlertaService)
+        +registrar(Roteador) void
+        -listar(Requisicao) Resposta
+        -detalhar(Requisicao) Resposta
+        -criar(Requisicao) Resposta
+        -atualizar(Requisicao) Resposta
+        -excluir(Requisicao) Resposta
+        -avaliar(Requisicao) Resposta
+        -lerRota(CorpoJson) Rota
+        -lerPonto(CorpoJson) PontoRota
+    }
     class SaudeController {
         -SaudeService saudeService
         +SaudeController(SaudeService)
@@ -248,7 +262,6 @@ classDiagram
     Roteador_Rota --> Roteador_Manipulador : manipulador
     AutenticacaoController --> AutenticacaoService : autenticacaoService
     CidadaoController --> CidadaoService : cidadaoService
-    CidadaoController --> ViaMonitoradaService : viaMonitoradaService
     CidadaoController --> AlertaService : alertaService
     GestorController --> GestorService : gestorService
     OcorrenciaController --> OcorrenciaService : ocorrenciaService
@@ -256,6 +269,8 @@ classDiagram
     OcorrenciaController --> RiscoService : riscoService
     RegiaoController --> RegiaoService : regiaoService
     RelatorioController --> RelatorioService : relatorioService
+    RotaController --> RotaService : rotaService
+    RotaController --> AlertaService : alertaService
     SaudeController --> SaudeService : saudeService
     ViaController --> ViaService : viaService
     CitizenRouteException <|-- AcessoNegadoException
@@ -290,6 +305,10 @@ classDiagram
     RelatorioController ..> Roteador
     RelatorioController ..> Requisicao
     RelatorioController ..> Resposta
+    RotaController ..> Roteador
+    RotaController ..> Requisicao
+    RotaController ..> Resposta
+    RotaController ..> CorpoJson
     SaudeController ..> Roteador
     SaudeController ..> Resposta
     ViaController ..> Roteador

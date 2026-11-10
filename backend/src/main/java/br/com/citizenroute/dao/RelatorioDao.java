@@ -72,17 +72,18 @@ public class RelatorioDao {
              ORDER BY minutos_medios
             """;
 
-    // No Oracle, NULL || '-' vira '-', por isso o CASE ignora cidadãos sem vias monitoradas.
+    // Exposição: quantos cidadãos de cada modal, quantas rotas eles salvaram e quantas
+    // ocorrências ativas estão nas vias dessas rotas.
     private static final String SQL_EXPOSICAO_MODAL = """
             SELECT c.modal,
                    COUNT(DISTINCT c.id_usuario) AS cidadaos,
-                   COUNT(DISTINCT CASE WHEN vm.id_via IS NOT NULL
-                                       THEN vm.id_cidadao || '-' || vm.id_via END) AS vias_monitoradas,
+                   COUNT(DISTINCT ro.id_rota) AS rotas,
                    COUNT(DISTINCT CASE WHEN o.status IN ('ABERTA', 'CONFIRMADA', 'EM_ATENDIMENTO')
                                        THEN o.id_ocorrencia END) AS ocorrencias_ativas
               FROM cr_cidadao c
-              LEFT JOIN cr_via_monitorada vm ON vm.id_cidadao = c.id_usuario
-              LEFT JOIN cr_ocorrencia_via ov ON ov.id_via = vm.id_via
+              LEFT JOIN cr_rota ro ON ro.id_cidadao = c.id_usuario
+              LEFT JOIN cr_rota_via rv ON rv.id_rota = ro.id_rota
+              LEFT JOIN cr_ocorrencia_via ov ON ov.id_via = rv.id_via
               LEFT JOIN cr_ocorrencia o ON o.id_ocorrencia = ov.id_ocorrencia
              GROUP BY c.modal
             """;
@@ -97,7 +98,7 @@ public class RelatorioDao {
                    (SELECT COUNT(*) FROM cr_ocorrencia
                      WHERE status = 'RESOLVIDA' AND dt_registro >= ?) AS resolvidas_30d,
                    (SELECT COUNT(*) FROM cr_cidadao) AS cidadaos,
-                   (SELECT COUNT(*) FROM cr_via_monitorada) AS vias_monitoradas
+                   (SELECT COUNT(*) FROM cr_rota) AS rotas
               FROM dual
             """;
 
@@ -165,7 +166,7 @@ public class RelatorioDao {
             List<ExposicaoModal> linhas = new ArrayList<>();
             while (resultado.next()) {
                 linhas.add(new ExposicaoModal(Modal.valueOf(resultado.getString("modal")),
-                        resultado.getInt("cidadaos"), resultado.getInt("vias_monitoradas"),
+                        resultado.getInt("cidadaos"), resultado.getInt("rotas"),
                         resultado.getInt("ocorrencias_ativas"), 0));
             }
             return linhas;
@@ -190,7 +191,7 @@ public class RelatorioDao {
                     return new ResumoPainel(resultado.getInt("ativas"), resultado.getInt("aguardando"),
                             resultado.getInt("em_atendimento"), resultado.getInt("graves"),
                             resultado.getInt("resolvidas_30d"), tempoMedio,
-                            resultado.getInt("cidadaos"), resultado.getInt("vias_monitoradas"));
+                            resultado.getInt("cidadaos"), resultado.getInt("rotas"));
                 }
             }
         } catch (SQLException e) {

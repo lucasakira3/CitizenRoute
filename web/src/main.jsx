@@ -5,6 +5,7 @@ import "./styles/base.css";
 import "./styles/componentes.css";
 import "./styles/paginas.css";
 import "./styles/mapa.css";
+import "./styles/rota.css";
 import "./styles/movimento.css";
 
 createRoot(document.getElementById("root")).render(

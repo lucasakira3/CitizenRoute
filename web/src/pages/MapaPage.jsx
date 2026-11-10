@@ -29,7 +29,7 @@ function modalDaUrl() {
 }
 
 export default function MapaPage() {
-  useTitulo("Mapa da cidade");
+  useTitulo("Mapa de riscos");
   const { sessao, dominio, rotulo } = useApp();
   const modalInicial = modalDaUrl();
   const [modal, setModal] = useState(
@@ -48,11 +48,6 @@ export default function MapaPage() {
   const refPainel = useRef(null);
 
   const ativas = useCarregar(() => api.buscar(`/ocorrencias${consulta({ ativas: true, modal })}`), [modal]);
-  const trajeto = useCarregar(
-    () =>
-      sessao?.tipo === "CIDADAO" ? api.buscar(`/cidadaos/${sessao.id}/vias-monitoradas`) : Promise.resolve([]),
-    [sessao?.id, sessao?.tipo],
-  );
 
   // Celular: o painel vira uma gaveta embaixo; computador: uma coluna à esquerda.
   useEffect(() => {
@@ -119,7 +114,6 @@ export default function MapaPage() {
           zonaSelecionada={zona}
           selecionada={selecionada}
           aoSelecionar={selecionar}
-          trajeto={trajeto.dados ?? []}
           folga={folga}
         />
       )}
@@ -141,7 +135,7 @@ export default function MapaPage() {
               <span className="visualmente-oculto">{painelAberto ? "Recolher o painel" : "Abrir o painel"}</span>
             </button>
           )}
-          <p className="sobretitulo">Mapa ao vivo · São Paulo</p>
+          <p className="sobretitulo">Mapa de riscos · São Paulo ao vivo</p>
           <h1 id="mapa-titulo" className="mapa-painel__titulo">
             A cidade calculada para quem {MODAL_FRASE[modal]}
           </h1>

@@ -3,6 +3,7 @@ package br.com.citizenroute.api.controller;
 import br.com.citizenroute.api.Requisicao;
 import br.com.citizenroute.api.Resposta;
 import br.com.citizenroute.api.Roteador;
+import br.com.citizenroute.model.CriterioRota;
 import br.com.citizenroute.model.Modal;
 import br.com.citizenroute.model.NivelImpacto;
 import br.com.citizenroute.model.NivelRisco;
@@ -11,6 +12,7 @@ import br.com.citizenroute.model.StatusOcorrencia;
 import br.com.citizenroute.model.TipoOcorrencia;
 import br.com.citizenroute.service.OcorrenciaService;
 import br.com.citizenroute.service.RiscoService;
+import br.com.citizenroute.service.RotaService;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -32,7 +34,10 @@ public class DominioController {
 
         List<Map<String, Object>> modais = new ArrayList<>();
         for (Modal modal : Modal.values()) {
-            modais.add(opcao(modal, modal.getRotulo()));
+            Map<String, Object> item = opcao(modal, modal.getRotulo());
+            item.put("velocidadeMediaKmh", modal.getVelocidadeMediaKmh());
+            item.put("motorizado", modal.isMotorizado());
+            modais.add(item);
         }
         corpo.put("modais", modais);
 
@@ -79,12 +84,21 @@ public class DominioController {
         }
         corpo.put("niveisRisco", riscos);
 
+        List<Map<String, Object>> criterios = new ArrayList<>();
+        for (CriterioRota criterio : CriterioRota.values()) {
+            Map<String, Object> item = opcao(criterio, criterio.getRotulo());
+            item.put("descricao", criterio.getDescricao());
+            criterios.add(item);
+        }
+        corpo.put("criteriosRota", criterios);
+
         Map<String, Object> limites = new LinkedHashMap<>();
         limites.put("moderado", RiscoService.LIMITE_MODERADO);
         limites.put("alto", RiscoService.LIMITE_ALTO);
         limites.put("critico", RiscoService.LIMITE_CRITICO);
         limites.put("alerta", RiscoService.LIMITE_ALERTA);
         corpo.put("limitesRisco", limites);
+        corpo.put("maximoRotas", RotaService.MAXIMO_ROTAS);
 
         return Resposta.ok(corpo);
     }

@@ -13,11 +13,11 @@ import java.util.Set;
  * @param idRegiao           ocorrências que atingem alguma via da região
  * @param idVia              ocorrências que atingem a via
  * @param idAutor            ocorrências reportadas por este cidadão
- * @param idCidadaoMonitorando ocorrências que atingem alguma via monitorada por este cidadão
+ * @param idCidadaoComRota   ocorrências que atingem alguma via das rotas salvas por este cidadão
  * @param apenasAtivas       somente ABERTA, CONFIRMADA ou EM_ATENDIMENTO
  */
 public record FiltroOcorrencia(StatusOcorrencia status, Set<TipoOcorrencia> tipos, Long idRegiao, Long idVia,
-                               Long idAutor, Long idCidadaoMonitorando, boolean apenasAtivas) {
+                               Long idAutor, Long idCidadaoComRota, boolean apenasAtivas) {
 
     public static FiltroOcorrencia todas() {
         return new FiltroOcorrencia(null, null, null, null, null, null, false);
@@ -27,7 +27,7 @@ public record FiltroOcorrencia(StatusOcorrencia status, Set<TipoOcorrencia> tipo
         return new FiltroOcorrencia(null, null, null, null, null, null, true);
     }
 
-    public static FiltroOcorrencia ativasNasViasDo(long idCidadao) {
+    public static FiltroOcorrencia ativasNasRotasDo(long idCidadao) {
         return new FiltroOcorrencia(null, null, null, null, null, idCidadao, true);
     }
 }

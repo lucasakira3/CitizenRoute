@@ -71,7 +71,7 @@ export function ExigirPerfil({ tipo, motivo, children }) {
           Você entrou como {sessao.perfil.toLowerCase()}.{" "}
           {tipo === "GESTOR"
             ? "Entre com uma conta de gestor para confirmar ocorrências e registrar ações."
-            : "Entre com uma conta de cidadão para salvar trajetos e receber alertas."}
+            : "Entre com uma conta de cidadão para salvar rotas e receber alertas."}
         </p>
         <a className="botao botao--secundario" href="#/entrar">
           Trocar de conta

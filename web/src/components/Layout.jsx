@@ -5,9 +5,10 @@ import { api } from "../services/api.js";
 /** Itens do menu principal. É o mesmo menu em todas as páginas. */
 const ITENS_MENU = [
   { caminho: "/", rotulo: "Painel" },
-  { caminho: "/mapa", rotulo: "Mapa" },
+  { caminho: "/rota", rotulo: "Rota" },
+  { caminho: "/minhas-rotas", rotulo: "Minhas rotas" },
+  { caminho: "/mapa", rotulo: "Mapa de riscos" },
   { caminho: "/ocorrencias", rotulo: "Ocorrências" },
-  { caminho: "/meu-trajeto", rotulo: "Meu trajeto" },
   { caminho: "/gestao", rotulo: "Gestão" },
   { caminho: "/relatorios", rotulo: "Relatórios" },
   { caminho: "/cadastros", rotulo: "Cadastros" },
@@ -21,7 +22,7 @@ function estaAtivo(caminho, rota) {
 }
 
 // Páginas que ocupam a tela inteira abaixo do cabeçalho (sem rodapé e sem margens)
-const TELA_CHEIA = new Set(["/mapa"]);
+const TELA_CHEIA = new Set(["/mapa", "/rota"]);
 
 export default function Layout({ rota, children }) {
   const { sessao, sair } = useApp();

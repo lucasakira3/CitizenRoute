@@ -32,7 +32,7 @@ public final class TradutorErroSql {
             "UK_CR_GESTOR_MATRICULA", "Esta matrícula já está cadastrada.",
             "UK_CR_REGIAO_NOME", "Já existe uma região com este nome.",
             "UK_CR_VIA_NOME_REGIAO", "Já existe uma via com este nome nesta região.",
-            "PK_CR_VIA_MONITORADA", "Esta via já está na sua lista de vias monitoradas.",
+            "UK_CR_ROTA_NOME", "Você já tem uma rota com este nome.",
             "PK_CR_OCORRENCIA_VIA", "A mesma via foi informada mais de uma vez na ocorrência.");
 
     /** Mensagens para exclusões bloqueadas porque ainda existem registros filhos. */

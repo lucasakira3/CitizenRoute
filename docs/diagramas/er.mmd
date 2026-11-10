@@ -8,8 +8,9 @@ erDiagram
     CR_CIDADAO ||--o{ CR_OCORRENCIA : "reporta"
     CR_OCORRENCIA ||--|{ CR_OCORRENCIA_VIA : "atinge"
     CR_VIA ||--o{ CR_OCORRENCIA_VIA : "é atingida em"
-    CR_CIDADAO ||--o{ CR_VIA_MONITORADA : "monitora"
-    CR_VIA ||--o{ CR_VIA_MONITORADA : "é monitorada em"
+    CR_CIDADAO ||--o{ CR_ROTA : "salva"
+    CR_ROTA ||--o{ CR_ROTA_VIA : "percorre"
+    CR_VIA ||--o{ CR_ROTA_VIA : "é percorrida em"
     CR_OCORRENCIA ||--o{ CR_ACAO : "recebe"
     CR_GESTOR ||--o{ CR_ACAO : "registra"
 
@@ -55,11 +56,24 @@ erDiagram
         NUMBER(10) id_via PK, FK
         VARCHAR2(15) nivel_impacto "CHECK 4 níveis"
     }
-    CR_VIA_MONITORADA {
-        NUMBER(10) id_cidadao PK, FK "ON DELETE CASCADE"
+    CR_ROTA {
+        NUMBER(10) id_rota PK "IDENTITY"
+        NUMBER(10) id_cidadao FK "ON DELETE CASCADE"
+        VARCHAR2(60) nome "NOT NULL, UK com id_cidadao"
+        VARCHAR2(120) origem_descricao "NOT NULL"
+        NUMBER origem_x "(8,2) NOT NULL, plano do mapa"
+        NUMBER origem_y "(8,2) NOT NULL"
+        VARCHAR2(120) destino_descricao "NOT NULL"
+        NUMBER destino_x "(8,2) NOT NULL"
+        NUMBER destino_y "(8,2) NOT NULL"
+        VARCHAR2(10) criterio "CHECK RAPIDA ou SEGURA"
+        NUMBER(7) distancia_m "CHECK maior que 0"
+        DATE dt_criacao "NOT NULL"
+    }
+    CR_ROTA_VIA {
+        NUMBER(10) id_rota PK, FK "ON DELETE CASCADE"
         NUMBER(10) id_via PK, FK "ON DELETE CASCADE"
-        VARCHAR2(60) apelido "NOT NULL"
-        DATE dt_inclusao "NOT NULL"
+        NUMBER(3) ordem "NOT NULL, CHECK maior ou igual a 1"
     }
     CR_ACAO {
         NUMBER(10) id_acao PK "IDENTITY"

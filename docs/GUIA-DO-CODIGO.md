@@ -6,9 +6,9 @@ Este guia é para o grupo estudar o projeto antes da entrega e da apresentação
 
 ## 1. O sistema em um minuto
 
-- **Cidadão** reporta uma ocorrência numa ou mais vias e salva as vias do seu trajeto.
+- **Cidadão** reporta uma ocorrência numa ou mais vias e planeja rotas: digita a saída e o destino, vê o risco de cada ocorrência no caminho e salva as rotas do dia a dia.
 - **Gestor** de um órgão público confirma ou descarta o relato, registra o que está sendo feito e marca como resolvido.
-- O sistema calcula o **risco** de cada ocorrência para cada **modal** (carro, moto, ônibus, app, a pé, bike). Quem monitora uma via recebe alerta quando o risco para o seu modal passa de 4.
+- O sistema calcula o **risco** de cada ocorrência para cada **modal** (carro, moto, ônibus, app, a pé, bike). Quem tem uma rota salva recebe alerta quando surge, numa via da rota, uma ocorrência cujo risco para o seu modal passa de 4.
 
 Tudo é CRUD em Java com JDBC no Oracle. O React só mostra e envia dados: as regras ficam no Java.
 
@@ -41,10 +41,11 @@ Exemplo: a Ana (moto) reporta um alagamento.
 | `Cidadao`, `Gestor` | Herdam de `Usuario`. O cidadão tem `modal`; o gestor tem `orgao` e `matricula`. |
 | `Regiao`, `Via` | Zona da cidade e logradouro. A via guarda o objeto `Regiao` (associação). |
 | `Ocorrencia` | Implementa `AvaliavelRisco`. O método `calcularRisco(Modal)` é a fórmula do projeto. |
-| `OcorrenciaVia`, `ViaMonitorada` | As duas associações N:N, cada uma com seu atributo extra (nível de impacto e apelido). |
+| `OcorrenciaVia` | Associação N:N entre ocorrência e via, com o nível de impacto. |
+| `Rota`, `PontoRota`, `CriterioRota` | Rota salva pelo cidadão: saída e destino (`PontoRota`, um `record` com o nome e a posição no mapa), o critério (mais rápida ou mais segura) e a lista ordenada de vias que ela percorre (a associação N:N `CR_ROTA_VIA`). |
 | `Acao` | Resposta do gestor. `statusNovo` é nulo quando é só um andamento. |
-| `Alerta` | Não é tabela: é o resultado do cruzamento entre ocorrências ativas e vias monitoradas. |
-| Enums | `Modal`, `Orgao`, `TipoOcorrencia`, `StatusOcorrencia`, `NivelImpacto`, `NivelRisco`, `TipoUsuario`. |
+| `Alerta` | Não é tabela: é o resultado do cruzamento entre uma ocorrência ativa e um caminho (as rotas salvas ou uma rota recém-calculada). |
+| Enums | `Modal` (também guarda a velocidade média e se é motorizado, usados no cálculo da rota), `Orgao`, `TipoOcorrencia`, `StatusOcorrencia`, `NivelImpacto`, `NivelRisco`, `TipoUsuario`, `CriterioRota`. |
 | `relatorio/*` | `record`s com uma linha de cada relatório. |
 
 **A matriz de risco** fica em `TipoOcorrencia`: cada tipo tem um peso e um fator para cada modal. Está escrita como uma tabela no código para ser fácil de ler e defender na apresentação.
@@ -67,9 +68,10 @@ Exemplo: a Ana (moto) reporta um alagamento.
 | `RiscoService` | Arredonda o risco, classifica em baixo, moderado, alto ou crítico e decide quando alertar (≥ 4). |
 | `OcorrenciaService` | Transições de status, quem pode editar e excluir, validação das vias. |
 | `AcaoService` | Andamentos: só em ocorrência ativa; só o gestor autor corrige; ação que mudou status não pode ser apagada. |
-| `AlertaService` | Cruza as vias monitoradas com as ocorrências ativas e calcula o risco para o modal do cidadão. |
+| `AlertaService` | Cruza as ocorrências ativas com um caminho e calcula o risco para o modal: os alertas das rotas salvas e a avaliação de uma rota antes de salvar. |
+| `RotaService` | CRUD das rotas: valida nome, saída, destino, distância e as vias do caminho; cada cidadão só altera as próprias rotas (máximo de 10). |
 | `RelatorioService` | Repassa os relatórios e completa a exposição por modal com o risco médio. |
-| `CidadaoService`, `GestorService`, `RegiaoService`, `ViaService`, `ViaMonitoradaService` | CRUD com validação, e-mail e matrícula únicos e permissões. |
+| `CidadaoService`, `GestorService`, `RegiaoService`, `ViaService` | CRUD com validação, e-mail e matrícula únicos e permissões. |
 
 ### `api`: a camada de interface
 
@@ -95,7 +97,7 @@ Cria os objetos na ordem DAO, depois Service, depois Controller, passando cada u
 
 - **Prefixo `CR_`**: o usuário Oracle da FIAP é usado em várias disciplinas. O prefixo evita apagar ou colidir com uma tabela `USUARIO` de outro trabalho.
 - **Herança no banco** (tabela por subclasse): `CR_USUARIO` guarda o comum; `CR_CIDADAO` e `CR_GESTOR` usam o mesmo id como PK e FK.
-- **`ON DELETE CASCADE`** só onde faz sentido apagar junto: as vias e ações de uma ocorrência excluída, os trajetos de um cidadão excluído. Não há cascade de cidadão para ocorrência: o histórico não pode sumir, então o Oracle bloqueia e o sistema explica.
+- **`ON DELETE CASCADE`** só onde faz sentido apagar junto: as vias e ações de uma ocorrência excluída, as rotas de um cidadão excluído e as vias de uma rota excluída. Não há cascade de cidadão para ocorrência: o histórico não pode sumir, então o Oracle bloqueia e o sistema explica.
 - **`DATE`** guarda data e hora no Oracle. `DATE - DATE` dá dias; vezes 1440 dá minutos. É assim que o relatório calcula o tempo de resposta.
 - **Dados de demonstração** com datas relativas (`SYSDATE - 3/24` é três horas atrás), para a demo parecer sempre atual.
 
@@ -113,18 +115,21 @@ Cria os objetos na ordem DAO, depois Service, depois Controller, passando cada u
 | `components/Layout.jsx` | Menu igual em todas as páginas e a faixa que avisa quando a API ou o banco caem. |
 | `components/PlacaVia.jsx` | Mostra a via como uma placa de rua azul de São Paulo. |
 | `components/SinalRisco.jsx` | Mostra o risco como uma placa de advertência (losango) colorida pela faixa. |
-| `components/MapaCidade.jsx` | O mapa. Carrega os dados da cidade, desenha o chão num `<canvas>` e põe por cima as placas 3D das ocorrências (HTML + CSS 3D), cada uma na via atingida, na cor do risco. Destaca as vias atingidas e o trajeto do cidadão. Tem dois modos: `tela` (página Mapa, câmera livre) e `previa` (Painel, câmera parada). |
+| `components/MapaCidade.jsx` | O mapa. Carrega os dados da cidade, desenha o chão num `<canvas>` e põe por cima as placas 3D das ocorrências (HTML + CSS 3D), cada uma na via atingida, na cor do risco. Destaca as vias atingidas e, na página de rotas, desenha a rota calculada e os marcadores A e B. Tem dois modos: `tela` (câmera livre) e `previa` (Painel, câmera parada). |
 | `utils/mapaCidade.js` | Carrega `public/mapa/sao-paulo.json`, decodifica as linhas e monta o índice de ruas por nome. É por esse índice que uma via do banco ("Avenida Paulista") acha o seu traçado; a comparação ignora acentos, títulos ("Doutor", "Professor") e o que vem entre parênteses ("Marginal Tietê (Expressa)"). |
 | `utils/desenhoMapa.js` | Desenha o mapa a cada quadro, como um app de mapa: chão, verde, água, trilhos, ruas (da menor para a maior), vias com ocorrência, prédios em 3D e os nomes, escolhidos para não se sobreporem. |
 | `utils/projecao.js` | As contas da perspectiva (`projetar` e `desprojetar`), usadas pela câmera e pelo desenho. |
-| `scripts/gerar-mapa.mjs` | Script que baixa os dados do OpenStreetMap (Overpass API), projeta as coordenadas, emenda os trechos de cada rua, simplifica as linhas e grava o arquivo do mapa. Só roda quando alguém quer atualizar o mapa; o site não depende dele. |
+| `scripts/gerar-mapa.mjs` | Script que baixa os dados do OpenStreetMap (Overpass API), projeta as coordenadas, emenda os trechos de cada rua, simplifica as linhas e grava o arquivo do mapa e a rede de ruas para as rotas. Só roda quando alguém quer atualizar o mapa; o site não depende dele. |
+| `utils/rotas.js` | O cálculo de rotas: carrega a rede (`public/mapa/sao-paulo-rotas.json`), acha o cruzamento mais próximo de um ponto, roda o A\*, descobre quais vias do banco a rota percorre, monta as penalidades da rota mais segura e faz a busca de ruas e bairros. |
+| `pages/PlanejarRotaPage.jsx` | Página Planejar rota: saída e destino (`components/CampoLugar.jsx`, com sugestões e marcação no mapa), modal, as opções mais rápida e mais segura lado a lado, as ocorrências no caminho e o formulário para salvar. |
+| `pages/MinhasRotasPage.jsx` | Alertas das rotas salvas, lista das rotas (abrir no mapa, renomear, excluir) e os dados do cidadão. |
 | `hooks/useCameraMapa.js` | A câmera do mapa: arrastar, roda e pinça para zoom, botão direito ou dois dedos para girar, teclado, voos animados com `requestAnimationFrame` e enquadramento automático. A cada quadro escreve a câmera em variáveis CSS (para as placas) e redesenha o canvas, sem re-renderizar o React. |
-| `pages/MapaPage.jsx` | Página Mapa em tela cheia: painel com o seletor de modal, a lista de ocorrências (clicar voa até a placa) e o detalhe da ocorrência escolhida. No celular o painel vira uma gaveta. |
+| `pages/MapaPage.jsx` | Página Mapa de riscos em tela cheia (visão da gestão pública): painel com o seletor de modal, a lista de ocorrências (clicar voa até a placa) e o detalhe da ocorrência escolhida. No celular o painel vira uma gaveta. |
 | `components/Icone.jsx` | Ícones próprios em SVG para os 7 tipos de ocorrência e os 6 modais. |
 | `components/Esqueleto.jsx` | Formas cinzentas que aparecem enquanto os dados carregam. |
 | `hooks/useContagem.js` | Faz os números do painel "contarem" até o valor, com `requestAnimationFrame`. |
 | `hooks/useReordenacao.js` | Quando o modal muda e a lista reordena, cada item desliza da posição antiga para a nova (técnica FLIP, com a Web Animations API). |
-| `styles/movimento.css` e `styles/mapa.css` | Animações de entrada, troca de página (View Transitions API), esqueletos e o visual do mapa (placas 3D com espessura, poste e sombra, painel lateral e controles). |
+| `styles/movimento.css`, `styles/mapa.css` e `styles/rota.css` | Animações de entrada, troca de página (View Transitions API), esqueletos, o visual do mapa (placas 3D com espessura, poste e sombra, painel lateral e controles) e o painel de rotas. |
 
 ### Como o mapa funciona (sem biblioteca)
 
@@ -136,6 +141,15 @@ Cria os objetos na ordem DAO, depois Service, depois Controller, passando cada u
 6. **Os prédios** (altura real do OpenStreetMap) são desenhados de perto com o algoritmo do pintor: primeiro os mais distantes, cada parede com um tom conforme o lado em que bate o sol.
 7. **As placas** ficam de pé "desfazendo" a câmera: `rotateZ(-giro) rotateX(-inclinação)`. É a técnica de *billboard*. A espessura vem de três camadas (frente colorida, miolo escuro e verso cinza) separadas no eixo Z.
 8. **Arrastar e dar zoom no ponto certo** exige a conta inversa da perspectiva (`desprojetar`): descobrir qual ponto do chão está embaixo do cursor.
+
+### Como a rota é calculada (sem biblioteca e sem internet)
+
+1. **A rede de ruas** é um grafo gerado pelo `scripts/gerar-mapa.mjs`. No OpenStreetMap, duas vias se cruzam quando usam o mesmo nó (o mesmo id). Cada nó usado por mais de uma via vira um cruzamento; o pedaço de via entre dois cruzamentos vira uma aresta com comprimento, classe (expressa, arterial, principal...), nome e sentido. Entram só as vias principais (cerca de 29 mil cruzamentos, pouco mais de 1 MB): com as ruas de bairro o arquivo passaria de 10 MB.
+2. **Saída e destino:** a busca procura nos nomes de ruas e bairros do próprio mapa. O ponto escolhido é ligado ao cruzamento mais próximo (essa ligação aparece tracejada).
+3. **O A\*** é o Dijkstra com uma estimativa: além do custo até agora, ele soma a distância em linha reta até o destino dividida pela maior velocidade possível. Como essa estimativa nunca passa do custo real, o caminho achado é o melhor, e o algoritmo olha muito menos cruzamentos. A fila de prioridade é um heap binário escrito à mão (`class Fila`).
+4. **O custo** de cada aresta é o tempo: comprimento dividido pela velocidade da classe da via (veículos) ou do modal (pedestre e bicicleta). Veículos não andam na contramão; pedestre e bicicleta não entram em via expressa.
+5. **A rota mais segura** multiplica o custo das vias com ocorrência ativa de risco moderado (6×), alto (25×) ou crítico (80×) para o modal. O caminho só passa por elas quando não há alternativa razoável.
+6. **O risco** é sempre calculado no Java: o front descobre quais vias do banco a rota percorre (pelo mesmo casamento de nomes do mapa) e chama `POST /api/rotas/avaliar`.
 
 ---
 
@@ -165,6 +179,12 @@ Os dados são do OpenStreetMap (licença ODbL, com crédito no canto do mapa). E
 **Por que não usaram Leaflet, Mapbox ou Three.js?**
 Seriam tecnologia fora do conteúdo, e a regra da entrega zera o requisito nesse caso. O chão é desenhado com a API Canvas 2D e as placas com transformações CSS, que são recursos nativos do navegador.
 
+**Por que a rota é calculada no navegador e não no Java?**
+A rede de ruas já está no front (sai do mesmo script do mapa) e o cálculo leva poucos milissegundos. O Java continua dono das regras: ele recebe as vias do caminho, calcula o risco para o modal e grava a rota com validação. Num produto real, o cálculo do caminho poderia ir para um serviço próprio.
+
+**Por que não usaram Google Maps ou um serviço de rotas?**
+Seria um serviço externo e uma tecnologia fora do conteúdo. Além disso, a solução precisa continuar útil fora do cenário ideal de conectividade: aqui a rota sai mesmo sem internet. O preço é não ter número de casa: o cidadão escolhe a rua, a avenida ou o bairro, ou marca o ponto no mapa.
+
 **Como garantem que o diagrama de classes bate com o código?**
 Ele foi gerado a partir das classes compiladas (`javap`). As fontes Mermaid estão em `docs/diagramas`.
 
@@ -175,13 +195,14 @@ Ele foi gerado a partir das classes compiladas (`javap`). As fontes Mermaid est�
 Antes de gravar, rode `sql/script.sql` de novo para os horários ficarem recentes.
 
 1. **Painel com "Moto" selecionado:** mostrar quantas ocorrências ativas pedem atenção. Trocar para "Carro": as placas do mapa mudam de cor e se levantam de novo, a lista se reordena e o número cai. Clicar em "Abrir o mapa 3D".
-2. **Mapa em tela cheia:** girar e inclinar a cidade, clicar numa placa (a câmera voa até ela e o painel mostra o detalhe) e clicar numa zona para filtrar.
-3. **Entrar como Ana (moto):** em Meu trajeto, o alerta alto da Radial Leste. Abrir a ocorrência e mostrar o risco para cada modal.
-4. **Entrar como Bruno (carro):** a mesma Radial Leste aparece como risco baixo.
-5. **Como Ana, reportar uma ocorrência nova** com duas vias e mostrar a validação (enviar com erro primeiro).
-6. **Entrar como Henrique (Defesa Civil):** a ocorrência nova está na fila. Confirmar com uma descrição. Abrir o detalhe e mostrar a linha do tempo.
-7. **No SQL Developer:** `SELECT` em `CR_OCORRENCIA` e `CR_ACAO` mostrando que os dados novos estão no Oracle.
-8. **Relatórios:** vias críticas e tempo de resposta por órgão.
+2. **Entrar como Ana (moto) e planejar uma rota:** do Tatuapé até a Sé. A rota mais rápida passa pelo alagamento da Radial Leste (risco alto para moto, trecho pintado de laranja); a rota mais segura desvia. Trocar o modal para Carro: o risco cai.
+3. **Minhas rotas:** o alerta alto da Radial Leste na rota "Casa para o trabalho". Abrir a ocorrência e mostrar o risco para cada modal.
+4. **Entrar como Bruno (carro):** a rota dele passa pela mesma Radial Leste, com risco baixo.
+5. **Mapa de riscos (visão da gestão):** girar e inclinar a cidade, clicar numa placa (a câmera voa até ela e o painel mostra o detalhe) e clicar numa zona para filtrar.
+6. **Como Ana, reportar uma ocorrência nova** com duas vias e mostrar a validação (enviar com erro primeiro).
+7. **Entrar como Henrique (Defesa Civil):** a ocorrência nova está na fila. Confirmar com uma descrição. Abrir o detalhe e mostrar a linha do tempo.
+8. **No SQL Developer:** `SELECT` em `CR_OCORRENCIA`, `CR_ACAO` e `CR_ROTA` mostrando que os dados novos estão no Oracle.
+9. **Relatórios:** vias críticas e tempo de resposta por órgão.
 
 Para o dado real da abertura do pitch, consulte fontes oficiais, como o Infosiga SP (acidentes de trânsito) e o CGE da Prefeitura de São Paulo (alagamentos), e cite a fonte no vídeo.
 

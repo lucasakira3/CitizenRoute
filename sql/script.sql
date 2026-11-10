@@ -17,7 +17,7 @@
 BEGIN
     FOR tabela IN (SELECT table_name
                      FROM user_tables
-                    WHERE table_name IN ('CR_ACAO', 'CR_VIA_MONITORADA', 'CR_OCORRENCIA_VIA',
+                    WHERE table_name IN ('CR_ACAO', 'CR_ROTA_VIA', 'CR_ROTA', 'CR_OCORRENCIA_VIA',
                                          'CR_OCORRENCIA', 'CR_GESTOR', 'CR_CIDADAO',
                                          'CR_USUARIO', 'CR_VIA', 'CR_REGIAO'))
     LOOP
@@ -116,17 +116,40 @@ CREATE TABLE cr_ocorrencia_via (
     CONSTRAINT ck_cr_ocvia_impacto CHECK (nivel_impacto IN ('BLOQUEIO_TOTAL', 'PARCIAL', 'LENTIDAO', 'SEM_INTERDICAO'))
 );
 
--- Associativa N:N entre cidadão e via (trajetos salvos)
-CREATE TABLE cr_via_monitorada (
-    id_cidadao   NUMBER(10)   NOT NULL,
-    id_via       NUMBER(10)   NOT NULL,
-    apelido      VARCHAR2(60) NOT NULL,
-    dt_inclusao  DATE         DEFAULT SYSDATE NOT NULL,
-    CONSTRAINT pk_cr_via_monitorada PRIMARY KEY (id_cidadao, id_via),
-    CONSTRAINT fk_cr_viamon_cidadao FOREIGN KEY (id_cidadao)
+-- Rota salva pelo cidadão: saída → destino (1:N cidadão → rotas).
+-- X e Y são a posição no plano do mapa (unidades de 25 m), usada para redesenhar o caminho.
+CREATE TABLE cr_rota (
+    id_rota            NUMBER(10)    GENERATED ALWAYS AS IDENTITY,
+    id_cidadao         NUMBER(10)    NOT NULL,
+    nome               VARCHAR2(60)  NOT NULL,
+    origem_descricao   VARCHAR2(120) NOT NULL,
+    origem_x           NUMBER(8,2)   NOT NULL,
+    origem_y           NUMBER(8,2)   NOT NULL,
+    destino_descricao  VARCHAR2(120) NOT NULL,
+    destino_x          NUMBER(8,2)   NOT NULL,
+    destino_y          NUMBER(8,2)   NOT NULL,
+    criterio           VARCHAR2(10)  DEFAULT 'SEGURA' NOT NULL,
+    distancia_m        NUMBER(7)     NOT NULL,
+    dt_criacao         DATE          DEFAULT SYSDATE NOT NULL,
+    CONSTRAINT pk_cr_rota PRIMARY KEY (id_rota),
+    CONSTRAINT fk_cr_rota_cidadao FOREIGN KEY (id_cidadao)
         REFERENCES cr_cidadao (id_usuario) ON DELETE CASCADE,
-    CONSTRAINT fk_cr_viamon_via FOREIGN KEY (id_via)
-        REFERENCES cr_via (id_via) ON DELETE CASCADE
+    CONSTRAINT uk_cr_rota_nome UNIQUE (id_cidadao, nome),
+    CONSTRAINT ck_cr_rota_criterio CHECK (criterio IN ('RAPIDA', 'SEGURA')),
+    CONSTRAINT ck_cr_rota_distancia CHECK (distancia_m > 0)
+);
+
+-- Associativa N:N entre rota e via: as vias cadastradas que a rota percorre, na ordem
+CREATE TABLE cr_rota_via (
+    id_rota  NUMBER(10) NOT NULL,
+    id_via   NUMBER(10) NOT NULL,
+    ordem    NUMBER(3)  NOT NULL,
+    CONSTRAINT pk_cr_rota_via PRIMARY KEY (id_rota, id_via),
+    CONSTRAINT fk_cr_rotavia_rota FOREIGN KEY (id_rota)
+        REFERENCES cr_rota (id_rota) ON DELETE CASCADE,
+    CONSTRAINT fk_cr_rotavia_via FOREIGN KEY (id_via)
+        REFERENCES cr_via (id_via) ON DELETE CASCADE,
+    CONSTRAINT ck_cr_rotavia_ordem CHECK (ordem >= 1)
 );
 
 -- Resposta do gestor (1:N ocorrência → ações; 1:N gestor → ações)
@@ -152,7 +175,8 @@ CREATE INDEX ix_cr_via_regiao        ON cr_via (id_regiao);
 CREATE INDEX ix_cr_ocorrencia_autor  ON cr_ocorrencia (id_cidadao_autor);
 CREATE INDEX ix_cr_ocorrencia_status ON cr_ocorrencia (status);
 CREATE INDEX ix_cr_ocvia_via         ON cr_ocorrencia_via (id_via);
-CREATE INDEX ix_cr_viamon_via        ON cr_via_monitorada (id_via);
+CREATE INDEX ix_cr_rota_cidadao      ON cr_rota (id_cidadao);
+CREATE INDEX ix_cr_rotavia_via       ON cr_rota_via (id_via);
 CREATE INDEX ix_cr_acao_ocorrencia   ON cr_acao (id_ocorrencia);
 CREATE INDEX ix_cr_acao_gestor       ON cr_acao (id_gestor);
 
@@ -167,9 +191,12 @@ COMMENT ON TABLE cr_cidadao IS 'Quem circula pela cidade; o modal muda o risco d
 COMMENT ON TABLE cr_gestor IS 'Servidor público que confirma ocorrências e registra ações';
 COMMENT ON TABLE cr_ocorrencia IS 'Evento reportado por um cidadão que afeta vias';
 COMMENT ON TABLE cr_ocorrencia_via IS 'Associativa N:N: vias atingidas por cada ocorrência';
-COMMENT ON TABLE cr_via_monitorada IS 'Associativa N:N: trajetos salvos pelos cidadãos';
+COMMENT ON TABLE cr_rota IS 'Rotas salvas pelos cidadãos (saída → destino)';
+COMMENT ON TABLE cr_rota_via IS 'Associativa N:N: vias cadastradas que cada rota percorre, na ordem';
 COMMENT ON TABLE cr_acao IS 'Histórico de respostas dos gestores';
 COMMENT ON COLUMN cr_usuario.senha_hash IS 'Hash PBKDF2 (pbkdf2$iteracoes$sal$hash). A senha nunca é gravada.';
+COMMENT ON COLUMN cr_rota.criterio IS 'RAPIDA: menor tempo; SEGURA: desvia das vias com risco moderado ou maior';
+COMMENT ON COLUMN cr_rota.origem_x IS 'Posição no plano do mapa (unidades de 25 m a partir do canto noroeste)';
 COMMENT ON COLUMN cr_ocorrencia.gravidade IS 'De 1 (leve) a 5 (muito grave)';
 COMMENT ON COLUMN cr_acao.status_novo IS 'Status resultante da ação; nulo quando é só um registro de andamento';
 
@@ -273,46 +300,112 @@ VALUES ('Larissa Costa', 'larissa.costa@exemplo.com',
 INSERT INTO cr_gestor (id_usuario, orgao, matricula)
 SELECT id_usuario, 'GCM', 'GCM-50318' FROM cr_usuario WHERE email = 'larissa.costa@exemplo.com';
 
--- 5.5 Vias monitoradas (trajetos salvos)
-INSERT INTO cr_via_monitorada (id_cidadao, id_via, apelido, dt_inclusao)
-SELECT u.id_usuario, v.id_via, 'Volta para casa', SYSDATE - 30
-  FROM cr_usuario u, cr_via v WHERE u.email = 'ana.souza@exemplo.com' AND v.nome = 'Radial Leste';
-INSERT INTO cr_via_monitorada (id_cidadao, id_via, apelido, dt_inclusao)
-SELECT u.id_usuario, v.id_via, 'Rota das entregas', SYSDATE - 30
-  FROM cr_usuario u, cr_via v WHERE u.email = 'ana.souza@exemplo.com' AND v.nome = 'Avenida Aricanduva';
-INSERT INTO cr_via_monitorada (id_cidadao, id_via, apelido, dt_inclusao)
-SELECT u.id_usuario, v.id_via, 'Entregas no centro', SYSDATE - 20
-  FROM cr_usuario u, cr_via v WHERE u.email = 'ana.souza@exemplo.com' AND v.nome = 'Avenida Paulista';
-INSERT INTO cr_via_monitorada (id_cidadao, id_via, apelido, dt_inclusao)
-SELECT u.id_usuario, v.id_via, 'Caminho do trabalho', SYSDATE - 28
-  FROM cr_usuario u, cr_via v WHERE u.email = 'bruno.lima@exemplo.com' AND v.nome = 'Radial Leste';
-INSERT INTO cr_via_monitorada (id_cidadao, id_via, apelido, dt_inclusao)
-SELECT u.id_usuario, v.id_via, 'Visita aos meus pais', SYSDATE - 28
-  FROM cr_usuario u, cr_via v WHERE u.email = 'bruno.lima@exemplo.com' AND v.nome = 'Marginal Tietê';
-INSERT INTO cr_via_monitorada (id_cidadao, id_via, apelido, dt_inclusao)
-SELECT u.id_usuario, v.id_via, 'Ônibus para a faculdade', SYSDATE - 25
-  FROM cr_usuario u, cr_via v WHERE u.email = 'carla.mendes@exemplo.com' AND v.nome = 'Avenida Sapopemba';
-INSERT INTO cr_via_monitorada (id_cidadao, id_via, apelido, dt_inclusao)
-SELECT u.id_usuario, v.id_via, 'Estágio', SYSDATE - 25
-  FROM cr_usuario u, cr_via v WHERE u.email = 'carla.mendes@exemplo.com' AND v.nome = 'Avenida Paulista';
-INSERT INTO cr_via_monitorada (id_cidadao, id_via, apelido, dt_inclusao)
-SELECT u.id_usuario, v.id_via, 'Corridas da manhã', SYSDATE - 22
-  FROM cr_usuario u, cr_via v WHERE u.email = 'diego.santos@exemplo.com' AND v.nome = 'Marginal Pinheiros';
-INSERT INTO cr_via_monitorada (id_cidadao, id_via, apelido, dt_inclusao)
-SELECT u.id_usuario, v.id_via, 'Corridas no horário comercial', SYSDATE - 22
-  FROM cr_usuario u, cr_via v WHERE u.email = 'diego.santos@exemplo.com' AND v.nome = 'Avenida Brigadeiro Faria Lima';
-INSERT INTO cr_via_monitorada (id_cidadao, id_via, apelido, dt_inclusao)
-SELECT u.id_usuario, v.id_via, 'A pé até o metrô', SYSDATE - 18
-  FROM cr_usuario u, cr_via v WHERE u.email = 'elisa.ferreira@exemplo.com' AND v.nome = 'Rua da Consolação';
-INSERT INTO cr_via_monitorada (id_cidadao, id_via, apelido, dt_inclusao)
-SELECT u.id_usuario, v.id_via, 'Trabalho', SYSDATE - 18
-  FROM cr_usuario u, cr_via v WHERE u.email = 'elisa.ferreira@exemplo.com' AND v.nome = 'Avenida Paulista';
-INSERT INTO cr_via_monitorada (id_cidadao, id_via, apelido, dt_inclusao)
-SELECT u.id_usuario, v.id_via, 'Ciclovia até o trabalho', SYSDATE - 15
-  FROM cr_usuario u, cr_via v WHERE u.email = 'felipe.rocha@exemplo.com' AND v.nome = 'Avenida Rebouças';
-INSERT INTO cr_via_monitorada (id_cidadao, id_via, apelido, dt_inclusao)
-SELECT u.id_usuario, v.id_via, 'Ciclovia da Faria Lima', SYSDATE - 15
-  FROM cr_usuario u, cr_via v WHERE u.email = 'felipe.rocha@exemplo.com' AND v.nome = 'Avenida Brigadeiro Faria Lima';
+-- 5.5 Rotas salvas (saída → destino) e as vias cadastradas que cada uma percorre.
+-- X e Y são a posição no plano do mapa; as vias e a distância foram calculadas pela
+-- própria tela de rotas, sobre o mapa do OpenStreetMap.
+INSERT INTO cr_rota (id_cidadao, nome, origem_descricao, origem_x, origem_y, destino_descricao, destino_x, destino_y,
+                     criterio, distancia_m, dt_criacao)
+SELECT id_usuario, 'Casa para o trabalho', 'Tatuapé', 1278.42, 1065.76,
+       'Praça da Sé', 1044.35, 1109.19, 'RAPIDA', 7787, SYSDATE - 30
+  FROM cr_usuario WHERE email = 'ana.souza@exemplo.com';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 1
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'ana.souza@exemplo.com' AND r.nome = 'Casa para o trabalho' AND v.nome = 'Radial Leste';
+
+INSERT INTO cr_rota (id_cidadao, nome, origem_descricao, origem_x, origem_y, destino_descricao, destino_x, destino_y,
+                     criterio, distancia_m, dt_criacao)
+SELECT id_usuario, 'Entregas na Paulista', 'Tatuapé', 1278.42, 1065.76,
+       'Avenida Paulista', 954.63, 1158.38, 'RAPIDA', 11403, SYSDATE - 20
+  FROM cr_usuario WHERE email = 'ana.souza@exemplo.com';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 1
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'ana.souza@exemplo.com' AND r.nome = 'Entregas na Paulista' AND v.nome = 'Radial Leste';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 2
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'ana.souza@exemplo.com' AND r.nome = 'Entregas na Paulista' AND v.nome = 'Avenida 23 de Maio';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 3
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'ana.souza@exemplo.com' AND r.nome = 'Entregas na Paulista' AND v.nome = 'Avenida Paulista';
+
+INSERT INTO cr_rota (id_cidadao, nome, origem_descricao, origem_x, origem_y, destino_descricao, destino_x, destino_y,
+                     criterio, distancia_m, dt_criacao)
+SELECT id_usuario, 'Caminho do trabalho', 'Penha', 1415.84, 1008.15,
+       'República', 1011.32, 1081.27, 'RAPIDA', 15648, SYSDATE - 28
+  FROM cr_usuario WHERE email = 'bruno.lima@exemplo.com';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 1
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'bruno.lima@exemplo.com' AND r.nome = 'Caminho do trabalho' AND v.nome = 'Radial Leste';
+
+INSERT INTO cr_rota (id_cidadao, nome, origem_descricao, origem_x, origem_y, destino_descricao, destino_x, destino_y,
+                     criterio, distancia_m, dt_criacao)
+SELECT id_usuario, 'Visita aos meus pais', 'Penha', 1415.84, 1008.15,
+       'Santana', 1079.42, 897.37, 'RAPIDA', 15883, SYSDATE - 28
+  FROM cr_usuario WHERE email = 'bruno.lima@exemplo.com';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 1
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'bruno.lima@exemplo.com' AND r.nome = 'Visita aos meus pais' AND v.nome = 'Radial Leste';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 2
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'bruno.lima@exemplo.com' AND r.nome = 'Visita aos meus pais' AND v.nome = 'Marginal Tietê';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 3
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'bruno.lima@exemplo.com' AND r.nome = 'Visita aos meus pais' AND v.nome = 'Avenida Cruzeiro do Sul';
+
+INSERT INTO cr_rota (id_cidadao, nome, origem_descricao, origem_x, origem_y, destino_descricao, destino_x, destino_y,
+                     criterio, distancia_m, dt_criacao)
+SELECT id_usuario, 'Ônibus para a faculdade', 'Sapopemba', 1537.36, 1356.02,
+       'Avenida Paulista', 954.63, 1158.38, 'RAPIDA', 17803, SYSDATE - 25
+  FROM cr_usuario WHERE email = 'carla.mendes@exemplo.com';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 1
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'carla.mendes@exemplo.com' AND r.nome = 'Ônibus para a faculdade' AND v.nome = 'Avenida Paulista';
+
+INSERT INTO cr_rota (id_cidadao, nome, origem_descricao, origem_x, origem_y, destino_descricao, destino_x, destino_y,
+                     criterio, distancia_m, dt_criacao)
+SELECT id_usuario, 'Corridas da manhã', 'Pinheiros', 803.34, 1183.19,
+       'Brooklin', 795.19, 1387.04, 'RAPIDA', 8537, SYSDATE - 22
+  FROM cr_usuario WHERE email = 'diego.santos@exemplo.com';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 1
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'diego.santos@exemplo.com' AND r.nome = 'Corridas da manhã' AND v.nome = 'Avenida Brigadeiro Faria Lima';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 2
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'diego.santos@exemplo.com' AND r.nome = 'Corridas da manhã' AND v.nome = 'Marginal Pinheiros';
+
+INSERT INTO cr_rota (id_cidadao, nome, origem_descricao, origem_x, origem_y, destino_descricao, destino_x, destino_y,
+                     criterio, distancia_m, dt_criacao)
+SELECT id_usuario, 'A pé até o metrô', 'Rua da Consolação', 986.85, 1094.57,
+       'Estação Consolação', 935.47, 1141.54, 'RAPIDA', 2071, SYSDATE - 18
+  FROM cr_usuario WHERE email = 'elisa.ferreira@exemplo.com';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 1
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'elisa.ferreira@exemplo.com' AND r.nome = 'A pé até o metrô' AND v.nome = 'Rua da Consolação';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 2
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'elisa.ferreira@exemplo.com' AND r.nome = 'A pé até o metrô' AND v.nome = 'Avenida Paulista';
+
+INSERT INTO cr_rota (id_cidadao, nome, origem_descricao, origem_x, origem_y, destino_descricao, destino_x, destino_y,
+                     criterio, distancia_m, dt_criacao)
+SELECT id_usuario, 'Ciclovia até o trabalho', 'Avenida Rebouças', 864.51, 1174.33,
+       'Avenida Brigadeiro Faria Lima', 846.98, 1270.94, 'RAPIDA', 3371, SYSDATE - 15
+  FROM cr_usuario WHERE email = 'felipe.rocha@exemplo.com';
+INSERT INTO cr_rota_via (id_rota, id_via, ordem)
+SELECT r.id_rota, v.id_via, 1
+  FROM cr_rota r JOIN cr_usuario u ON u.id_usuario = r.id_cidadao, cr_via v
+ WHERE u.email = 'felipe.rocha@exemplo.com' AND r.nome = 'Ciclovia até o trabalho' AND v.nome = 'Avenida Brigadeiro Faria Lima';
 
 -- 5.6 Ocorrências ativas (geram alertas)
 
@@ -637,7 +730,8 @@ UNION ALL SELECT 'CR_CIDADAO', COUNT(*) FROM cr_cidadao
 UNION ALL SELECT 'CR_GESTOR', COUNT(*) FROM cr_gestor
 UNION ALL SELECT 'CR_OCORRENCIA', COUNT(*) FROM cr_ocorrencia
 UNION ALL SELECT 'CR_OCORRENCIA_VIA', COUNT(*) FROM cr_ocorrencia_via
-UNION ALL SELECT 'CR_VIA_MONITORADA', COUNT(*) FROM cr_via_monitorada
+UNION ALL SELECT 'CR_ROTA', COUNT(*) FROM cr_rota
+UNION ALL SELECT 'CR_ROTA_VIA', COUNT(*) FROM cr_rota_via
 UNION ALL SELECT 'CR_ACAO', COUNT(*) FROM cr_acao;
 
 
@@ -686,16 +780,16 @@ SELECT p.orgao,
  GROUP BY p.orgao
  ORDER BY minutos_medios;
 
--- 7.4 Exposição por modal: cidadãos, vias monitoradas e ocorrências ativas nessas vias
+-- 7.4 Exposição por modal: cidadãos, rotas salvas e ocorrências ativas nas vias dessas rotas
 SELECT c.modal,
        COUNT(DISTINCT c.id_usuario) AS cidadaos,
-       COUNT(DISTINCT CASE WHEN vm.id_via IS NOT NULL
-                           THEN vm.id_cidadao || '-' || vm.id_via END) AS vias_monitoradas,
+       COUNT(DISTINCT ro.id_rota) AS rotas,
        COUNT(DISTINCT CASE WHEN o.status IN ('ABERTA', 'CONFIRMADA', 'EM_ATENDIMENTO')
                            THEN o.id_ocorrencia END) AS ocorrencias_ativas
   FROM cr_cidadao c
-  LEFT JOIN cr_via_monitorada vm ON vm.id_cidadao = c.id_usuario
-  LEFT JOIN cr_ocorrencia_via ov ON ov.id_via = vm.id_via
+  LEFT JOIN cr_rota ro ON ro.id_cidadao = c.id_usuario
+  LEFT JOIN cr_rota_via rv ON rv.id_rota = ro.id_rota
+  LEFT JOIN cr_ocorrencia_via ov ON ov.id_via = rv.id_via
   LEFT JOIN cr_ocorrencia o ON o.id_ocorrencia = ov.id_ocorrencia
  GROUP BY c.modal
  ORDER BY ocorrencias_ativas DESC;

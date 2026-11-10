@@ -123,13 +123,13 @@ export default function PainelPage() {
       <section className="secao papeis" aria-label="O que cada pessoa faz no CitizenRoute">
         <div className="papel">
           <h2 className="papel__titulo">Quem circula se protege</h2>
-          <p>Reporte o que viu, salve as vias do seu caminho e receba o risco calculado para o seu modal.</p>
+          <p>Reporte o que viu, planeje sua rota da saída ao destino e receba o risco calculado para o seu modal.</p>
           <div className="acoes">
             <a className="botao botao--primario" href="#/ocorrencias/nova">
               Reportar ocorrência
             </a>
-            <a className="botao botao--secundario" href="#/meu-trajeto">
-              Montar meu trajeto
+            <a className="botao botao--secundario" href="#/rota">
+              Planejar uma rota
             </a>
           </div>
         </div>

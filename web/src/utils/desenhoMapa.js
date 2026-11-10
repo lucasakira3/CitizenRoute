@@ -1,7 +1,7 @@
 // Desenha o mapa no canvas, quadro a quadro, com a câmera atual.
 //
 // Ordem das camadas (como num app de mapa): chão da cidade, verde, água,
-// aeroportos, trilhos, ruas (da menor para a maior), trajeto do cidadão, vias com
+// aeroportos, trilhos, ruas (da menor para a maior), vias com
 // ocorrência, prédios em 3D e, por cima de tudo, os nomes. Os nomes são escolhidos
 // a cada quadro e não podem se sobrepor: os mais importantes entram primeiro.
 //
@@ -21,7 +21,6 @@ const COR = {
   aeroporto: "#e2e3e8",
   pista: "#b7bcc3",
   trilho: "#aeb5bc",
-  trajeto: "#2d6fd0",
   texto: "#36414b",
   halo: "rgba(255, 255, 255, 0.94)",
   bairro: "#6f7b86",
@@ -128,8 +127,8 @@ function medir(ctx, fonte, texto) {
 /**
  * @param ctx contexto 2D do canvas (já do tamanho da tela × densidade de pixels)
  * @param estado { dados, camera, largura, altura, ox, oy, dpr, destaque, memoria }
- *   destaque: { afetadas: [{ indices, nivel, impacto, forte, fraca }], trajeto: [indices],
- *               zonaSelecionada, riscoZona: { CHAVE: nivel } }
+ *   destaque: { afetadas: [{ indices, nivel, impacto, forte, fraca }], 
+ *               zonaSelecionada, riscoZona: { CHAVE: nivel }, rota, marcadores: [{ x, y, texto, cor }] }
  *   memoria: objeto guardado entre quadros (nomes escritos no quadro anterior)
  */
 export function desenharMapa(ctx, estado) {
@@ -283,7 +282,7 @@ export function desenharMapa(ctx, estado) {
     });
   });
 
-  // 7. Trajeto do cidadão e vias com ocorrência
+  // 7. Vias com ocorrência
   const desenharDestaque = (indices, cor, { brilho, nucleo, tracejado, alfa = 1 }) => {
     const caminho = new Path2D();
     let k = 1;
@@ -306,9 +305,6 @@ export function desenharMapa(ctx, estado) {
     ctx.globalAlpha = 1;
   };
   const larguraDestaque = Math.max(3.2, larguraVia(2, zoom) * 0.75);
-  if (destaque.trajeto?.length) {
-    desenharDestaque(destaque.trajeto, COR.trajeto, { brilho: larguraDestaque + 9, nucleo: larguraDestaque });
-  }
   (destaque.afetadas ?? []).forEach((item) => {
     desenharDestaque(item.indices, COR_RISCO[item.nivel], {
       brilho: larguraDestaque + (item.forte ? 18 : 11),
@@ -317,6 +313,12 @@ export function desenharMapa(ctx, estado) {
       alfa: item.fraca ? 0.35 : 1,
     });
   });
+
+  // 7b. Rota calculada: linha azul com contorno, por cima das vias; os trechos com
+  //     ocorrência ganham a cor do risco por cima do azul
+  if (destaque.rota) {
+    desenharRota(ctx, destaque.rota, proj, Math.max(4.5, larguraVia(2, zoom) * 0.95));
+  }
 
   // 8. Zona escolhida: as outras ficam esmaecidas e a escolhida ganha contorno azul
   if (destaque.zonaSelecionada) {
@@ -350,6 +352,78 @@ export function desenharMapa(ctx, estado) {
 
   // 10. Nomes (desviando das placas das ocorrências, que ficam por cima do canvas)
   desenharNomes(ctx, dados, proj, area, { zoom, largura, altura, memoria, obstaculos: destaque.obstaculos ?? [] });
+
+  // 11. Marcadores de saída e destino, sempre por cima de tudo
+  (destaque.marcadores ?? []).forEach((marcador) => desenharMarcador(ctx, marcador, proj));
+}
+
+// -------------------------------------------------------------------- rota
+
+const COR_ROTA = { linha: "#1a66d6", contorno: "#0b3f8f", acesso: "#1a66d6" };
+
+/**
+ * rota: { pontos: Float32Array [x, y, ...], acessos: [[x1, y1, x2, y2]], trechos: [{ pontos, nivel }] }
+ * Os acessos (do ponto escolhido até a via principal) ficam tracejados.
+ */
+function desenharRota(ctx, rota, proj, largura) {
+  if (rota.acessos?.length) {
+    const caminho = new Path2D();
+    rota.acessos.forEach(([x1, y1, x2, y2]) => tracar(caminho, [x1, y1, x2, y2], proj));
+    ctx.strokeStyle = COR_ROTA.acesso;
+    ctx.lineWidth = Math.max(2.5, largura * 0.45);
+    ctx.setLineDash([2, largura * 0.9]);
+    ctx.stroke(caminho);
+    ctx.setLineDash([]);
+  }
+
+  const caminho = new Path2D();
+  tracar(caminho, rota.pontos, proj);
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+  ctx.lineWidth = largura + 6;
+  ctx.stroke(caminho);
+  ctx.strokeStyle = COR_ROTA.contorno;
+  ctx.lineWidth = largura + 2.5;
+  ctx.stroke(caminho);
+  ctx.strokeStyle = COR_ROTA.linha;
+  ctx.lineWidth = largura;
+  ctx.stroke(caminho);
+
+  (rota.trechos ?? []).forEach(({ pontos, nivel }) => {
+    const trecho = new Path2D();
+    tracar(trecho, pontos, proj);
+    ctx.strokeStyle = COR_RISCO[nivel];
+    ctx.lineWidth = largura;
+    ctx.stroke(trecho);
+  });
+}
+
+/** Alfinete redondo com uma letra (A = saída, B = destino), em tamanho fixo na tela. */
+function desenharMarcador(ctx, { x, y, texto, cor }, proj) {
+  const p = proj.projetar(x, y);
+  if (!p.ok) return;
+  const raio = 13;
+  const topo = p.y - raio * 2.1;
+  ctx.save();
+  ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
+  ctx.beginPath();
+  ctx.ellipse(p.x, p.y + 1, 6, 2.6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y);
+  ctx.lineTo(p.x - raio * 0.62, topo + raio * 0.75);
+  ctx.arc(p.x, topo, raio, Math.PI * 0.82, Math.PI * 0.18);
+  ctx.closePath();
+  ctx.fillStyle = cor;
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 2.5;
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "800 13px Overpass, 'Public Sans', sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(texto, p.x, topo + 1);
+  ctx.restore();
 }
 
 // ------------------------------------------------------------------ prédios

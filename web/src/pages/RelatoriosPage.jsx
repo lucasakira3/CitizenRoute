@@ -217,7 +217,7 @@ function ExposicaoModal() {
     <Relatorio
       id="rel-modal"
       titulo="Quem está mais exposto agora"
-      descricao="Risco médio das ocorrências ativas para cada modal, com quantos cidadãos e vias monitoradas cada um tem."
+      descricao="Risco médio das ocorrências ativas para cada modal, com quantos cidadãos e rotas salvas cada um tem."
       estado={estado}
     >
       {(linhas) => (
@@ -231,7 +231,7 @@ function ExposicaoModal() {
               <span className="exposicao__modal">{rotulo("modais", linha.modal)}</span>
               <span className="exposicao__detalhe">
                 {plural(linha.cidadaos, "cidadão", "cidadãos")} ·{" "}
-                {plural(linha.viasMonitoradas, "via monitorada", "vias monitoradas")} ·{" "}
+                {plural(linha.rotas, "rota salva", "rotas salvas")} ·{" "}
                 {plural(linha.ocorrenciasAtivasNasVias, "ocorrência ativa nelas", "ocorrências ativas nelas")}
               </span>
             </li>

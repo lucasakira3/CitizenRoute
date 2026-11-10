@@ -41,7 +41,7 @@ public class RelatorioController {
         mapa.put("resolvidasUltimos30Dias", resumo.resolvidasUltimos30Dias());
         mapa.put("tempoMedioRespostaMinutos", resumo.tempoMedioRespostaMinutos());
         mapa.put("cidadaos", resumo.cidadaos());
-        mapa.put("viasMonitoradas", resumo.viasMonitoradas());
+        mapa.put("rotasSalvas", resumo.rotasSalvas());
         return Resposta.ok(mapa);
     }
 
@@ -95,7 +95,7 @@ public class RelatorioController {
         Map<String, Object> mapa = new LinkedHashMap<>();
         mapa.put("modal", linha.modal());
         mapa.put("cidadaos", linha.cidadaos());
-        mapa.put("viasMonitoradas", linha.viasMonitoradas());
+        mapa.put("rotas", linha.rotas());
         mapa.put("ocorrenciasAtivasNasVias", linha.ocorrenciasAtivasNasVias());
         mapa.put("riscoMedioAtual", linha.riscoMedioAtual());
         return mapa;

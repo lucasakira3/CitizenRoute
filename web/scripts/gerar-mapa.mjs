@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const SAIDA = join(AQUI, "..", "public", "mapa", "sao-paulo.json");
+const SAIDA_ROTAS = join(AQUI, "..", "public", "mapa", "sao-paulo-rotas.json");
 const CACHE = process.env.CACHE_MAPA ?? join(tmpdir(), "citizenroute-osm");
 // Servidores públicos da Overpass API: se o primeiro estiver ocupado, tenta o segundo
 const SERVIDORES = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
@@ -452,6 +453,9 @@ async function gerar() {
       }
     });
   });
+  // Rede de ruas para calcular rotas (arquivo à parte, carregado só na página de rotas).
+  // Precisa ser gerada junto com o mapa: as arestas usam os mesmos índices de "nomes".
+  const rede = gerarRede([...osm.ruas.elements, ...osm.entorno.elements], nomeId);
   saida.nomes = nomes;
 
   // Água: rios largos, lagos e represas viram áreas; rios estreitos, linhas
@@ -535,12 +539,162 @@ async function gerar() {
   const texto = JSON.stringify(saida);
   writeFileSync(SAIDA, texto);
   console.log(`gravado ${SAIDA}: ${(texto.length / 1024 / 1024).toFixed(2)} MB`);
+  const textoRede = JSON.stringify(rede);
+  writeFileSync(SAIDA_ROTAS, textoRede);
+  console.log(
+    `gravado ${SAIDA_ROTAS}: ${(textoRede.length / 1024 / 1024).toFixed(2)} MB, ` +
+      `${rede.nos.length / 2} cruzamentos e ${rede.arestas.length} trechos`,
+  );
   console.log(
     Object.entries(saida)
       .filter(([, valor]) => Array.isArray(valor))
       .map(([chave, valor]) => `${chave}=${valor.length}`)
       .join(" "),
   );
+}
+
+// ------------------------------------------------------------ rede de rotas
+
+/**
+ * Monta a rede (grafo) das vias principais para o cálculo de rotas no navegador.
+ *
+ * No OpenStreetMap, duas vias se cruzam quando compartilham um nó (o mesmo id). Cada nó usado
+ * por mais de uma via, ou que é ponta de uma via, vira um cruzamento; o pedaço de via entre
+ * dois cruzamentos vira um trecho (aresta), com comprimento, classe, nome e sentido.
+ *
+ * Formato gravado (coordenadas em inteiros, unidade × ESCALA, como no mapa):
+ *   nos:     [x0, y0, dx1, dy1, ...]   posição de cada cruzamento, em diferenças
+ *   arestas: [[a, b, classe, nome, sentido, comprimento × 10, dx, dy, ...], ...]
+ *            sentido 1 = só de a para b (mão única), 0 = mão dupla;
+ *            os pontos do meio do trecho vêm em diferenças a partir do cruzamento a.
+ * Só fica a maior parte conectada da rede: um pedaço solto não leva a lugar nenhum.
+ */
+function gerarRede(vias, nomeId) {
+  const unicas = new Map();
+  vias.forEach((via) => {
+    if (via.type !== "way" || !via.geometry || via.nodes?.length !== via.geometry.length) return;
+    const classe = CLASSE_DO_OSM[via.tags?.highway];
+    if (classe === undefined || classe === 5 || classe === 6) return;
+    if (via.geometry.some((ponto) => !ponto)) return;
+    unicas.set(via.id, { via, classe });
+  });
+
+  // Quantas vezes cada nó aparece: mais de uma vez (ou ponta de via) = cruzamento
+  const usos = new Map();
+  unicas.forEach(({ via }) => {
+    via.nodes.forEach((no, i) => {
+      const ponta = i === 0 || i === via.nodes.length - 1;
+      usos.set(no, (usos.get(no) ?? 0) + (ponta ? 2 : 1));
+    });
+  });
+
+  const indiceNo = new Map();
+  const posicoes = [];
+  const noDe = (id, ponto) => {
+    if (!indiceNo.has(id)) {
+      indiceNo.set(id, posicoes.length);
+      posicoes.push(projetar(ponto));
+    }
+    return indiceNo.get(id);
+  };
+
+  const arestas = [];
+  unicas.forEach(({ via, classe }) => {
+    const tags = via.tags ?? {};
+    let sentido = 0;
+    let inverter = false;
+    if (["yes", "true", "1"].includes(tags.oneway) || tags.junction === "roundabout" || tags.highway === "motorway") {
+      sentido = 1;
+    } else if (tags.oneway === "-1") {
+      sentido = 1;
+      inverter = true;
+    }
+    const nome = nomeId(tags.name ?? "");
+    let inicio = 0;
+    for (let i = 1; i < via.nodes.length; i += 1) {
+      if (i < via.nodes.length - 1 && (usos.get(via.nodes[i]) ?? 0) < 2) continue;
+      const pontos = via.geometry.slice(inicio, i + 1).map(projetar);
+      let a = noDe(via.nodes[inicio], via.geometry[inicio]);
+      let b = noDe(via.nodes[i], via.geometry[i]);
+      let meio = simplificar(pontos, 0.3).slice(1, -1);
+      if (inverter) {
+        [a, b] = [b, a];
+        meio = meio.reverse();
+      }
+      if (a !== b || meio.length) arestas.push({ a, b, classe, nome, sentido, comprimento: comprimentoDe(pontos), meio });
+      inicio = i;
+    }
+  });
+
+  // Maior componente conectada (ignorando o sentido)
+  const vizinhos = posicoes.map(() => []);
+  arestas.forEach(({ a, b }) => {
+    vizinhos[a].push(b);
+    vizinhos[b].push(a);
+  });
+  const componente = new Int32Array(posicoes.length).fill(-1);
+  const tamanhos = [];
+  for (let inicio = 0; inicio < posicoes.length; inicio += 1) {
+    if (componente[inicio] >= 0) continue;
+    const id = tamanhos.length;
+    let tamanho = 0;
+    const pilha = [inicio];
+    componente[inicio] = id;
+    while (pilha.length) {
+      const atual = pilha.pop();
+      tamanho += 1;
+      vizinhos[atual].forEach((outro) => {
+        if (componente[outro] < 0) {
+          componente[outro] = id;
+          pilha.push(outro);
+        }
+      });
+    }
+    tamanhos.push(tamanho);
+  }
+  const maior = tamanhos.indexOf(Math.max(...tamanhos));
+
+  // Renumera só os nós da maior componente
+  const novo = new Int32Array(posicoes.length).fill(-1);
+  const nos = [];
+  posicoes.forEach((ponto, i) => {
+    if (componente[i] === maior) {
+      novo[i] = nos.length;
+      nos.push(ponto);
+    }
+  });
+  const quantizar = ([x, y]) => [Math.round(x * ESCALA), Math.round(y * ESCALA)];
+  const nosQ = nos.map(quantizar);
+  const saidaArestas = [];
+  arestas.forEach(({ a, b, classe, nome, sentido, comprimento, meio }) => {
+    if (novo[a] < 0) return;
+    const [ax, ay] = nosQ[novo[a]];
+    const deltas = [];
+    let px = ax;
+    let py = ay;
+    meio.map(quantizar).forEach(([x, y]) => {
+      deltas.push(x - px, y - py);
+      px = x;
+      py = y;
+    });
+    saidaArestas.push([novo[a], novo[b], classe, nome, sentido, Math.round(comprimento * 10), ...deltas]);
+  });
+
+  // Não dá para usar codificar(): ela pula pontos repetidos, e aqui cada nó precisa manter o seu índice
+  const nosCodificados = [];
+  nosQ.forEach(([x, y], i) => {
+    if (i === 0) nosCodificados.push(x, y);
+    else nosCodificados.push(x - nosQ[i - 1][0], y - nosQ[i - 1][1]);
+  });
+
+  return {
+    fonte: "© colaboradores do OpenStreetMap (ODbL)",
+    gerado: new Date().toISOString().slice(0, 10),
+    escala: ESCALA,
+    metrosPorUnidade: METROS_POR_UNIDADE,
+    nos: nosCodificados,
+    arestas: saidaArestas,
+  };
 }
 
 function pontoNoComprimento(pontos, alvo) {

@@ -586,30 +586,88 @@
   color: var(--texto-suave);
 }
 
-.vias-monitoradas {
+.alerta__rotas {
+  margin: -0.4rem 0 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--placa);
+}
+
+.texto-apoio {
+  margin: 0.2rem 0 0.6rem;
+  font-size: 0.92rem;
+  color: var(--texto-suave);
+}
+
+.rotas-salvas {
   margin: 0 0 0.6rem;
   padding: 0;
   list-style: none;
 }
 
-.vias-monitoradas__item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1rem;
-  padding: 0.75rem 0;
+.rotas-salvas__item {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem 0;
   border-bottom: 1px solid var(--linha);
 }
 
-.vias-monitoradas__info {
-  display: grid;
-  gap: 0.3rem;
-  justify-items: start;
+.rotas-salvas__cabeca {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
 }
 
-.vias-monitoradas__apelido {
+.rotas-salvas__nome {
+  font-family: var(--fonte-placa);
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.rotas-salvas__livre {
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: var(--sucesso-fundo);
+  color: var(--sucesso);
+  font-size: 0.78rem;
   font-weight: 700;
+}
+
+.rotas-salvas__trajeto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.45rem;
+  margin: 0;
+  font-size: 0.93rem;
+}
+
+.rotas-salvas__ponto {
+  display: inline-grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  color: #fff;
+  font-family: var(--fonte-placa);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.rotas-salvas__ponto--a {
+  background: var(--asfalto);
+}
+
+.rotas-salvas__ponto--b {
+  margin-left: 0.35rem;
+  background: #1a66d6;
+}
+
+.rotas-salvas__meta {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--texto-suave);
 }
 
 /* --------------------------------------------------------------- Gestão */

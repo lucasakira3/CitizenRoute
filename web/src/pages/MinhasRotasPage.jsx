@@ -11,40 +11,46 @@ import { navegar } from "../hooks/useRota.js";
 import { useTitulo } from "../hooks/useTitulo.js";
 import { api } from "../services/api.js";
 import { avisarNaProximaPagina, retirarAvisoPendente } from "../services/aviso.js";
-import { tempoRelativo } from "../utils/formato.js";
+import { formatarMinutos, formatarNumero, tempoRelativo } from "../utils/formato.js";
 import { MODAL_FRASE } from "../utils/rotulos.js";
+import { corpoDaRota, minutosPara } from "../utils/rotas.js";
 import { criarValidador } from "../utils/validacao.js";
 
-export default function MeuTrajetoPage() {
-  useTitulo("Meu trajeto");
+const ORDEM_RISCO = { BAIXO: 1, MODERADO: 2, ALTO: 3, CRITICO: 4 };
+
+export default function MinhasRotasPage() {
+  useTitulo("Minhas rotas");
   return (
     <>
       <header className="cabeca-pagina">
         <div>
           <p className="sobretitulo">Para quem circula</p>
-          <h1>Meu trajeto</h1>
+          <h1>Minhas rotas</h1>
           <p className="lead">
-            Salve as vias por onde você passa. Quando surgir uma ocorrência nelas, o risco aparece aqui, calculado para o
-            seu jeito de se locomover.
+            Salve os caminhos que você faz no dia a dia. Quando surgir uma ocorrência em alguma via deles, o risco
+            aparece aqui, calculado para o seu jeito de se locomover.
           </p>
         </div>
+        <a className="botao botao--primario" href="#/rota">
+          Planejar uma rota
+        </a>
       </header>
-      <ExigirPerfil tipo="CIDADAO" motivo="Entre com a sua conta de cidadão para salvar vias e receber alertas.">
-        <ConteudoTrajeto />
+      <ExigirPerfil tipo="CIDADAO" motivo="Entre com a sua conta de cidadão para salvar rotas e receber alertas.">
+        <ConteudoRotas />
       </ExigirPerfil>
     </>
   );
 }
 
-function ConteudoTrajeto() {
+function ConteudoRotas() {
   const { sessao } = useApp();
   const [aviso, setAviso] = useState(retirarAvisoPendente);
   const alertas = useCarregar(() => api.buscar(`/cidadaos/${sessao.id}/alertas`), [sessao.id, sessao.modal]);
-  const vias = useCarregar(() => api.buscar(`/cidadaos/${sessao.id}/vias-monitoradas`), [sessao.id]);
+  const rotas = useCarregar(() => api.buscar(`/cidadaos/${sessao.id}/rotas`), [sessao.id]);
 
-  function aposMudarVias(texto) {
+  function aposMudarRotas(texto) {
     setAviso({ tipo: "sucesso", texto });
-    vias.recarregar();
+    rotas.recarregar();
     alertas.recarregar();
   }
 
@@ -52,15 +58,20 @@ function ConteudoTrajeto() {
     <>
       <Aviso aviso={aviso} aoFechar={() => setAviso(null)} />
       <div className="trajeto">
-        <Alertas estado={alertas} temVias={(vias.dados ?? []).length > 0} />
-        <ViasMonitoradas estado={vias} aoMudar={aposMudarVias} aoErro={(texto) => setAviso({ tipo: "erro", texto })} />
+        <Alertas estado={alertas} temRotas={(rotas.dados ?? []).length > 0} />
+        <RotasSalvas
+          estado={rotas}
+          alertas={alertas.dados ?? []}
+          aoMudar={aposMudarRotas}
+          aoErro={(texto) => setAviso({ tipo: "erro", texto })}
+        />
         <Perfil aoAvisar={setAviso} />
       </div>
     </>
   );
 }
 
-function Alertas({ estado, temVias }) {
+function Alertas({ estado, temRotas }) {
   const { sessao, rotulo } = useApp();
   const frase = MODAL_FRASE[sessao.modal];
   const alertas = estado.dados ?? [];
@@ -69,17 +80,19 @@ function Alertas({ estado, temVias }) {
 
   return (
     <section className="secao trajeto__alertas" aria-labelledby="alertas-titulo">
-      <h2 id="alertas-titulo">Alertas nas suas vias</h2>
+      <h2 id="alertas-titulo">Alertas nas suas rotas</h2>
       {estado.carregando && !estado.dados && <Carregando />}
       {estado.erro && <ErroCarga erro={estado.erro} aoTentar={estado.recarregar} />}
-      {estado.dados && !temVias && (
-        <Vazio titulo="Você ainda não salvou nenhuma via.">
-          <p>Adicione as vias do seu caminho em &ldquo;Vias monitoradas&rdquo; para receber alertas.</p>
+      {estado.dados && !temRotas && (
+        <Vazio titulo="Você ainda não salvou nenhuma rota.">
+          <p>
+            <a href="#/rota">Planeje uma rota</a> com a sua saída e o seu destino e salve para receber alertas.
+          </p>
         </Vazio>
       )}
-      {estado.dados && temVias && alertas.length === 0 && (
+      {estado.dados && temRotas && alertas.length === 0 && (
         <Vazio titulo="Caminho livre.">
-          <p>Nenhuma ocorrência ativa nas suas vias agora.</p>
+          <p>Nenhuma ocorrência ativa nas suas rotas agora.</p>
         </Vazio>
       )}
 
@@ -93,9 +106,12 @@ function Alertas({ estado, temVias }) {
             <h3 className="alerta__titulo">
               <a href={`#/ocorrencias/${alerta.ocorrencia.id}`}>{alerta.ocorrencia.titulo}</a>
             </h3>
+            <p className="alerta__rotas">
+              Na rota {alerta.rotas.map((rota) => rota.nome).join(", ")}
+            </p>
             <div className="lista-placas">
-              {alerta.viasAfetadas.map((vm) => (
-                <PlacaVia key={vm.via.id} via={vm.via} apelido={vm.apelido} semRegiao />
+              {alerta.viasAfetadas.map((via) => (
+                <PlacaVia key={via.id} via={via} semRegiao />
               ))}
             </div>
             <p className="alerta__rodape">
@@ -108,13 +124,13 @@ function Alertas({ estado, temVias }) {
 
       {outros.length > 0 && (
         <div className="alertas-baixos">
-          <h3 className="subtitulo">Também nas suas vias, com risco baixo para quem {frase}</h3>
+          <h3 className="subtitulo">Também nas suas rotas, com risco baixo para quem {frase}</h3>
           <ul>
             {outros.map((alerta) => (
               <li key={alerta.ocorrencia.id}>
                 <SinalRisco risco={alerta.risco} tamanho="pequeno" />
                 <a href={`#/ocorrencias/${alerta.ocorrencia.id}`}>{alerta.ocorrencia.titulo}</a>
-                <span className="alertas-baixos__via">{alerta.viasAfetadas.map((vm) => vm.apelido).join(", ")}</span>
+                <span className="alertas-baixos__via">{alerta.rotas.map((rota) => rota.nome).join(", ")}</span>
               </li>
             ))}
           </ul>
@@ -124,131 +140,120 @@ function Alertas({ estado, temVias }) {
   );
 }
 
-function ViasMonitoradas({ estado, aoMudar, aoErro }) {
-  const { sessao } = useApp();
-  const todasVias = useCarregar(() => api.buscar("/vias"), []);
-  const form = useFormulario({ idVia: "", apelido: "" });
+/** Pior alerta de cada rota, para o resumo da lista. */
+function piorPorRota(alertas) {
+  const pior = new Map();
+  alertas.forEach((alerta) => {
+    alerta.rotas.forEach((rota) => {
+      const atual = pior.get(rota.id);
+      if (!atual || ORDEM_RISCO[alerta.risco.nivel] > ORDEM_RISCO[atual.risco.nivel]) pior.set(rota.id, alerta);
+    });
+  });
+  return pior;
+}
+
+function RotasSalvas({ estado, alertas, aoMudar, aoErro }) {
+  const { sessao, dominio, rotulo } = useApp();
   const [editando, setEditando] = useState(null);
-  const monitoradas = estado.dados ?? [];
-  const idsMonitorados = new Set(monitoradas.map((vm) => vm.via.id));
-  const disponiveis = (todasVias.dados ?? []).filter((via) => !idsMonitorados.has(via.id));
+  const rotas = estado.dados ?? [];
+  const pior = piorPorRota(alertas);
+  const velocidade = dominio.modais.find((modal) => modal.codigo === sessao.modal)?.velocidadeMediaKmh ?? 20;
 
-  async function adicionar(evento) {
-    evento.preventDefault();
-    const ok = await form.enviar(
-      (valores) => {
-        const validador = criarValidador();
-        validador.escolha("idVia", valores.idVia, "Escolha a via que você quer monitorar.");
-        validador.texto("apelido", valores.apelido, "Apelido", 2, 60);
-        return validador.erros;
-      },
-      (valores) =>
-        api.criar(`/cidadaos/${sessao.id}/vias-monitoradas`, {
-          idVia: Number(valores.idVia),
-          apelido: valores.apelido.trim(),
-        }),
-    );
-    if (ok) {
-      form.reiniciar();
-      aoMudar("Via adicionada ao seu trajeto.");
-    }
-  }
-
-  async function remover(vm) {
-    if (!window.confirm(`Parar de monitorar ${vm.via.nome}?`)) {
+  async function excluir(rota) {
+    if (!window.confirm(`Excluir a rota "${rota.nome}"?`)) {
       return;
     }
     try {
-      await api.excluir(`/cidadaos/${sessao.id}/vias-monitoradas/${vm.via.id}`);
-      aoMudar("Via removida do seu trajeto.");
+      await api.excluir(`/cidadaos/${sessao.id}/rotas/${rota.id}`);
+      aoMudar("Rota excluída.");
     } catch (erro) {
       aoErro(erro.message);
     }
   }
 
   return (
-    <section className="secao cartao trajeto__vias" aria-labelledby="vias-titulo">
-      <h2 id="vias-titulo">Vias monitoradas</h2>
+    <section className="secao cartao trajeto__vias" aria-labelledby="rotas-titulo">
+      <h2 id="rotas-titulo">Rotas salvas</h2>
       {estado.carregando && !estado.dados && <Carregando />}
       {estado.erro && <ErroCarga erro={estado.erro} aoTentar={estado.recarregar} />}
+      {estado.dados && rotas.length === 0 && <p className="texto-apoio">Nenhuma rota salva ainda.</p>}
 
-      <ul className="vias-monitoradas">
-        {monitoradas.map((vm) => (
-          <li key={vm.via.id} className="vias-monitoradas__item">
-            {editando === vm.via.id ? (
-              <RenomearVia
-                vm={vm}
-                aoSalvar={() => {
-                  setEditando(null);
-                  aoMudar("Apelido atualizado.");
-                }}
-                aoCancelar={() => setEditando(null)}
-              />
-            ) : (
-              <>
-                <div className="vias-monitoradas__info">
-                  <span className="vias-monitoradas__apelido">{vm.apelido}</span>
-                  <PlacaVia via={vm.via} />
-                </div>
-                <div className="acoes acoes--linha">
-                  <button type="button" className="botao-texto" onClick={() => setEditando(vm.via.id)}>
-                    Renomear<span className="visualmente-oculto"> {vm.apelido}</span>
-                  </button>
-                  <button type="button" className="botao-texto botao-texto--perigo" onClick={() => remover(vm)}>
-                    Remover<span className="visualmente-oculto"> {vm.apelido}</span>
-                  </button>
-                </div>
-              </>
-            )}
-          </li>
-        ))}
+      <ul className="rotas-salvas">
+        {rotas.map((rota) => {
+          const alerta = pior.get(rota.id);
+          return (
+            <li key={rota.id} className="rotas-salvas__item">
+              {editando === rota.id ? (
+                <RenomearRota
+                  rota={rota}
+                  aoSalvar={() => {
+                    setEditando(null);
+                    aoMudar("Rota renomeada.");
+                  }}
+                  aoCancelar={() => setEditando(null)}
+                />
+              ) : (
+                <>
+                  <div className="rotas-salvas__cabeca">
+                    <span className="rotas-salvas__nome">{rota.nome}</span>
+                    {alerta ? (
+                      <SinalRisco risco={alerta.risco} tamanho="pequeno" />
+                    ) : (
+                      <span className="rotas-salvas__livre">Livre</span>
+                    )}
+                  </div>
+                  <p className="rotas-salvas__trajeto">
+                    <span className="rotas-salvas__ponto rotas-salvas__ponto--a" aria-label="Saída">
+                      A
+                    </span>
+                    {rota.origem.descricao}
+                    <span className="rotas-salvas__ponto rotas-salvas__ponto--b" aria-label="Destino">
+                      B
+                    </span>
+                    {rota.destino.descricao}
+                  </p>
+                  <p className="rotas-salvas__meta">
+                    {formatarNumero(rota.distanciaMetros / 1000, 1)} km · cerca de{" "}
+                    {formatarMinutos(minutosPara(rota.distanciaMetros, velocidade))} ·{" "}
+                    {rotulo("criteriosRota", rota.criterio).toLowerCase()} · {rota.vias.length}{" "}
+                    {rota.vias.length === 1 ? "via acompanhada" : "vias acompanhadas"}
+                  </p>
+                  <div className="acoes acoes--linha">
+                    <button type="button" className="botao-texto" onClick={() => navegar(`/rota?id=${rota.id}`)}>
+                      Abrir no mapa<span className="visualmente-oculto"> {rota.nome}</span>
+                    </button>
+                    <button type="button" className="botao-texto" onClick={() => setEditando(rota.id)}>
+                      Renomear<span className="visualmente-oculto"> {rota.nome}</span>
+                    </button>
+                    <button type="button" className="botao-texto botao-texto--perigo" onClick={() => excluir(rota)}>
+                      Excluir<span className="visualmente-oculto"> {rota.nome}</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </li>
+          );
+        })}
       </ul>
-
-      <form className="formulario formulario--compacto" onSubmit={adicionar} noValidate>
-        <h3 className="subtitulo">Adicionar via</h3>
-        <Aviso aviso={form.aviso} />
-        <Campo id="vm-via" rotulo="Via" erro={form.erros.idVia}>
-          <select value={form.valores.idVia} onChange={form.alterar("idVia")}>
-            <option value="">Escolha a via</option>
-            {disponiveis.map((via) => (
-              <option key={via.id} value={via.id}>
-                {via.nome} · {via.regiao.nome}
-              </option>
-            ))}
-          </select>
-        </Campo>
-        <Campo id="vm-apelido" rotulo="Apelido" erro={form.erros.apelido} dica="Como você chama esse trecho.">
-          <input
-            type="text"
-            maxLength={60}
-            placeholder="Ex.: Caminho do trabalho"
-            value={form.valores.apelido}
-            onChange={form.alterar("apelido")}
-          />
-        </Campo>
-        <button type="submit" className="botao botao--primario" disabled={form.enviando}>
-          {form.enviando ? "Salvando…" : "Monitorar via"}
-        </button>
-      </form>
     </section>
   );
 }
 
-function RenomearVia({ vm, aoSalvar, aoCancelar }) {
+function RenomearRota({ rota, aoSalvar, aoCancelar }) {
   const { sessao } = useApp();
-  const form = useFormulario({ apelido: vm.apelido });
-  const idCampo = `renomear-${vm.via.id}`;
+  const form = useFormulario({ nome: rota.nome });
+  const idCampo = `renomear-rota-${rota.id}`;
 
   async function salvar(evento) {
     evento.preventDefault();
     const ok = await form.enviar(
       (valores) => {
         const validador = criarValidador();
-        validador.texto("apelido", valores.apelido, "Apelido", 2, 60);
+        validador.texto("nome", valores.nome, "Nome da rota", 2, 60);
         return validador.erros;
       },
       (valores) =>
-        api.atualizar(`/cidadaos/${sessao.id}/vias-monitoradas/${vm.via.id}`, { apelido: valores.apelido.trim() }),
+        api.atualizar(`/cidadaos/${sessao.id}/rotas/${rota.id}`, corpoDaRota(rota, { nome: valores.nome.trim() })),
     );
     if (ok) {
       aoSalvar();
@@ -257,8 +262,8 @@ function RenomearVia({ vm, aoSalvar, aoCancelar }) {
 
   return (
     <form className="formulario formulario--linha" onSubmit={salvar} noValidate>
-      <Campo id={idCampo} rotulo={`Novo apelido para ${vm.via.nome}`} erro={form.erros.apelido ?? form.aviso?.texto}>
-        <input type="text" maxLength={60} value={form.valores.apelido} onChange={form.alterar("apelido")} />
+      <Campo id={idCampo} rotulo={`Novo nome para ${rota.nome}`} erro={form.erros.nome ?? form.aviso?.texto}>
+        <input type="text" maxLength={60} value={form.valores.nome} onChange={form.alterar("nome")} />
       </Campo>
       <div className="acoes acoes--linha">
         <button type="submit" className="botao botao--primario botao--pequeno" disabled={form.enviando}>
@@ -304,7 +309,7 @@ function Perfil({ aoAvisar }) {
   }
 
   async function excluirConta() {
-    if (!window.confirm("Excluir a sua conta? Suas vias monitoradas também serão apagadas.")) {
+    if (!window.confirm("Excluir a sua conta? Suas rotas salvas também serão apagadas.")) {
       return;
     }
     try {

@@ -8,23 +8,25 @@ import CadastrosPage from "./pages/CadastrosPage.jsx";
 import EntrarPage from "./pages/EntrarPage.jsx";
 import GestaoPage from "./pages/GestaoPage.jsx";
 import MapaPage from "./pages/MapaPage.jsx";
-import MeuTrajetoPage from "./pages/MeuTrajetoPage.jsx";
+import MinhasRotasPage from "./pages/MinhasRotasPage.jsx";
 import NaoEncontradaPage from "./pages/NaoEncontradaPage.jsx";
 import OcorrenciaDetalhePage from "./pages/OcorrenciaDetalhePage.jsx";
 import OcorrenciaFormPage from "./pages/OcorrenciaFormPage.jsx";
 import OcorrenciasPage from "./pages/OcorrenciasPage.jsx";
 import PainelPage from "./pages/PainelPage.jsx";
+import PlanejarRotaPage from "./pages/PlanejarRotaPage.jsx";
 import RelatoriosPage from "./pages/RelatoriosPage.jsx";
 
 // A ordem importa: "/ocorrencias/nova" precisa vir antes de "/ocorrencias/:id".
 const ROTAS = [
   ["/", PainelPage],
+  ["/rota", PlanejarRotaPage],
   ["/mapa", MapaPage],
   ["/ocorrencias", OcorrenciasPage],
   ["/ocorrencias/nova", OcorrenciaFormPage],
   ["/ocorrencias/:id/editar", OcorrenciaFormPage],
   ["/ocorrencias/:id", OcorrenciaDetalhePage],
-  ["/meu-trajeto", MeuTrajetoPage],
+  ["/minhas-rotas", MinhasRotasPage],
   ["/gestao", GestaoPage],
   ["/relatorios", RelatoriosPage],
   ["/cadastros", CadastrosPage],
@@ -95,7 +97,7 @@ export default function App() {
       return {};
     }
     const mapa = {};
-    ["modais", "orgaos", "tiposOcorrencia", "status", "niveisImpacto", "niveisRisco"].forEach((grupo) => {
+    ["modais", "orgaos", "tiposOcorrencia", "status", "niveisImpacto", "niveisRisco", "criteriosRota"].forEach((grupo) => {
       mapa[grupo] = Object.fromEntries(dominio[grupo].map((item) => [item.codigo, item.rotulo]));
     });
     return mapa;

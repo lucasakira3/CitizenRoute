@@ -17,12 +17,18 @@ classDiagram
     }
     class AlertaService {
         -OcorrenciaDao ocorrenciaDao
-        -ViaMonitoradaDao viaMonitoradaDao
+        -RotaService rotaService
         -CidadaoService cidadaoService
         -RiscoService riscoService
         -AutenticacaoService autenticacao
-        +AlertaService(OcorrenciaDao, ViaMonitoradaDao, CidadaoService, RiscoService, AutenticacaoService)
+        +AlertaService(OcorrenciaDao, RotaService, CidadaoService, RiscoService, AutenticacaoService)
         +alertasDoCidadao(long, Long) List~Alerta~
+        +alertasDaRota(Rota) List~Alerta~
+        +avaliarCaminho(List~Long~, Modal) List~Alerta~
+        -avaliar(List~Via~, Modal, List~Rota~) List~Alerta~
+        -viasAtingidas(Ocorrencia, List~Via~) List~Via~
+        -criar(Ocorrencia, List~Via~, List~Rota~, Modal) Alerta
+        -ordenar(List~Alerta~) List~Alerta~
     }
     class AutenticacaoService {
         -String MENSAGEM_LOGIN_INVALIDO$
@@ -112,6 +118,28 @@ classDiagram
         +riscoPorModal(AvaliavelRisco) Map~Modal‚Double~
         ~arredondar(double)$ double
     }
+    class RotaService {
+        +int MAXIMO_ROTAS$
+        +int MAXIMO_VIAS_POR_ROTA$
+        +int DISTANCIA_MAXIMA_METROS$
+        -double LIMITE_PLANO$
+        -RotaDao rotaDao
+        -ViaService viaService
+        -CidadaoService cidadaoService
+        -AutenticacaoService autenticacao
+        +RotaService(RotaDao, ViaService, CidadaoService, AutenticacaoService)
+        +listar(long, Long) List~Rota~
+        ~rotasDo(long) List~Rota~
+        +buscar(long, long, Long) Rota
+        +criar(long, Rota, List~Long~, Long) Rota
+        +atualizar(long, long, Rota, List~Long~, Long) Rota
+        +excluir(long, long, Long) void
+        +viasDoCaminho(List~Long~) List~Via~
+        -validar(Rota, List~Long~) Rota
+        -validarPonto(Validador, String, String, String, PontoRota) PontoRota
+        -rotaDoCidadao(long, long) Rota
+        -exigirDono(long, Long) Cidadao
+    }
     class SaudeService {
         -SaudeDao saudeDao
         +SaudeService(SaudeDao)
@@ -143,19 +171,6 @@ classDiagram
         +temErro(String) boolean
         +validar() void
     }
-    class ViaMonitoradaService {
-        +int MAXIMO_VIAS$
-        -ViaMonitoradaDao viaMonitoradaDao
-        -ViaService viaService
-        -CidadaoService cidadaoService
-        -AutenticacaoService autenticacao
-        +ViaMonitoradaService(ViaMonitoradaDao, ViaService, CidadaoService, AutenticacaoService)
-        +listar(long, Long) List~ViaMonitorada~
-        +adicionar(long, Long, String, Long) ViaMonitorada
-        +atualizar(long, long, String, Long) ViaMonitorada
-        +remover(long, long, Long) void
-        -exigirDono(long, Long) Cidadao
-    }
     class ViaService {
         -ViaDao viaDao
         -RegiaoService regiaoService
@@ -172,7 +187,7 @@ classDiagram
     AcaoService --> OcorrenciaService : ocorrenciaService
     AcaoService --> AutenticacaoService : autenticacao
     AlertaService --> OcorrenciaDao : ocorrenciaDao
-    AlertaService --> ViaMonitoradaDao : viaMonitoradaDao
+    AlertaService --> RotaService : rotaService
     AlertaService --> CidadaoService : cidadaoService
     AlertaService --> RiscoService : riscoService
     AlertaService --> AutenticacaoService : autenticacao
@@ -194,12 +209,13 @@ classDiagram
     RelatorioService --> RelatorioDao : relatorioDao
     RelatorioService --> OcorrenciaDao : ocorrenciaDao
     RelatorioService --> RiscoService : riscoService
+    RotaService --> RotaDao : rotaDao
+    RotaService --> ViaService : viaService
+    RotaService --> CidadaoService : cidadaoService
+    RotaService --> AutenticacaoService : autenticacao
     SaudeService --> SaudeDao : saudeDao
-    ViaMonitoradaService --> ViaMonitoradaDao : viaMonitoradaDao
-    ViaMonitoradaService --> ViaService : viaService
-    ViaMonitoradaService --> CidadaoService : cidadaoService
-    ViaMonitoradaService --> AutenticacaoService : autenticacao
     ViaService --> ViaDao : viaDao
     ViaService --> RegiaoService : regiaoService
     ViaService --> AutenticacaoService : autenticacao
     GestorService ..> Validador
+    RotaService ..> Validador

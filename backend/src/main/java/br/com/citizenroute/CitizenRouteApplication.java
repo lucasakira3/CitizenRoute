@@ -8,6 +8,7 @@ import br.com.citizenroute.api.controller.GestorController;
 import br.com.citizenroute.api.controller.OcorrenciaController;
 import br.com.citizenroute.api.controller.RegiaoController;
 import br.com.citizenroute.api.controller.RelatorioController;
+import br.com.citizenroute.api.controller.RotaController;
 import br.com.citizenroute.api.controller.SaudeController;
 import br.com.citizenroute.api.controller.ViaController;
 import br.com.citizenroute.dao.AcaoDao;
@@ -19,7 +20,7 @@ import br.com.citizenroute.dao.RelatorioDao;
 import br.com.citizenroute.dao.SaudeDao;
 import br.com.citizenroute.dao.UsuarioDao;
 import br.com.citizenroute.dao.ViaDao;
-import br.com.citizenroute.dao.ViaMonitoradaDao;
+import br.com.citizenroute.dao.RotaDao;
 import br.com.citizenroute.service.AcaoService;
 import br.com.citizenroute.service.AlertaService;
 import br.com.citizenroute.service.AutenticacaoService;
@@ -31,7 +32,7 @@ import br.com.citizenroute.service.RelatorioService;
 import br.com.citizenroute.service.RiscoService;
 import br.com.citizenroute.service.SaudeService;
 import br.com.citizenroute.service.SenhaService;
-import br.com.citizenroute.service.ViaMonitoradaService;
+import br.com.citizenroute.service.RotaService;
 import br.com.citizenroute.service.ViaService;
 import com.sun.net.httpserver.HttpServer;
 
@@ -65,7 +66,7 @@ public final class CitizenRouteApplication {
         ViaDao viaDao = new ViaDao();
         AcaoDao acaoDao = new AcaoDao();
         OcorrenciaDao ocorrenciaDao = new OcorrenciaDao(acaoDao);
-        ViaMonitoradaDao viaMonitoradaDao = new ViaMonitoradaDao();
+        RotaDao rotaDao = new RotaDao();
         RelatorioDao relatorioDao = new RelatorioDao();
 
         // Camada Service: regras de negócio e validações
@@ -78,10 +79,9 @@ public final class CitizenRouteApplication {
         GestorService gestorService = new GestorService(gestorDao, usuarioDao, senhaService, autenticacao);
         OcorrenciaService ocorrenciaService = new OcorrenciaService(ocorrenciaDao, viaDao, autenticacao);
         AcaoService acaoService = new AcaoService(acaoDao, ocorrenciaService, autenticacao);
-        ViaMonitoradaService viaMonitoradaService =
-                new ViaMonitoradaService(viaMonitoradaDao, viaService, cidadaoService, autenticacao);
+        RotaService rotaService = new RotaService(rotaDao, viaService, cidadaoService, autenticacao);
         AlertaService alertaService =
-                new AlertaService(ocorrenciaDao, viaMonitoradaDao, cidadaoService, riscoService, autenticacao);
+                new AlertaService(ocorrenciaDao, rotaService, cidadaoService, riscoService, autenticacao);
         RelatorioService relatorioService = new RelatorioService(relatorioDao, ocorrenciaDao, riscoService);
         SaudeService saudeService = new SaudeService(new SaudeDao());
 
@@ -92,7 +92,8 @@ public final class CitizenRouteApplication {
         new AutenticacaoController(autenticacao).registrar(roteador);
         new RegiaoController(regiaoService).registrar(roteador);
         new ViaController(viaService).registrar(roteador);
-        new CidadaoController(cidadaoService, viaMonitoradaService, alertaService).registrar(roteador);
+        new CidadaoController(cidadaoService, alertaService).registrar(roteador);
+        new RotaController(rotaService, alertaService).registrar(roteador);
         new GestorController(gestorService).registrar(roteador);
         new OcorrenciaController(ocorrenciaService, acaoService, riscoService).registrar(roteador);
         new RelatorioController(relatorioService).registrar(roteador);

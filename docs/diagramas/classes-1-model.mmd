@@ -15,11 +15,12 @@ classDiagram
     }
     class Alerta {
         -Ocorrencia ocorrencia
-        -List~ViaMonitorada~ viasAfetadas
+        -List~Via~ viasAfetadas
+        -List~Rota~ rotasAfetadas
         -double risco
         -NivelRisco nivel
         -boolean acimaDoLimite
-        +Alerta(Ocorrencia, List~ViaMonitorada~, double, NivelRisco, boolean)
+        +Alerta(Ocorrencia, List~Via~, List~Rota~, double, NivelRisco, boolean)
     }
     class AvaliavelRisco {
         <<interface>>
@@ -31,6 +32,13 @@ classDiagram
         +Cidadao(Long, String, String, Modal)
         +getTipo() TipoUsuario
         +getDescricaoPerfil() String
+    }
+    class CriterioRota {
+        <<enumeration>>
+        RAPIDA
+        SEGURA
+        -String rotulo
+        -String descricao
     }
     class Gestor {
         -Orgao orgao
@@ -49,6 +57,8 @@ classDiagram
         PEDESTRE
         BIKE
         -String rotulo
+        -double velocidadeMediaKmh
+        -boolean motorizado
     }
     class NivelImpacto {
         <<enumeration>>
@@ -98,11 +108,32 @@ classDiagram
         -String rotulo
         -String atribuicao
     }
+    class PontoRota {
+        <<record>>
+        -String descricao
+        -double x
+        -double y
+        +PontoRota(String, double, double)
+    }
     class Regiao {
         -Long id
         -String nome
         +Regiao()
         +Regiao(Long, String)
+    }
+    class Rota {
+        -Long id
+        -Long idCidadao
+        -String nome
+        -PontoRota origem
+        -PontoRota destino
+        -CriterioRota criterio
+        -int distanciaMetros
+        -LocalDateTime dataCriacao
+        -List~Via~ vias
+        +Rota()
+        +Rota(Long, Long, String, PontoRota, PontoRota, CriterioRota, int)
+        +passaPelaVia(Long) boolean
     }
     class StatusOcorrencia {
         <<enumeration>>
@@ -153,19 +184,11 @@ classDiagram
         +Via()
         +Via(Long, String, Regiao)
     }
-    class ViaMonitorada {
-        -Long idCidadao
-        -Via via
-        -String apelido
-        -LocalDateTime dataInclusao
-        +ViaMonitorada()
-        +ViaMonitorada(Long, Via, String)
-    }
     class ExposicaoModal {
         <<record>>
         -Modal modal
         -int cidadaos
-        -int viasMonitoradas
+        -int rotas
         -int ocorrenciasAtivasNasVias
         -double riscoMedioAtual
         +ExposicaoModal(Modal, int, int, int, double)
@@ -188,7 +211,7 @@ classDiagram
         -int resolvidasUltimos30Dias
         -Double tempoMedioRespostaMinutos
         -int cidadaos
-        -int viasMonitoradas
+        -int rotasSalvas
         +ResumoPainel(int, int, int, int, int, Double, int, int)
     }
     class TempoRespostaOrgao {
@@ -213,7 +236,8 @@ classDiagram
     Acao --> Gestor : gestor
     Acao --> StatusOcorrencia : statusNovo
     Alerta --> Ocorrencia : ocorrencia
-    Alerta --> "*" ViaMonitorada : viasAfetadas
+    Alerta --> "*" Via : viasAfetadas
+    Alerta --> "*" Rota : rotasAfetadas
     Alerta --> NivelRisco : nivel
     Usuario <|-- Cidadao
     Cidadao --> Modal : modal
@@ -226,13 +250,18 @@ classDiagram
     Ocorrencia --> "*" OcorrenciaVia : vias
     OcorrenciaVia --> Via : via
     OcorrenciaVia --> NivelImpacto : nivelImpacto
+    Rota --> PontoRota : origem
+    Rota --> PontoRota : destino
+    Rota --> CriterioRota : criterio
+    Rota --> "*" Via : vias
     TipoOcorrencia --> Orgao : orgaoResponsavel
     TipoOcorrencia --> "*" Modal : fatorPorModal
     Via --> Regiao : regiao
-    ViaMonitorada --> Via : via
     ExposicaoModal --> Modal : modal
     OcorrenciasPorRegiao --> TipoOcorrencia : tipo
     TempoRespostaOrgao --> Orgao : orgao
     AvaliavelRisco ..> Modal
     Cidadao ..> TipoUsuario
     Gestor ..> TipoUsuario
+    Ocorrencia ..> Modal
+    Usuario ..> TipoUsuario

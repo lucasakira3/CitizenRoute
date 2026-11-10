@@ -22,7 +22,7 @@ export { zonaDaRegiao };
  *   num canvas a cada quadro (utils/desenhoMapa.js).
  * - Cada ocorrência é uma placa de advertência 3D (HTML + CSS 3D) em cima da via
  *   atingida, na cor do risco para o modal escolhido. As vias atingidas acendem.
- * - Para um cidadão logado, as vias do trajeto dele aparecem em azul.
+ * - Na página de rotas, a rota calculada aparece em azul, com os marcadores de saída (A) e destino (B).
  *
  * modo "tela": página Mapa, câmera livre. modo "previa": quadro do Painel, câmera parada.
  */
@@ -129,7 +129,10 @@ export default function MapaCidade({
   aoSelecionarZona,
   selecionada = null,
   aoSelecionar,
-  trajeto = [],
+  rota = null,
+  marcadores = null,
+  aoClicarNoChao,
+  rotuloRegiao,
   folga,
   ref,
 }) {
@@ -210,13 +213,9 @@ export default function MapaCidade({
     () => (dados ? montarSinais(ocorrencias, dados) : { sinais: [], afetadas: new Map(), foraDoMapa: 0 }),
     [ocorrencias, dados],
   );
-  const indicesTrajeto = useMemo(
-    () => (dados ? trajeto.flatMap((vm) => linhasNaCidade(dados, tracadoDaVia(dados, vm.via))) : []),
-    [trajeto, dados],
-  );
   const riscoZona = useMemo(() => piorRiscoPorZona(ocorrencias), [ocorrencias]);
 
-  // O que o desenho destaca: vias com ocorrência, trajeto e zona escolhida
+  // O que o desenho destaca: vias com ocorrência, rota calculada e zona escolhida
   useEffect(() => {
     refDestaque.current = {
       afetadas: [...afetadas.values()].map((item) => ({
@@ -226,13 +225,14 @@ export default function MapaCidade({
         forte: Boolean(selecionada) && item.ids.includes(selecionada),
         fraca: Boolean(selecionada) && !item.ids.includes(selecionada),
       })),
-      trajeto: indicesTrajeto,
       zonaSelecionada,
       riscoZona,
       obstaculos: sinais.map((sinal) => [sinal.x, sinal.y]),
+      rota,
+      marcadores,
     };
     aplicar();
-  }, [afetadas, sinais, indicesTrajeto, zonaSelecionada, riscoZona, selecionada, aplicar]);
+  }, [afetadas, sinais, zonaSelecionada, riscoZona, selecionada, rota, marcadores, aplicar]);
 
   const verZona = useCallback(
     (chave) => {
@@ -252,8 +252,24 @@ export default function MapaCidade({
       },
       verZona,
       verCidade: () => verCidade(),
+      /** Enquadra uma lista de pontos [x, y, x, y, ...] (a rota calculada, por exemplo). */
+      verPontos(pontos) {
+        if (!pontos?.length) return;
+        let x0 = Infinity;
+        let y0 = Infinity;
+        let x1 = -Infinity;
+        let y1 = -Infinity;
+        for (let i = 0; i < pontos.length; i += 2) {
+          x0 = Math.min(x0, pontos[i]);
+          x1 = Math.max(x1, pontos[i]);
+          y0 = Math.min(y0, pontos[i + 1]);
+          y1 = Math.max(y1, pontos[i + 1]);
+        }
+        const margem = Math.max(12, (x1 - x0 + y1 - y0) * 0.08);
+        verArea({ x0: x0 - margem, y0: y0 - margem, x1: x1 + margem, y1: y1 + margem }, { zoomMaximo: 5 });
+      },
     }),
-    [sinais, focar, verZona, verCidade],
+    [sinais, focar, verZona, verCidade, verArea],
   );
 
   const escolherSinal = useCallback(
@@ -267,6 +283,11 @@ export default function MapaCidade({
   // Clique no chão: na prévia filtra pela zona; na tela cheia fecha a ocorrência aberta
   function aoClicarNoMapa(evento) {
     if (!dados || evento.target.closest(".sinal3d")) return;
+    if (aoClicarNoChao) {
+      const ponto = camera.pontoNaTela(evento.clientX, evento.clientY);
+      aoClicarNoChao(ponto.x, ponto.y);
+      return;
+    }
     if (tela) {
       if (selecionada) aoSelecionar?.(null);
       return;
@@ -311,9 +332,10 @@ export default function MapaCidade({
         role="region"
         aria-roledescription="mapa"
         aria-label={
-          tela
+          rotuloRegiao ??
+          (tela
             ? "Mapa de São Paulo com as ocorrências ativas. Arraste para mover, use a roda ou a pinça para aproximar e o botão direito para girar. No teclado: setas movem, + e − aproximam, Q e E giram, T alterna 2D e 3D."
-            : "Mapa de São Paulo com as ocorrências ativas. Clique numa zona para filtrar a lista."
+            : "Mapa de São Paulo com as ocorrências ativas. Clique numa zona para filtrar a lista.")
         }
         onKeyDown={camera.aoTeclar}
         onClick={aoClicarNoMapa}
@@ -410,10 +432,10 @@ export default function MapaCidade({
               {rotulo("niveisRisco", nivel)}
             </li>
           ))}
-          {indicesTrajeto.length > 0 && (
+          {rota && (
             <li>
               <span className="mapa3d__amostra-trajeto" aria-hidden="true" />
-              Seu trajeto
+              Sua rota
             </li>
           )}
         </ul>

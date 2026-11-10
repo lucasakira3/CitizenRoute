@@ -128,11 +128,11 @@ public class OcorrenciaDao implements CrudDao<Ocorrencia> {
                     + " WHERE ov.id_ocorrencia = o.id_ocorrencia AND v.id_regiao = ?)");
             parametros.add(filtro.idRegiao());
         }
-        if (filtro.idCidadaoMonitorando() != null) {
+        if (filtro.idCidadaoComRota() != null) {
             sql.append(" AND EXISTS (SELECT 1 FROM cr_ocorrencia_via ov"
-                    + " JOIN cr_via_monitorada vm ON vm.id_via = ov.id_via"
-                    + " WHERE ov.id_ocorrencia = o.id_ocorrencia AND vm.id_cidadao = ?)");
-            parametros.add(filtro.idCidadaoMonitorando());
+                    + " JOIN cr_rota_via rv ON rv.id_via = ov.id_via JOIN cr_rota ro ON ro.id_rota = rv.id_rota"
+                    + " WHERE ov.id_ocorrencia = o.id_ocorrencia AND ro.id_cidadao = ?)");
+            parametros.add(filtro.idCidadaoComRota());
         }
         sql.append(" ORDER BY CASE WHEN o.status IN ").append(ATIVAS)
                 .append(" THEN 0 ELSE 1 END, o.dt_registro DESC, o.id_ocorrencia DESC");

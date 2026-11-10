@@ -63,12 +63,12 @@ classDiagram
         -Long idRegiao
         -Long idVia
         -Long idAutor
-        -Long idCidadaoMonitorando
+        -Long idCidadaoComRota
         -boolean apenasAtivas
         +FiltroOcorrencia(StatusOcorrencia, Set~TipoOcorrencia~, Long, Long, Long, Long, boolean)
         +todas()$ FiltroOcorrencia
         +ativas()$ FiltroOcorrencia
-        +ativasNasViasDo(long)$ FiltroOcorrencia
+        +ativasNasRotasDo(long)$ FiltroOcorrencia
     }
     class GestorDao {
         -String SQL_SELECT$
@@ -156,6 +156,29 @@ classDiagram
         +exposicaoPorModal() List~ExposicaoModal~
         +resumo() ResumoPainel
     }
+    class RotaDao {
+        -String SQL_SELECT$
+        -String SQL_SELECT_VIAS$
+        -String SQL_INSERIR$
+        -String SQL_INSERIR_VIA$
+        -String SQL_ATUALIZAR$
+        -String SQL_EXCLUIR_VIAS$
+        -String SQL_EXCLUIR$
+        +RotaDao()
+        +inserir(Rota) Rota
+        +listar() List~Rota~
+        +listarPorCidadao(long) List~Rota~
+        +buscarPorId(long) Optional~Rota~
+        +atualizar(Rota) boolean
+        +excluir(long) boolean
+        -preencherPontos(PreparedStatement, Rota, int) void
+        -inserirVias(Connection, Rota) void
+        -consultar(String, Long) List~Rota~
+        -carregarVias(Connection, List~Rota~) void
+        -mapear(ResultSet) Rota
+        +atualizar(Object) boolean
+        +inserir(Object) Object
+    }
     class SaudeDao {
         -String SQL_VERIFICAR$
         +SaudeDao()
@@ -206,19 +229,6 @@ classDiagram
         +atualizar(Object) boolean
         +inserir(Object) Object
     }
-    class ViaMonitoradaDao {
-        -String SQL_SELECT$
-        -String SQL_INSERIR$
-        -String SQL_ATUALIZAR$
-        -String SQL_EXCLUIR$
-        +ViaMonitoradaDao()
-        +inserir(ViaMonitorada) ViaMonitorada
-        +listarPorCidadao(long) List~ViaMonitorada~
-        +buscar(long, long) Optional~ViaMonitorada~
-        +atualizar(ViaMonitorada) boolean
-        +excluir(long, long) boolean
-        -mapear(ResultSet) ViaMonitorada
-    }
     CrudDao <|.. AcaoDao
     CrudDao <|.. CidadaoDao
     FiltroOcorrencia --> StatusOcorrencia : status
@@ -228,5 +238,6 @@ classDiagram
     CrudDao <|.. OcorrenciaDao
     OcorrenciaDao --> AcaoDao : acaoDao
     CrudDao <|.. RegiaoDao
+    CrudDao <|.. RotaDao
     CrudDao <|.. ViaDao
     OcorrenciaDao ..> FiltroOcorrencia

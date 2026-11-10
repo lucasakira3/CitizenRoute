@@ -21,7 +21,7 @@ const CONTAS_DEMO = [
 ];
 
 function destinoApos(usuario) {
-  return usuario.tipo === "GESTOR" ? "/gestao" : "/meu-trajeto";
+  return usuario.tipo === "GESTOR" ? "/gestao" : "/minhas-rotas";
 }
 
 export default function EntrarPage() {
@@ -52,7 +52,7 @@ export default function EntrarPage() {
           </p>
           <div className="acoes">
             <a className="botao botao--primario" href={`#${destinoApos(sessao)}`}>
-              {sessao.tipo === "GESTOR" ? "Abrir a fila da gestão" : "Ver meu trajeto"}
+              {sessao.tipo === "GESTOR" ? "Abrir a fila da gestão" : "Ver minhas rotas"}
             </a>
             <button
               type="button"
@@ -171,7 +171,7 @@ function Cadastro() {
     if (ok) {
       entrar(usuario);
       avisarNaProximaPagina("sucesso", "Conta criada. Agora salve as vias do seu caminho para receber alertas.");
-      navegar("/meu-trajeto");
+      navegar("/minhas-rotas");
     }
   }
 

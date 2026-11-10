@@ -7,10 +7,11 @@ import br.com.citizenroute.model.Gestor;
 import br.com.citizenroute.model.NivelRisco;
 import br.com.citizenroute.model.Ocorrencia;
 import br.com.citizenroute.model.OcorrenciaVia;
+import br.com.citizenroute.model.PontoRota;
 import br.com.citizenroute.model.Regiao;
+import br.com.citizenroute.model.Rota;
 import br.com.citizenroute.model.Usuario;
 import br.com.citizenroute.model.Via;
-import br.com.citizenroute.model.ViaMonitorada;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -117,19 +118,41 @@ public final class Conversor {
         return mapa;
     }
 
-    public static Map<String, Object> viaMonitorada(ViaMonitorada viaMonitorada) {
+    public static Map<String, Object> rota(Rota rota) {
         Map<String, Object> mapa = new LinkedHashMap<>();
-        mapa.put("idCidadao", viaMonitorada.getIdCidadao());
-        mapa.put("via", via(viaMonitorada.getVia()));
-        mapa.put("apelido", viaMonitorada.getApelido());
-        mapa.put("dataInclusao", viaMonitorada.getDataInclusao());
+        mapa.put("id", rota.getId());
+        mapa.put("idCidadao", rota.getIdCidadao());
+        mapa.put("nome", rota.getNome());
+        mapa.put("origem", ponto(rota.getOrigem()));
+        mapa.put("destino", ponto(rota.getDestino()));
+        mapa.put("criterio", rota.getCriterio());
+        mapa.put("distanciaMetros", rota.getDistanciaMetros());
+        mapa.put("dataCriacao", rota.getDataCriacao());
+        mapa.put("vias", lista(rota.getVias(), Conversor::via));
+        return mapa;
+    }
+
+    /** Versão curta da rota, usada dentro dos alertas. */
+    private static Map<String, Object> rotaResumo(Rota rota) {
+        Map<String, Object> mapa = new LinkedHashMap<>();
+        mapa.put("id", rota.getId());
+        mapa.put("nome", rota.getNome());
+        return mapa;
+    }
+
+    private static Map<String, Object> ponto(PontoRota ponto) {
+        Map<String, Object> mapa = new LinkedHashMap<>();
+        mapa.put("descricao", ponto.descricao());
+        mapa.put("x", ponto.x());
+        mapa.put("y", ponto.y());
         return mapa;
     }
 
     public static Map<String, Object> alerta(Alerta alerta) {
         Map<String, Object> mapa = new LinkedHashMap<>();
         mapa.put("ocorrencia", ocorrencia(alerta.getOcorrencia()));
-        mapa.put("viasAfetadas", lista(alerta.getViasAfetadas(), Conversor::viaMonitorada));
+        mapa.put("viasAfetadas", lista(alerta.getViasAfetadas(), Conversor::via));
+        mapa.put("rotas", lista(alerta.getRotasAfetadas(), Conversor::rotaResumo));
         mapa.put("risco", risco(alerta.getRisco(), alerta.getNivel(), alerta.isAcimaDoLimite()));
         return mapa;
     }
