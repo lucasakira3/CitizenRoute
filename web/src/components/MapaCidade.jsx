@@ -28,7 +28,6 @@ export { zonaDaRegiao };
  */
 
 const ORDEM_RISCO = { BAIXO: 1, MODERADO: 2, ALTO: 3, CRITICO: 4 };
-const ORDEM_IMPACTO = { BLOQUEIO_TOTAL: 4, PARCIAL: 3, LENTIDAO: 2, SEM_INTERDICAO: 1 };
 const NIVEIS = ["BAIXO", "MODERADO", "ALTO", "CRITICO"];
 
 // Onde ficam as placas de vias que não foram achadas no mapa, em volta do centro da zona
@@ -50,34 +49,26 @@ function montarSinais(ocorrencias, dados) {
   let foraDoMapa = 0;
 
   ocorrencias.forEach((ocorrencia) => {
-    const comTracado = ocorrencia.vias
-      .map((item) => ({ ...item, indices: linhasNaCidade(dados, tracadoDaVia(dados, item.via)) }))
-      .filter((item) => item.indices.length);
+    const { via } = ocorrencia;
+    const indices = linhasNaCidade(dados, tracadoDaVia(dados, via));
 
-    comTracado.forEach((item) => {
-      const atual = afetadas.get(item.via.id);
+    if (indices.length) {
+      // A via acende na cor do pior risco entre as ocorrências dela
       const nivel = ocorrencia.risco.nivel;
+      const atual = afetadas.get(via.id);
       if (!atual) {
-        afetadas.set(item.via.id, { indices: item.indices, nivel, impacto: item.nivelImpacto, ids: [ocorrencia.id] });
+        afetadas.set(via.id, { indices, nivel, ids: [ocorrencia.id] });
       } else {
         atual.ids.push(ocorrencia.id);
         if (ORDEM_RISCO[nivel] > ORDEM_RISCO[atual.nivel]) atual.nivel = nivel;
-        if (ORDEM_IMPACTO[item.nivelImpacto] > ORDEM_IMPACTO[atual.impacto]) atual.impacto = item.nivelImpacto;
       }
-    });
-
-    if (comTracado.length) {
-      // A placa fica na via mais atingida (bloqueio total antes de lentidão)
-      const principal = [...comTracado].sort(
-        (a, b) => ORDEM_IMPACTO[b.nivelImpacto] - ORDEM_IMPACTO[a.nivelImpacto],
-      )[0];
-      const grupo = porVia.get(principal.via.id) ?? { indices: principal.indices, ocorrencias: [] };
+      const grupo = porVia.get(via.id) ?? { indices, ocorrencias: [] };
       grupo.ocorrencias.push(ocorrencia);
-      porVia.set(principal.via.id, grupo);
+      porVia.set(via.id, grupo);
       return;
     }
 
-    const zona = dados.zonas.find((z) => z.chave === zonaDaRegiao(ocorrencia.vias[0]?.via.regiao?.nome));
+    const zona = dados.zonas.find((z) => z.chave === zonaDaRegiao(via.zona));
     if (!zona) {
       foraDoMapa += 1;
       return;
@@ -113,11 +104,10 @@ function montarSinais(ocorrencias, dados) {
 function piorRiscoPorZona(ocorrencias) {
   const resultado = {};
   ocorrencias.forEach((ocorrencia) => {
-    new Set(ocorrencia.vias.map((item) => zonaDaRegiao(item.via.regiao?.nome))).forEach((chave) => {
-      if (chave && (!resultado[chave] || ORDEM_RISCO[ocorrencia.risco.nivel] > ORDEM_RISCO[resultado[chave]])) {
-        resultado[chave] = ocorrencia.risco.nivel;
-      }
-    });
+    const chave = zonaDaRegiao(ocorrencia.via.zona);
+    if (chave && (!resultado[chave] || ORDEM_RISCO[ocorrencia.risco.nivel] > ORDEM_RISCO[resultado[chave]])) {
+      resultado[chave] = ocorrencia.risco.nivel;
+    }
   });
   return resultado;
 }
@@ -221,7 +211,6 @@ export default function MapaCidade({
       afetadas: [...afetadas.values()].map((item) => ({
         indices: item.indices,
         nivel: item.nivel,
-        impacto: item.impacto,
         forte: Boolean(selecionada) && item.ids.includes(selecionada),
         fraca: Boolean(selecionada) && !item.ids.includes(selecionada),
       })),

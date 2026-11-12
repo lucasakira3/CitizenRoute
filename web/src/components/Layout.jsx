@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useApp } from "../contexto.js";
 import { PILARES } from "../utils/pilares.js";
 import Logo from "./Logo.jsx";
-import { api } from "../services/api.js";
 
 /**
  * Menu principal: os seis pilares do hub, o mesmo em todas as páginas.
@@ -105,8 +104,6 @@ export default function Layout({ rota, children }) {
         </div>
       </header>
 
-      <FaixaStatus />
-
       <main id="conteudo" className={`conteudo ${telaCheia ? "conteudo--tela-cheia" : ""}`} tabIndex={-1}>
         {children}
       </main>
@@ -137,43 +134,5 @@ export default function Layout({ rota, children }) {
         </footer>
       )}
     </>
-  );
-}
-
-/** Faixa zebrada, como fita de obra, que só aparece quando a API ou o banco estão fora do ar. */
-function FaixaStatus() {
-  const [saude, setSaude] = useState(null);
-  const [erro, setErro] = useState(null);
-
-  const verificar = useCallback(() => {
-    api
-      .buscar("/health")
-      .then((resposta) => {
-        setSaude(resposta);
-        setErro(null);
-      })
-      .catch(setErro);
-  }, []);
-
-  useEffect(() => {
-    verificar();
-  }, [verificar]);
-
-  const bancoFora = saude && !saude.banco.conectado;
-  if (!erro && !bancoFora) {
-    return null;
-  }
-
-  return (
-    <div className="faixa-status" role="alert">
-      <div className="faixa-status__interno">
-        <p>
-          <strong>{erro ? "API fora do ar." : "Banco indisponível."}</strong> {erro ? erro.message : saude.banco.mensagem}
-        </p>
-        <button type="button" className="botao botao--pequeno botao--secundario" onClick={verificar}>
-          Verificar de novo
-        </button>
-      </div>
-    </div>
   );
 }

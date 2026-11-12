@@ -1,131 +1,98 @@
 package br.com.citizenlife.dao;
 
-import br.com.citizenlife.config.OracleConnectionFactory;
 import br.com.citizenlife.model.Cidadao;
-import br.com.citizenlife.model.Modal;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/** Acesso à tabela CL_CIDADAO: o CRUD do cadastro e as consultas do login. */
+/** CRUD da tabela CL_CIDADAO. */
 public class CidadaoDao implements CrudDao<Cidadao> {
 
-    private static final String SQL_SELECT =
-            "SELECT id_cidadao, nome, email, senha_hash, modal, dt_cadastro FROM cl_cidadao";
-    private static final String SQL_INSERIR =
-            "INSERT INTO cl_cidadao (nome, email, senha_hash, modal, dt_cadastro) VALUES (?, ?, ?, ?, ?)";
-    private static final String SQL_ATUALIZAR =
-            "UPDATE cl_cidadao SET nome = ?, email = ?, senha_hash = ?, modal = ? WHERE id_cidadao = ?";
-    // ON DELETE CASCADE remove junto as rotas salvas (e as vias de cada rota) e os endereços.
-    private static final String SQL_EXCLUIR = "DELETE FROM cl_cidadao WHERE id_cidadao = ?";
-    private static final String SQL_EMAIL_EM_USO =
-            "SELECT COUNT(*) FROM cl_cidadao WHERE email = ? AND id_cidadao <> ?";
+    private static final String SELECT = "SELECT id_cidadao, nome, email, senha_hash, modal, dt_cadastro FROM cl_cidadao";
 
     @Override
     public Cidadao inserir(Cidadao cidadao) {
-        try (Connection conexao = OracleConnectionFactory.abrirConexao();
-             PreparedStatement comando = conexao.prepareStatement(SQL_INSERIR, new String[]{"ID_CIDADAO"})) {
+        String sql = "INSERT INTO cl_cidadao (nome, email, senha_hash, modal, dt_cadastro) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conexao = Conexao.abrir();
+             PreparedStatement comando = conexao.prepareStatement(sql, new String[]{"ID_CIDADAO"})) {
             comando.setString(1, cidadao.getNome());
             comando.setString(2, cidadao.getEmail());
             comando.setString(3, cidadao.getSenhaHash());
-            comando.setString(4, cidadao.getModal() == null ? null : cidadao.getModal().name());
-            comando.setTimestamp(5, JdbcUtil.paraTimestamp(cidadao.getDataCadastro()));
+            comando.setString(4, cidadao.getModal());
+            comando.setTimestamp(5, Timestamp.valueOf(cidadao.getDataCadastro()));
             comando.executeUpdate();
-            cidadao.setId(JdbcUtil.idGerado(comando));
+            cidadao.setId(Conexao.idGerado(comando));
             return cidadao;
         } catch (SQLException e) {
-            throw TradutorErroSql.traduzir(e, "cadastrar o cidadão");
+            throw Conexao.traduzir(e, "cadastrar o cidadão");
         }
     }
 
     @Override
     public List<Cidadao> listar() {
-        try (Connection conexao = OracleConnectionFactory.abrirConexao();
-             PreparedStatement comando = conexao.prepareStatement(SQL_SELECT + " ORDER BY nome");
-             ResultSet resultado = comando.executeQuery()) {
-            List<Cidadao> cidadaos = new ArrayList<>();
-            while (resultado.next()) {
-                cidadaos.add(mapear(resultado));
-            }
-            return cidadaos;
-        } catch (SQLException e) {
-            throw TradutorErroSql.traduzir(e, "listar os cidadãos");
-        }
+        return consultar(SELECT + " ORDER BY nome", null);
     }
 
     @Override
     public Optional<Cidadao> buscarPorId(long id) {
-        return buscarUm(SQL_SELECT + " WHERE id_cidadao = ?", id, "buscar o cidadão");
+        return consultar(SELECT + " WHERE id_cidadao = ?", id).stream().findFirst();
     }
 
     public Optional<Cidadao> buscarPorEmail(String email) {
-        return buscarUm(SQL_SELECT + " WHERE email = ?", email, "buscar o cidadão pelo e-mail");
-    }
-
-    /** Verifica se o e-mail pertence a outro cidadão (ignora o próprio id na edição). */
-    public boolean emailEmUso(String email, Long idIgnorado) {
-        try (Connection conexao = OracleConnectionFactory.abrirConexao();
-             PreparedStatement comando = conexao.prepareStatement(SQL_EMAIL_EM_USO)) {
-            comando.setString(1, email);
-            comando.setLong(2, idIgnorado == null ? -1 : idIgnorado);
-            try (ResultSet resultado = comando.executeQuery()) {
-                resultado.next();
-                return resultado.getInt(1) > 0;
-            }
-        } catch (SQLException e) {
-            throw TradutorErroSql.traduzir(e, "verificar o e-mail");
-        }
+        return consultar(SELECT + " WHERE email = ?", email).stream().findFirst();
     }
 
     @Override
     public boolean atualizar(Cidadao cidadao) {
-        try (Connection conexao = OracleConnectionFactory.abrirConexao();
-             PreparedStatement comando = conexao.prepareStatement(SQL_ATUALIZAR)) {
+        String sql = "UPDATE cl_cidadao SET nome = ?, email = ?, senha_hash = ?, modal = ? WHERE id_cidadao = ?";
+        try (Connection conexao = Conexao.abrir(); PreparedStatement comando = conexao.prepareStatement(sql)) {
             comando.setString(1, cidadao.getNome());
             comando.setString(2, cidadao.getEmail());
             comando.setString(3, cidadao.getSenhaHash());
-            comando.setString(4, cidadao.getModal() == null ? null : cidadao.getModal().name());
+            comando.setString(4, cidadao.getModal());
             comando.setLong(5, cidadao.getId());
             return comando.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw TradutorErroSql.traduzir(e, "atualizar o cidadão");
+            throw Conexao.traduzir(e, "atualizar o cidadão");
         }
     }
 
+    /** ON DELETE CASCADE apaga junto as rotas e os endereços do cidadão. */
     @Override
     public boolean excluir(long id) {
-        try (Connection conexao = OracleConnectionFactory.abrirConexao();
-             PreparedStatement comando = conexao.prepareStatement(SQL_EXCLUIR)) {
+        try (Connection conexao = Conexao.abrir();
+             PreparedStatement comando = conexao.prepareStatement("DELETE FROM cl_cidadao WHERE id_cidadao = ?")) {
             comando.setLong(1, id);
             return comando.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw TradutorErroSql.traduzir(e, "excluir o cidadão");
+            throw Conexao.traduzir(e, "excluir o cidadão");
         }
     }
 
-    private Optional<Cidadao> buscarUm(String sql, Object parametro, String contexto) {
-        try (Connection conexao = OracleConnectionFactory.abrirConexao();
-             PreparedStatement comando = conexao.prepareStatement(sql)) {
-            comando.setObject(1, parametro);
-            try (ResultSet resultado = comando.executeQuery()) {
-                return resultado.next() ? Optional.of(mapear(resultado)) : Optional.empty();
+    private List<Cidadao> consultar(String sql, Object parametro) {
+        try (Connection conexao = Conexao.abrir(); PreparedStatement comando = conexao.prepareStatement(sql)) {
+            if (parametro != null) {
+                comando.setObject(1, parametro);
             }
+            List<Cidadao> cidadaos = new ArrayList<>();
+            try (ResultSet resultado = comando.executeQuery()) {
+                while (resultado.next()) {
+                    Cidadao cidadao = new Cidadao(resultado.getLong("id_cidadao"), resultado.getString("nome"),
+                            resultado.getString("email"), resultado.getString("modal"));
+                    cidadao.setSenhaHash(resultado.getString("senha_hash"));
+                    cidadao.setDataCadastro(Conexao.data(resultado, "dt_cadastro"));
+                    cidadaos.add(cidadao);
+                }
+            }
+            return cidadaos;
         } catch (SQLException e) {
-            throw TradutorErroSql.traduzir(e, contexto);
+            throw Conexao.traduzir(e, "consultar os cidadãos");
         }
-    }
-
-    private Cidadao mapear(ResultSet resultado) throws SQLException {
-        String modal = resultado.getString("modal");
-        Cidadao cidadao = new Cidadao(resultado.getLong("id_cidadao"), resultado.getString("nome"),
-                resultado.getString("email"), modal == null ? null : Modal.valueOf(modal));
-        cidadao.setSenhaHash(resultado.getString("senha_hash"));
-        cidadao.setDataCadastro(JdbcUtil.lerData(resultado, "dt_cadastro"));
-        return cidadao;
     }
 }

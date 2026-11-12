@@ -14,7 +14,7 @@
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <exec.mainClass>br.com.citizenlife.CitizenLifeApplication</exec.mainClass>
+        <exec.mainClass>br.com.citizenlife.CitizenLife</exec.mainClass>
     </properties>
 
     <dependencies>

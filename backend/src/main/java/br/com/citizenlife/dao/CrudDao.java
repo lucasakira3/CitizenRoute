@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Contrato das operações CRUD que todo DAO de entidade principal implementa.
+ * Contrato do CRUD que os DAOs das entidades principais implementam
+ * (CidadaoDao, RotaDao e EnderecoDao).
  *
  * @param <T> entidade do pacote model
  */
@@ -19,9 +20,9 @@ public interface CrudDao<T> {
     /** SELECT por chave primária. Vazio quando o id não existe. */
     Optional<T> buscarPorId(long id);
 
-    /** UPDATE. Devolve falso quando nenhum registro tem o id informado. */
+    /** UPDATE. Devolve falso quando nenhum registro tem o id. */
     boolean atualizar(T entidade);
 
-    /** DELETE. Devolve falso quando nenhum registro tem o id informado. */
+    /** DELETE. Devolve falso quando nenhum registro tem o id. */
     boolean excluir(long id);
 }

@@ -1,19 +1,19 @@
 package br.com.citizenlife.model;
 
-/** Avenida, rua ou trecho, sempre ligado a uma região (tabela CL_VIA). */
+/** Avenida ou rua cadastrada, com a zona da cidade (tabela CL_VIA). */
 public class Via {
 
     private Long id;
     private String nome;
-    private Regiao regiao;
+    private String zona;
 
     public Via() {
     }
 
-    public Via(Long id, String nome, Regiao regiao) {
+    public Via(Long id, String nome, String zona) {
         this.id = id;
         this.nome = nome;
-        this.regiao = regiao;
+        this.zona = zona;
     }
 
     public Long getId() {
@@ -32,11 +32,11 @@ public class Via {
         this.nome = nome;
     }
 
-    public Regiao getRegiao() {
-        return regiao;
+    public String getZona() {
+        return zona;
     }
 
-    public void setRegiao(Regiao regiao) {
-        this.regiao = regiao;
+    public void setZona(String zona) {
+        this.zona = zona;
     }
 }

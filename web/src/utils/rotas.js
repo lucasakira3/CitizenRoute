@@ -301,15 +301,13 @@ function montarResultado(rede, origem, destino, saida, chegada, passos) {
 
 /**
  * Partes da rota que passam por vias com ocorrência, na cor do pior risco de cada uma.
- * alertas: resposta da API ({ viasAfetadas, risco }).
+ * alertas: ocorrências no caminho, vindas da API ({ via, risco }).
  */
 export function trechosComRisco(rota, alertas, nomesPorVia) {
   const pior = new Map();
-  alertas.forEach(({ viasAfetadas, risco }) => {
-    viasAfetadas.forEach((via) => {
-      (nomesPorVia.get(via.id) ?? []).forEach((nome) => {
-        if (!pior.has(nome) || ORDEM_RISCO[risco.nivel] > ORDEM_RISCO[pior.get(nome)]) pior.set(nome, risco.nivel);
-      });
+  alertas.forEach(({ via, risco }) => {
+    (nomesPorVia.get(via.id) ?? []).forEach((nome) => {
+      if (!pior.has(nome) || ORDEM_RISCO[risco.nivel] > ORDEM_RISCO[pior.get(nome)]) pior.set(nome, risco.nivel);
     });
   });
   return rota.segmentos
@@ -355,10 +353,8 @@ export function penalidadesDeRisco(ocorrencias, nomesPorVia) {
   ocorrencias.forEach((ocorrencia) => {
     const nivel = ocorrencia.risco?.nivel;
     if (!nivel || ORDEM_RISCO[nivel] < ORDEM_RISCO.MODERADO) return;
-    ocorrencia.vias.forEach(({ via }) => {
-      (nomesPorVia.get(via.id) ?? []).forEach((nome) => {
-        if (!pior.has(nome) || ORDEM_RISCO[nivel] > ORDEM_RISCO[pior.get(nome)]) pior.set(nome, nivel);
-      });
+    (nomesPorVia.get(ocorrencia.via.id) ?? []).forEach((nome) => {
+      if (!pior.has(nome) || ORDEM_RISCO[nivel] > ORDEM_RISCO[pior.get(nome)]) pior.set(nome, nivel);
     });
   });
   return new Map([...pior].map(([nome, nivel]) => [nome, PENALIDADE_RISCO[nivel]]));
@@ -492,7 +488,6 @@ export function minutosPara(distanciaMetros, velocidadeKmh) {
 export function corpoDaRota(rota, mudancas = {}) {
   return {
     nome: rota.nome,
-    criterio: rota.criterio,
     distanciaMetros: rota.distanciaMetros,
     origem: rota.origem,
     destino: rota.destino,

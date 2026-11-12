@@ -3,7 +3,6 @@ package br.com.citizenlife.api;
 import br.com.citizenlife.exception.ValidacaoException;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -11,24 +10,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Leitor e escritor de JSON feito só com Java puro, sem bibliotecas externas.
- *
- * <p>Conversões usadas:</p>
- * <ul>
- *   <li>objeto JSON ↔ Map&lt;String, Object&gt;</li>
- *   <li>array JSON ↔ List&lt;Object&gt;</li>
- *   <li>texto ↔ String; número ↔ Long ou Double; true/false ↔ Boolean; null ↔ null</li>
- *   <li>enum → nome da constante; LocalDateTime → texto ISO (2026-11-07T14:30:00)</li>
- * </ul>
+ * Leitor e escritor de JSON feito com Java puro, sem bibliotecas.
+ * Objeto JSON ↔ Map, array ↔ List, texto ↔ String, número ↔ Long ou Double, true/false ↔ Boolean.
  */
 public final class Json {
 
-    private static final DateTimeFormatter FORMATO_DATA = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    private final String texto;
+    private int posicao;
 
-    private Json() {
+    private Json(String texto) {
+        this.texto = texto;
     }
 
-    // ---------------------------------------------------------------- escrita
+    // ------------------------------------------------------------------ escrita
 
     public static String escrever(Object valor) {
         StringBuilder saida = new StringBuilder();
@@ -39,38 +33,28 @@ public final class Json {
     private static void escrever(Object valor, StringBuilder saida) {
         if (valor == null) {
             saida.append("null");
-        } else if (valor instanceof String texto) {
-            escreverTexto(texto, saida);
-        } else if (valor instanceof Double numero && (numero.isNaN() || numero.isInfinite())) {
-            saida.append("null");
         } else if (valor instanceof Number || valor instanceof Boolean) {
             saida.append(valor);
-        } else if (valor instanceof Enum<?> constante) {
-            escreverTexto(constante.name(), saida);
         } else if (valor instanceof LocalDateTime data) {
-            escreverTexto(data.withNano(0).format(FORMATO_DATA), saida);
+            escreverTexto(data.withNano(0).toString(), saida);
         } else if (valor instanceof Map<?, ?> mapa) {
             saida.append('{');
-            boolean primeiro = true;
-            for (Map.Entry<?, ?> entrada : mapa.entrySet()) {
-                if (!primeiro) {
-                    saida.append(',');
-                }
-                primeiro = false;
-                escreverTexto(String.valueOf(entrada.getKey()), saida);
+            String separador = "";
+            for (Map.Entry<?, ?> item : mapa.entrySet()) {
+                saida.append(separador);
+                escreverTexto(String.valueOf(item.getKey()), saida);
                 saida.append(':');
-                escrever(entrada.getValue(), saida);
+                escrever(item.getValue(), saida);
+                separador = ",";
             }
             saida.append('}');
-        } else if (valor instanceof Collection<?> colecao) {
+        } else if (valor instanceof Collection<?> lista) {
             saida.append('[');
-            boolean primeiro = true;
-            for (Object item : colecao) {
-                if (!primeiro) {
-                    saida.append(',');
-                }
-                primeiro = false;
+            String separador = "";
+            for (Object item : lista) {
+                saida.append(separador);
                 escrever(item, saida);
+                separador = ",";
             }
             saida.append(']');
         } else {
@@ -78,18 +62,15 @@ public final class Json {
         }
     }
 
-    private static void escreverTexto(String texto, StringBuilder saida) {
+    private static void escreverTexto(String valor, StringBuilder saida) {
         saida.append('"');
-        for (int i = 0; i < texto.length(); i++) {
-            char c = texto.charAt(i);
+        for (char c : valor.toCharArray()) {
             switch (c) {
                 case '"' -> saida.append("\\\"");
                 case '\\' -> saida.append("\\\\");
                 case '\n' -> saida.append("\\n");
                 case '\r' -> saida.append("\\r");
                 case '\t' -> saida.append("\\t");
-                case '\b' -> saida.append("\\b");
-                case '\f' -> saida.append("\\f");
                 default -> {
                     if (c < 0x20) {
                         saida.append(String.format("\\u%04x", (int) c));
@@ -102,195 +83,144 @@ public final class Json {
         saida.append('"');
     }
 
-    // ---------------------------------------------------------------- leitura
+    // ------------------------------------------------------------------ leitura
 
-    /** Lê um texto JSON. Lança ValidacaoException com a posição do erro se o JSON estiver malformado. */
+    /** Lê um texto JSON. Se estiver malformado, lança ValidacaoException com a posição do erro. */
     public static Object ler(String texto) {
-        Leitor leitor = new Leitor(texto);
-        leitor.pularEspacos();
+        Json leitor = new Json(texto);
         Object valor = leitor.lerValor();
         leitor.pularEspacos();
-        if (!leitor.fim()) {
-            throw leitor.erro("conteúdo extra depois do fim do JSON");
+        if (leitor.posicao < texto.length()) {
+            throw leitor.erro("conteúdo extra depois do fim");
         }
         return valor;
     }
 
-    /** Analisador recursivo: cada método lê um tipo de valor e avança a posição. */
-    private static final class Leitor {
-        private final String texto;
-        private int posicao;
-
-        Leitor(String texto) {
-            this.texto = texto;
+    private Object lerValor() {
+        pularEspacos();
+        if (posicao >= texto.length()) {
+            throw erro("o texto terminou antes do esperado");
         }
+        char c = texto.charAt(posicao);
+        if (c == '{') return lerObjeto();
+        if (c == '[') return lerLista();
+        if (c == '"') return lerTexto();
+        if (texto.startsWith("true", posicao)) return lerPalavra("true", Boolean.TRUE);
+        if (texto.startsWith("false", posicao)) return lerPalavra("false", Boolean.FALSE);
+        if (texto.startsWith("null", posicao)) return lerPalavra("null", null);
+        if (c == '-' || Character.isDigit(c)) return lerNumero();
+        throw erro("caractere inesperado '" + c + "'");
+    }
 
-        boolean fim() {
-            return posicao >= texto.length();
-        }
-
-        void pularEspacos() {
-            while (!fim() && Character.isWhitespace(texto.charAt(posicao))) {
-                posicao++;
-            }
-        }
-
-        Object lerValor() {
-            if (fim()) {
-                throw erro("o JSON terminou antes do esperado");
-            }
-            char c = texto.charAt(posicao);
-            return switch (c) {
-                case '{' -> lerObjeto();
-                case '[' -> lerLista();
-                case '"' -> lerTexto();
-                case 't' -> lerPalavra("true", Boolean.TRUE);
-                case 'f' -> lerPalavra("false", Boolean.FALSE);
-                case 'n' -> lerPalavra("null", null);
-                default -> {
-                    if (c == '-' || Character.isDigit(c)) {
-                        yield lerNumero();
-                    }
-                    throw erro("caractere inesperado '" + c + "'");
-                }
-            };
-        }
-
-        Map<String, Object> lerObjeto() {
-            Map<String, Object> objeto = new LinkedHashMap<>();
-            posicao++; // {
-            pularEspacos();
-            if (consumir('}')) {
-                return objeto;
-            }
-            do {
-                pularEspacos();
-                if (fim() || texto.charAt(posicao) != '"') {
-                    throw erro("esperava o nome de um campo entre aspas");
-                }
-                String chave = lerTexto();
-                pularEspacos();
-                if (!consumir(':')) {
-                    throw erro("esperava ':' depois do nome do campo");
-                }
-                pularEspacos();
-                objeto.put(chave, lerValor());
-                pularEspacos();
-            } while (consumir(','));
-            if (!consumir('}')) {
-                throw erro("esperava ',' ou '}'");
-            }
+    private Map<String, Object> lerObjeto() {
+        Map<String, Object> objeto = new LinkedHashMap<>();
+        posicao++;
+        pularEspacos();
+        if (consumir('}')) {
             return objeto;
         }
-
-        List<Object> lerLista() {
-            List<Object> lista = new ArrayList<>();
-            posicao++; // [
+        do {
             pularEspacos();
-            if (consumir(']')) {
-                return lista;
+            if (posicao >= texto.length() || texto.charAt(posicao) != '"') {
+                throw erro("esperava o nome de um campo entre aspas");
             }
-            do {
-                pularEspacos();
-                lista.add(lerValor());
-                pularEspacos();
-            } while (consumir(','));
-            if (!consumir(']')) {
-                throw erro("esperava ',' ou ']'");
+            String chave = lerTexto();
+            pularEspacos();
+            if (!consumir(':')) {
+                throw erro("esperava ':' depois do nome do campo");
             }
+            objeto.put(chave, lerValor());
+            pularEspacos();
+        } while (consumir(','));
+        if (!consumir('}')) {
+            throw erro("esperava ',' ou '}'");
+        }
+        return objeto;
+    }
+
+    private List<Object> lerLista() {
+        List<Object> lista = new ArrayList<>();
+        posicao++;
+        pularEspacos();
+        if (consumir(']')) {
             return lista;
         }
-
-        String lerTexto() {
-            StringBuilder valor = new StringBuilder();
-            posicao++; // aspas de abertura
-            while (!fim()) {
-                char c = texto.charAt(posicao++);
-                if (c == '"') {
-                    return valor.toString();
-                }
-                if (c != '\\') {
-                    valor.append(c);
-                    continue;
-                }
-                if (fim()) {
-                    break;
-                }
-                char escape = texto.charAt(posicao++);
-                switch (escape) {
-                    case '"', '\\', '/' -> valor.append(escape);
-                    case 'n' -> valor.append('\n');
-                    case 'r' -> valor.append('\r');
-                    case 't' -> valor.append('\t');
-                    case 'b' -> valor.append('\b');
-                    case 'f' -> valor.append('\f');
-                    case 'u' -> {
-                        if (posicao + 4 > texto.length()) {
-                            throw erro("escape \\u incompleto");
-                        }
-                        try {
-                            valor.append((char) Integer.parseInt(texto.substring(posicao, posicao + 4), 16));
-                        } catch (NumberFormatException e) {
-                            throw erro("escape \\u inválido");
-                        }
-                        posicao += 4;
-                    }
-                    default -> throw erro("escape inválido \\" + escape);
-                }
-            }
-            throw erro("texto sem aspas de fechamento");
+        do {
+            lista.add(lerValor());
+            pularEspacos();
+        } while (consumir(','));
+        if (!consumir(']')) {
+            throw erro("esperava ',' ou ']'");
         }
+        return lista;
+    }
 
-        Number lerNumero() {
-            int inicio = posicao;
-            if (texto.charAt(posicao) == '-') {
-                posicao++;
+    private String lerTexto() {
+        StringBuilder valor = new StringBuilder();
+        posicao++;
+        while (posicao < texto.length()) {
+            char c = texto.charAt(posicao++);
+            if (c == '"') {
+                return valor.toString();
             }
-            boolean decimal = false;
-            while (!fim()) {
-                char c = texto.charAt(posicao);
-                if (Character.isDigit(c)) {
-                    posicao++;
-                } else if (c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-') {
-                    decimal = true;
-                    posicao++;
-                } else {
-                    break;
-                }
+            if (c != '\\' || posicao >= texto.length()) {
+                valor.append(c);
+                continue;
             }
-            String numero = texto.substring(inicio, posicao);
-            try {
-                if (!decimal) {
+            char escape = texto.charAt(posicao++);
+            switch (escape) {
+                case 'n' -> valor.append('\n');
+                case 'r' -> valor.append('\r');
+                case 't' -> valor.append('\t');
+                case 'b' -> valor.append('\b');
+                case 'f' -> valor.append('\f');
+                case 'u' -> {
                     try {
-                        return Long.parseLong(numero);
-                    } catch (NumberFormatException grande) {
-                        return Double.parseDouble(numero);
+                        valor.append((char) Integer.parseInt(texto.substring(posicao, posicao + 4), 16));
+                    } catch (RuntimeException e) {
+                        throw erro("escape \\u inválido");
                     }
+                    posicao += 4;
                 }
-                return Double.parseDouble(numero);
-            } catch (NumberFormatException e) {
-                throw erro("número inválido '" + numero + "'");
+                default -> valor.append(escape);
             }
         }
+        throw erro("texto sem aspas de fechamento");
+    }
 
-        Object lerPalavra(String palavra, Object valor) {
-            if (!texto.startsWith(palavra, posicao)) {
-                throw erro("valor inválido");
-            }
-            posicao += palavra.length();
-            return valor;
+    private Number lerNumero() {
+        int inicio = posicao++;
+        while (posicao < texto.length() && "0123456789.eE+-".indexOf(texto.charAt(posicao)) >= 0) {
+            posicao++;
         }
+        String numero = texto.substring(inicio, posicao);
+        try {
+            return numero.matches("-?\\d{1,18}") ? Long.parseLong(numero) : Double.parseDouble(numero);
+        } catch (NumberFormatException e) {
+            throw erro("número inválido '" + numero + "'");
+        }
+    }
 
-        boolean consumir(char esperado) {
-            if (!fim() && texto.charAt(posicao) == esperado) {
-                posicao++;
-                return true;
-            }
-            return false;
-        }
+    private Object lerPalavra(String palavra, Object valor) {
+        posicao += palavra.length();
+        return valor;
+    }
 
-        ValidacaoException erro(String motivo) {
-            return new ValidacaoException("JSON inválido na posição " + posicao + ": " + motivo + ".");
+    private void pularEspacos() {
+        while (posicao < texto.length() && Character.isWhitespace(texto.charAt(posicao))) {
+            posicao++;
         }
+    }
+
+    private boolean consumir(char esperado) {
+        if (posicao < texto.length() && texto.charAt(posicao) == esperado) {
+            posicao++;
+            return true;
+        }
+        return false;
+    }
+
+    private ValidacaoException erro(String motivo) {
+        return new ValidacaoException("corpo", "JSON inválido na posição " + posicao + ": " + motivo + ".");
     }
 }

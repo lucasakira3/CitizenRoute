@@ -119,7 +119,6 @@ export default function PlanejarRotaPage() {
         setRotaSalva(rota);
         setOrigem(rota.origem);
         setDestino(rota.destino);
-        setCriterio(rota.criterio);
       })
       .catch((erro) => setAviso({ tipo: "erro", texto: erro.message }));
   }, [idRota, cidadao, sessao?.id]);
@@ -153,7 +152,7 @@ export default function PlanejarRotaPage() {
     setCalculando(true);
     setErroRota(null);
     try {
-      const ativas = await api.buscar(`/ocorrencias${consulta({ ativas: true, modal })}`);
+      const ativas = await api.buscar(`/ocorrencias${consulta({ modal })}`);
       const opcoes = {
         motorizado: infoModal.motorizado,
         velocidade: infoModal.velocidadeMediaKmh,
@@ -381,7 +380,6 @@ export default function PlanejarRotaPage() {
               rotaSalva={rotaSalva}
               origem={origem}
               destino={destino}
-              criterio={criterio}
               escolhida={escolhida}
               modalDiferente={cidadao && modal !== (sessao.modal ?? dominio.modalPadraoRisco)}
               aoSalvar={(rota, texto) => {
@@ -427,7 +425,7 @@ function Resultado({ resultado, criterio, aoEscolher, modal, rotulo }) {
               />
               <span className="rota-opcao__topo">
                 <Icone nome={codigo === "SEGURA" ? "ESCUDO" : "RELOGIO"} tamanho={18} />
-                {rotulo("criteriosRota", codigo)}
+                {codigo === "SEGURA" ? "Mais segura" : "Mais rápida"}
               </span>
               <span className="rota-opcao__tempo">{formatarMinutos(opcao.minutos)}</span>
               <span className="rota-opcao__meta">
@@ -466,19 +464,17 @@ function Resultado({ resultado, criterio, aoEscolher, modal, rotulo }) {
       ) : (
         <ol className="rota-alertas">
           {escolhida.alertas.map((alerta) => (
-            <li key={alerta.ocorrencia.id} className={`rota-alerta rota-alerta--${alerta.risco.nivel}`}>
+            <li key={alerta.id} className={`rota-alerta rota-alerta--${alerta.risco.nivel}`}>
               <SinalRisco risco={alerta.risco} tamanho="pequeno" />
               <div className="rota-alerta__texto">
                 <p className="rota-alerta__nivel">
                   Risco {rotulo("niveisRisco", alerta.risco.nivel).toLowerCase()} para quem {frase}
                 </p>
-                <a className="rota-alerta__titulo" href={`#/mobilidade/mapa?modal=${modal}&ocorrencia=${alerta.ocorrencia.id}`}>
-                  {alerta.ocorrencia.titulo}
+                <a className="rota-alerta__titulo" href={`#/mobilidade/mapa?modal=${modal}&ocorrencia=${alerta.id}`}>
+                  {alerta.titulo}
                 </a>
                 <div className="lista-placas">
-                  {alerta.viasAfetadas.map((via) => (
-                    <PlacaVia key={via.id} via={via} semRegiao />
-                  ))}
+                  <PlacaVia via={alerta.via} semRegiao />
                 </div>
               </div>
             </li>
@@ -504,7 +500,7 @@ function Resultado({ resultado, criterio, aoEscolher, modal, rotulo }) {
 
 // ------------------------------------------------------------------- salvar
 
-function SalvarRota({ cidadao, rotaSalva, origem, destino, criterio, escolhida, modalDiferente, aoSalvar }) {
+function SalvarRota({ cidadao, rotaSalva, origem, destino, escolhida, modalDiferente, aoSalvar }) {
   const { sessao, dominio } = useApp();
   const form = useFormulario({ nome: rotaSalva?.nome ?? "" });
 
@@ -530,7 +526,6 @@ function SalvarRota({ cidadao, rotaSalva, origem, destino, criterio, escolhida, 
     evento.preventDefault();
     const corpo = {
       nome: form.valores.nome.trim(),
-      criterio,
       distanciaMetros: escolhida.rota.distanciaMetros,
       origem: { descricao: origem.descricao, x: origem.x, y: origem.y },
       destino: { descricao: destino.descricao, x: destino.x, y: destino.y },

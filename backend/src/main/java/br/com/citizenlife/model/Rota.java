@@ -5,40 +5,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Rota salva pelo cidadão, como "Casa → Trabalho" (tabela CL_ROTA).
- *
- * <p>A lista de vias (tabela associativa CL_ROTA_VIA, N:N entre rota e via) guarda, na ordem
- * do caminho, as vias cadastradas que a rota percorre. É por elas que os alertas são calculados:
- * uma ocorrência numa dessas vias vira alerta para o dono da rota.</p>
+ * Caminho salvo pelo cidadão, da saída ao destino (tabela CL_ROTA).
+ * Guarda as vias cadastradas por onde passa (tabela associativa CL_ROTA_VIA, N:N com CL_VIA).
+ * X e Y são a posição no mapa, usada para redesenhar o caminho.
  */
 public class Rota {
 
     private Long id;
     private Long idCidadao;
     private String nome;
-    private PontoRota origem;
-    private PontoRota destino;
-    private CriterioRota criterio;
+    private String origemDescricao;
+    private double origemX;
+    private double origemY;
+    private String destinoDescricao;
+    private double destinoX;
+    private double destinoY;
     private int distanciaMetros;
     private LocalDateTime dataCriacao;
     private List<Via> vias = new ArrayList<>();
 
-    public Rota() {
-    }
-
-    public Rota(Long id, Long idCidadao, String nome, PontoRota origem, PontoRota destino,
-                CriterioRota criterio, int distanciaMetros) {
-        this.id = id;
-        this.idCidadao = idCidadao;
-        this.nome = nome;
-        this.origem = origem;
-        this.destino = destino;
-        this.criterio = criterio;
-        this.distanciaMetros = distanciaMetros;
-    }
-
-    /** Verdadeiro quando a rota passa pela via informada. */
-    public boolean passaPelaVia(Long idVia) {
+    /** Indica se a rota passa pela via informada. */
+    public boolean passaPor(Long idVia) {
         return vias.stream().anyMatch(via -> via.getId().equals(idVia));
     }
 
@@ -66,28 +53,52 @@ public class Rota {
         this.nome = nome;
     }
 
-    public PontoRota getOrigem() {
-        return origem;
+    public String getOrigemDescricao() {
+        return origemDescricao;
     }
 
-    public void setOrigem(PontoRota origem) {
-        this.origem = origem;
+    public void setOrigemDescricao(String origemDescricao) {
+        this.origemDescricao = origemDescricao;
     }
 
-    public PontoRota getDestino() {
-        return destino;
+    public double getOrigemX() {
+        return origemX;
     }
 
-    public void setDestino(PontoRota destino) {
-        this.destino = destino;
+    public void setOrigemX(double origemX) {
+        this.origemX = origemX;
     }
 
-    public CriterioRota getCriterio() {
-        return criterio;
+    public double getOrigemY() {
+        return origemY;
     }
 
-    public void setCriterio(CriterioRota criterio) {
-        this.criterio = criterio;
+    public void setOrigemY(double origemY) {
+        this.origemY = origemY;
+    }
+
+    public String getDestinoDescricao() {
+        return destinoDescricao;
+    }
+
+    public void setDestinoDescricao(String destinoDescricao) {
+        this.destinoDescricao = destinoDescricao;
+    }
+
+    public double getDestinoX() {
+        return destinoX;
+    }
+
+    public void setDestinoX(double destinoX) {
+        this.destinoX = destinoX;
+    }
+
+    public double getDestinoY() {
+        return destinoY;
+    }
+
+    public void setDestinoY(double destinoY) {
+        this.destinoY = destinoY;
     }
 
     public int getDistanciaMetros() {
@@ -111,6 +122,6 @@ public class Rota {
     }
 
     public void setVias(List<Via> vias) {
-        this.vias = vias;
+        this.vias = vias == null ? new ArrayList<>() : new ArrayList<>(vias);
     }
 }

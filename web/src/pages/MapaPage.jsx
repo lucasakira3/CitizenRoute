@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { EtiquetaStatus, Gravidade } from "../components/Etiquetas.jsx";
+import { Gravidade } from "../components/Etiquetas.jsx";
 import { ErroCarga, Vazio } from "../components/Estados.jsx";
 import Icone from "../components/Icone.jsx";
 import MapaCidade, { zonaDaRegiao } from "../components/MapaCidade.jsx";
@@ -44,7 +44,7 @@ export default function MapaPage() {
   const refMapa = useRef(null);
   const refPainel = useRef(null);
 
-  const ativas = useCarregar(() => api.buscar(`/ocorrencias${consulta({ ativas: true, modal })}`), [modal]);
+  const ativas = useCarregar(() => api.buscar(`/ocorrencias${consulta({ modal })}`), [modal]);
 
   // Vindo de um alerta: assim que o mapa e as placas carregam, a câmera voa até a ocorrência.
   useEffect(() => {
@@ -79,7 +79,7 @@ export default function MapaPage() {
 
   const ordenadas = ativas.dados ? [...ativas.dados].sort((a, b) => b.risco.valor - a.risco.valor) : [];
   const visiveis = zona
-    ? ordenadas.filter((ocorrencia) => ocorrencia.vias.some((item) => zonaDaRegiao(item.via.regiao?.nome) === zona))
+    ? ordenadas.filter((ocorrencia) => zonaDaRegiao(ocorrencia.via.zona) === zona)
     : ordenadas;
   const comAlerta = ordenadas.filter((ocorrencia) => ocorrencia.risco.alerta).length;
   const escolhida = ordenadas.find((ocorrencia) => ocorrencia.id === selecionada) ?? null;
@@ -206,7 +206,7 @@ export default function MapaPage() {
                         </span>
                         <span className="mapa-lista__titulo">{ocorrencia.titulo}</span>
                         <span className="mapa-lista__vias">
-                          {ocorrencia.vias.map((item) => item.via.nome).join(" · ")}
+                          {ocorrencia.via.nome}
                         </span>
                       </span>
                     </button>
@@ -251,17 +251,13 @@ function DetalheNoMapa({ ocorrencia, rotulo, aoVoltar }) {
       </p>
       {ocorrencia.descricao && <p className="mapa-detalhe__descricao">{ocorrencia.descricao}</p>}
       <div className="mapa-detalhe__etiquetas">
-        <EtiquetaStatus status={ocorrencia.status} />
         <Gravidade valor={ocorrencia.gravidade} />
       </div>
       <div className="mapa-detalhe__vias">
-        {ocorrencia.vias.map((item) => (
-          <PlacaVia key={item.via.id} via={item.via} impacto={item.nivelImpacto} />
-        ))}
+        <PlacaVia via={ocorrencia.via} />
       </div>
       <p className="mapa-detalhe__quando">
-        Registrada {tempoRelativo(ocorrencia.dataRegistro)}
-        {ocorrencia.autor ? ` por ${ocorrencia.autor.nome.split(" ")[0]}` : ""}.
+        Registrada {tempoRelativo(ocorrencia.dataRegistro)}.
       </p>
     </article>
   );

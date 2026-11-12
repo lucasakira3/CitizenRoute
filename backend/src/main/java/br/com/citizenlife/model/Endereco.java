@@ -1,30 +1,26 @@
 package br.com.citizenlife.model;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
 /**
- * Endereço salvo pelo cidadão, como "Casa" ou "Trabalho" (tabela CL_ENDERECO).
- * Serve de atalho para a saída e o destino na tela de rotas.
- * O local usa o mesmo {@link PontoRota} das rotas: o nome escolhido e a posição no mapa.
+ * Lugar salvo pelo cidadão, como "Casa" ou "Trabalho" (tabela CL_ENDERECO).
+ * Vira atalho de saída e destino na tela de rota.
  */
 public class Endereco {
+
+    public static final List<String> TIPOS = List.of("CASA", "TRABALHO", "ESTUDO", "OUTRO");
 
     private Long id;
     private Long idCidadao;
     private String apelido;
-    private TipoEndereco tipo;
-    private PontoRota local;
-    private LocalDateTime dataCriacao;
+    private String tipo;
+    private String descricao;
+    private double x;
+    private double y;
 
-    public Endereco() {
-    }
-
-    public Endereco(Long id, Long idCidadao, String apelido, TipoEndereco tipo, PontoRota local) {
-        this.id = id;
-        this.idCidadao = idCidadao;
-        this.apelido = apelido;
-        this.tipo = tipo;
-        this.local = local;
+    /** Casa e trabalho são únicos: cada cidadão tem no máximo um de cada. */
+    public boolean isTipoUnico() {
+        return "CASA".equals(tipo) || "TRABALHO".equals(tipo);
     }
 
     public Long getId() {
@@ -51,27 +47,35 @@ public class Endereco {
         this.apelido = apelido;
     }
 
-    public TipoEndereco getTipo() {
+    public String getTipo() {
         return tipo;
     }
 
-    public void setTipo(TipoEndereco tipo) {
+    public void setTipo(String tipo) {
         this.tipo = tipo;
     }
 
-    public PontoRota getLocal() {
-        return local;
+    public String getDescricao() {
+        return descricao;
     }
 
-    public void setLocal(PontoRota local) {
-        this.local = local;
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
     }
 
-    public LocalDateTime getDataCriacao() {
-        return dataCriacao;
+    public double getX() {
+        return x;
     }
 
-    public void setDataCriacao(LocalDateTime dataCriacao) {
-        this.dataCriacao = dataCriacao;
+    public void setX(double x) {
+        this.x = x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setY(double y) {
+        this.y = y;
     }
 }

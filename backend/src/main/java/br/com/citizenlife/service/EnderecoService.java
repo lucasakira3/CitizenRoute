@@ -1,118 +1,82 @@
 package br.com.citizenlife.service;
 
 import br.com.citizenlife.dao.EnderecoDao;
-import br.com.citizenlife.exception.RecursoNaoEncontradoException;
-import br.com.citizenlife.exception.RegraNegocioException;
+import br.com.citizenlife.exception.CitizenLifeException;
+import br.com.citizenlife.exception.ValidacaoException;
 import br.com.citizenlife.model.Endereco;
-import br.com.citizenlife.model.PontoRota;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * Endereços salvos pelo cidadão (casa, trabalho, estudo...). Cada cidadão só vê e altera os próprios.
- *
- * <ul>
- *   <li>O apelido é único por cidadão (o banco garante com UK_CL_ENDERECO_APELIDO).</li>
- *   <li>Casa e trabalho são únicos: dá para ter vários "Outro", mas só uma "Casa".</li>
- *   <li>No máximo {@value #MAXIMO_ENDERECOS} endereços por cidadão.</li>
- * </ul>
+ * Endereços salvos do cidadão. Regras: apelido sem repetir, uma casa e um trabalho no máximo
+ * e até {@value #MAXIMO_ENDERECOS} endereços por pessoa.
  */
 public class EnderecoService {
 
     public static final int MAXIMO_ENDERECOS = 10;
 
     private final EnderecoDao enderecoDao;
-    private final AutenticacaoService autenticacao;
+    private final CidadaoService cidadaoService;
 
-    public EnderecoService(EnderecoDao enderecoDao, AutenticacaoService autenticacao) {
+    public EnderecoService(EnderecoDao enderecoDao, CidadaoService cidadaoService) {
         this.enderecoDao = enderecoDao;
-        this.autenticacao = autenticacao;
+        this.cidadaoService = cidadaoService;
     }
 
     public List<Endereco> listar(long idCidadao, Long idAtor) {
-        autenticacao.exigirProprio(idAtor, idCidadao, "ver os endereços");
+        cidadaoService.exigirDono(idAtor, idCidadao);
         return enderecoDao.listarPorCidadao(idCidadao);
     }
 
     public Endereco criar(long idCidadao, Endereco dados, Long idAtor) {
-        autenticacao.exigirProprio(idAtor, idCidadao, "salvar endereços");
+        cidadaoService.exigirDono(idAtor, idCidadao);
         List<Endereco> atuais = enderecoDao.listarPorCidadao(idCidadao);
-        Endereco endereco = validar(dados, atuais, null);
+        validar(dados, atuais);
         if (atuais.size() >= MAXIMO_ENDERECOS) {
-            throw new RegraNegocioException("Você já tem " + MAXIMO_ENDERECOS
-                    + " endereços salvos. Exclua um antes de criar outro.");
+            throw new ValidacaoException("apelido", "Você já tem " + MAXIMO_ENDERECOS + " endereços. Exclua um antes.");
         }
-        endereco.setIdCidadao(idCidadao);
-        endereco.setDataCriacao(LocalDateTime.now());
-        return enderecoDao.inserir(endereco);
+        dados.setIdCidadao(idCidadao);
+        return enderecoDao.inserir(dados);
     }
 
     public Endereco atualizar(long idCidadao, long idEndereco, Endereco dados, Long idAtor) {
-        autenticacao.exigirProprio(idAtor, idCidadao, "alterar os endereços");
-        Endereco atual = enderecoDoCidadao(idCidadao, idEndereco);
-        Endereco endereco = validar(dados, enderecoDao.listarPorCidadao(idCidadao), idEndereco);
-        endereco.setId(atual.getId());
-        endereco.setIdCidadao(atual.getIdCidadao());
-        endereco.setDataCriacao(atual.getDataCriacao());
-        if (!enderecoDao.atualizar(endereco)) {
-            throw new RecursoNaoEncontradoException("Endereço " + idEndereco + " não encontrado.");
-        }
-        return endereco;
+        cidadaoService.exigirDono(idAtor, idCidadao);
+        enderecoDoCidadao(idCidadao, idEndereco);
+        dados.setId(idEndereco);
+        dados.setIdCidadao(idCidadao);
+        validar(dados, enderecoDao.listarPorCidadao(idCidadao));
+        enderecoDao.atualizar(dados);
+        return dados;
     }
 
     public void excluir(long idCidadao, long idEndereco, Long idAtor) {
-        autenticacao.exigirProprio(idAtor, idCidadao, "excluir os endereços");
+        cidadaoService.exigirDono(idAtor, idCidadao);
         enderecoDoCidadao(idCidadao, idEndereco);
-        if (!enderecoDao.excluir(idEndereco)) {
-            throw new RecursoNaoEncontradoException("Endereço " + idEndereco + " não encontrado.");
-        }
+        enderecoDao.excluir(idEndereco);
     }
 
-    /**
-     * Valida os campos e as regras de tipo.
-     *
-     * @param ignorar id do próprio endereço na edição (nulo ao criar)
-     */
-    private Endereco validar(Endereco dados, List<Endereco> atuais, Long ignorar) {
-        Validador validador = new Validador();
-        String apelido = validador.texto("apelido", dados.getApelido(), "Apelido", 2, 40);
-        validador.obrigatorio("tipo", dados.getTipo(), "Escolha o tipo do endereço.");
-
-        PontoRota local = dados.getLocal();
-        String descricao = null;
-        if (local == null) {
-            validador.erro("local", "Escolha o local do endereço.");
-        } else {
-            descricao = validador.texto("local", local.descricao(), "Local", 2, 120);
-            boolean dentro = local.x() >= 0 && local.y() >= 0
-                    && local.x() <= RotaService.LIMITE_PLANO && local.y() <= RotaService.LIMITE_PLANO;
-            validador.exigir(dentro, "local", "O local escolhido está fora do mapa.");
-        }
-
+    private void validar(Endereco endereco, List<Endereco> atuais) {
+        ValidacaoException erros = new ValidacaoException();
+        endereco.setApelido(erros.texto("apelido", endereco.getApelido(), "Apelido", 2, 40));
+        endereco.setDescricao(erros.texto("local", endereco.getDescricao(), "Local", 2, 120));
+        erros.exigir(Endereco.TIPOS.contains(endereco.getTipo()), "tipo", "Escolha o tipo do endereço.");
+        erros.exigir(endereco.getX() >= 0 && endereco.getY() >= 0, "local", "Escolha o local no mapa.");
         for (Endereco outro : atuais) {
-            if (outro.getId().equals(ignorar)) {
+            if (Objects.equals(outro.getId(), endereco.getId())) {
                 continue;
             }
-            if (dados.getTipo() != null && dados.getTipo().isUnico() && outro.getTipo() == dados.getTipo()) {
-                validador.erro("tipo", "Você já tem um endereço do tipo " + dados.getTipo().getRotulo().toLowerCase()
-                        + ". Edite o que existe ou escolha outro tipo.");
-            }
-            if (outro.getApelido().equalsIgnoreCase(apelido)) {
-                validador.erro("apelido", "Você já tem um endereço com este apelido.");
-            }
+            erros.exigir(!(endereco.isTipoUnico() && outro.getTipo().equals(endereco.getTipo())),
+                    "tipo", "Você já tem um endereço deste tipo.");
+            erros.exigir(!outro.getApelido().equalsIgnoreCase(endereco.getApelido()),
+                    "apelido", "Você já tem um endereço com este apelido.");
         }
-        validador.validar();
-
-        return new Endereco(null, null, apelido, dados.getTipo(), new PontoRota(descricao, local.x(), local.y()));
+        erros.lancarSeHouverErros();
     }
 
     private Endereco enderecoDoCidadao(long idCidadao, long idEndereco) {
-        Endereco endereco = enderecoDao.buscarPorId(idEndereco)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Endereço " + idEndereco + " não encontrado."));
-        if (endereco.getIdCidadao() != idCidadao) {
-            throw new RecursoNaoEncontradoException("Endereço " + idEndereco + " não encontrado.");
-        }
-        return endereco;
+        return enderecoDao.buscarPorId(idEndereco)
+                .filter(endereco -> endereco.getIdCidadao() == idCidadao)
+                .orElseThrow(() -> CitizenLifeException.naoEncontrado("Endereço não encontrado."));
     }
 }

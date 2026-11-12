@@ -2,44 +2,32 @@ package br.com.citizenlife.model;
 
 import java.time.LocalDateTime;
 
-/**
- * Quem usa o Citizen Life (tabela CL_CIDADAO).
- * O modal (como a pessoa se locomove) muda o risco de cada ocorrência no caminho.
- * O cadastro não pede o modal: ele é configurado depois, no perfil.
- */
+/** Quem usa o Citizen Life (tabela CL_CIDADAO). */
 public class Cidadao {
+
+    /** Sem meio de transporte informado, o risco é calculado para quem anda a pé (o caso mais exposto). */
+    public static final String MODAL_PADRAO = "PEDESTRE";
 
     private Long id;
     private String nome;
     private String email;
     private String senhaHash;
-    private Modal modal;
+    private String modal;
     private LocalDateTime dataCadastro;
 
     public Cidadao() {
     }
 
-    public Cidadao(Long id, String nome, String email, Modal modal) {
+    public Cidadao(Long id, String nome, String email, String modal) {
         this.id = id;
         this.nome = nome;
         this.email = email;
         this.modal = modal;
     }
 
-    /** Modal usado no cálculo do risco quando a pessoa ainda não informou o dela. */
-    public static final Modal MODAL_PADRAO_RISCO = Modal.PEDESTRE;
-
-    /** Texto curto exibido na interface, por exemplo "Cidadão · Moto". */
-    public String getDescricaoPerfil() {
-        return modal == null ? "Cidadão" : "Cidadão · " + modal.getRotulo();
-    }
-
-    /**
-     * Modal para calcular o risco dos alertas. Sem modal informado, calcula para quem anda a pé,
-     * o caso mais exposto na maioria das ocorrências: na dúvida, o sistema avisa mais, e não menos.
-     */
-    public Modal modalParaRisco() {
-        return modal == null ? MODAL_PADRAO_RISCO : modal;
+    /** Modal usado no cálculo do risco dos alertas. */
+    public String modalParaRisco() {
+        return modal == null ? MODAL_PADRAO : modal;
     }
 
     public Long getId() {
@@ -74,11 +62,11 @@ public class Cidadao {
         this.senhaHash = senhaHash;
     }
 
-    public Modal getModal() {
+    public String getModal() {
         return modal;
     }
 
-    public void setModal(Modal modal) {
+    public void setModal(String modal) {
         this.modal = modal;
     }
 

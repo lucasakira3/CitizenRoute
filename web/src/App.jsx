@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Layout from "./components/Layout.jsx";
-import { Carregando, ErroCarga } from "./components/Estados.jsx";
 import { AppContext } from "./contexto.js";
 import { combinar, useRota } from "./hooks/useRota.js";
+import { DOMINIO } from "./utils/dominio.js";
 import { api, definirAoSessaoInvalida, lerSessao, salvarSessao } from "./services/api.js";
 import EmBrevePage from "./pages/EmBrevePage.jsx";
 import EntrarPage from "./pages/EntrarPage.jsx";
@@ -39,9 +39,6 @@ function resolverRota(rota) {
 export default function App() {
   const rota = useRota();
   const [sessao, setSessao] = useState(lerSessao);
-  const [dominio, setDominio] = useState(null);
-  const [erroDominio, setErroDominio] = useState(null);
-  const [tentativa, setTentativa] = useState(0);
   const primeiraRota = useRef(true);
 
   const entrar = useCallback((usuario) => {
@@ -69,12 +66,6 @@ export default function App() {
     }
   }, [entrar]);
 
-  // Opções e rótulos (modais, tipos, status...) vêm do Java: uma única fonte das regras.
-  useEffect(() => {
-    setErroDominio(null);
-    api.buscar("/dominio").then(setDominio).catch(setErroDominio);
-  }, [tentativa]);
-
   // A cada troca de página: volta ao topo e leva o foco ao conteúdo (ajuda quem usa teclado).
   useEffect(() => {
     if (primeiraRota.current) {
@@ -85,47 +76,33 @@ export default function App() {
     document.getElementById("conteudo")?.focus({ preventScroll: true });
   }, [rota]);
 
+  // Rótulos de cada código (MOTO → "Moto"), montados uma vez a partir de utils/dominio.js
   const rotulos = useMemo(() => {
-    if (!dominio) {
-      return {};
-    }
     const mapa = {};
-    ["modais", "tiposOcorrencia", "status", "niveisImpacto", "niveisRisco", "criteriosRota", "tiposEndereco"].forEach((grupo) => {
-      mapa[grupo] = Object.fromEntries(dominio[grupo].map((item) => [item.codigo, item.rotulo]));
+    ["modais", "tiposOcorrencia", "niveisRisco", "tiposEndereco"].forEach((grupo) => {
+      mapa[grupo] = Object.fromEntries(DOMINIO[grupo].map((item) => [item.codigo, item.rotulo]));
     });
     return mapa;
-  }, [dominio]);
+  }, []);
 
   const contexto = useMemo(
     () => ({
       sessao,
       entrar,
       sair,
-      dominio,
+      dominio: DOMINIO,
       rotulo: (grupo, codigo) => rotulos[grupo]?.[codigo] ?? codigo ?? "",
     }),
-    [sessao, entrar, sair, dominio, rotulos],
+    [sessao, entrar, sair, rotulos],
   );
 
   const { Pagina, parametros } = resolverRota(rota);
 
-  let conteudo;
-  if (dominio) {
-    conteudo = <Pagina key={rota} parametros={parametros} />;
-  } else if (erroDominio) {
-    conteudo = (
-      <section className="secao">
-        <h1>Não foi possível abrir o Citizen Life</h1>
-        <ErroCarga erro={erroDominio} aoTentar={() => setTentativa((n) => n + 1)} />
-      </section>
-    );
-  } else {
-    conteudo = <Carregando texto="Abrindo o Citizen Life…" />;
-  }
-
   return (
     <AppContext.Provider value={contexto}>
-      <Layout rota={rota}>{conteudo}</Layout>
+      <Layout rota={rota}>
+        <Pagina key={rota} parametros={parametros} />
+      </Layout>
     </AppContext.Provider>
   );
 }

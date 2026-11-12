@@ -127,7 +127,7 @@ function medir(ctx, fonte, texto) {
 /**
  * @param ctx contexto 2D do canvas (já do tamanho da tela × densidade de pixels)
  * @param estado { dados, camera, largura, altura, ox, oy, dpr, destaque, memoria }
- *   destaque: { afetadas: [{ indices, nivel, impacto, forte, fraca }], 
+ *   destaque: { afetadas: [{ indices, nivel, forte, fraca }], 
  *               zonaSelecionada, riscoZona: { CHAVE: nivel }, rota, marcadores: [{ x, y, texto, cor }] }
  *   memoria: objeto guardado entre quadros (nomes escritos no quadro anterior)
  */
@@ -309,7 +309,7 @@ export function desenharMapa(ctx, estado) {
     desenharDestaque(item.indices, COR_RISCO[item.nivel], {
       brilho: larguraDestaque + (item.forte ? 18 : 11),
       nucleo: larguraDestaque * (item.forte ? 1.25 : 1),
-      tracejado: item.impacto === "LENTIDAO" || item.impacto === "SEM_INTERDICAO",
+      tracejado: false,
       alfa: item.fraca ? 0.35 : 1,
     });
   });
