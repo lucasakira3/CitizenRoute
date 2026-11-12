@@ -62,7 +62,8 @@ public class Servidor implements HttpHandler {
             }
             String rota = troca.getRequestMethod() + " " + NUMERO.matcher(caminho).replaceAll("/{id}");
             String usuario = troca.getRequestHeaders().getFirst("X-Usuario-Id");
-            Long ator = usuario == null || usuario.isBlank() ? null : Long.valueOf(usuario.trim());
+            // Cabeçalho ausente ou que não é um número: trata como quem não entrou (401)
+            Long ator = usuario == null || !usuario.trim().matches("\\d{1,18}") ? null : Long.valueOf(usuario.trim());
 
             corpo = rotear(rota, ids, ator, lerCorpo(troca), lerParametros(troca));
             status = corpo == null ? 204 : rota.startsWith("POST /api/cidadaos") ? 201 : 200;

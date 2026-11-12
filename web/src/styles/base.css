@@ -469,35 +469,6 @@ code {
 
 /* ------------------------------------------------------- Faixa de status */
 
-.faixa-status {
-  position: relative;
-  background: #fff6d4;
-  border-bottom: 1px solid #e6cf7a;
-}
-
-.faixa-status::before {
-  content: "";
-  display: block;
-  height: 8px;
-  background: repeating-linear-gradient(-45deg, var(--sinal) 0 12px, var(--asfalto) 12px 24px);
-}
-
-.faixa-status__interno {
-  max-width: var(--largura);
-  margin: 0 auto;
-  padding: 0.8rem var(--margem);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem 1.2rem;
-}
-
-.faixa-status p {
-  margin: 0;
-  max-width: 80ch;
-}
-
 /* ------------------------------------------------------ Conteúdo e rodapé */
 
 .conteudo {

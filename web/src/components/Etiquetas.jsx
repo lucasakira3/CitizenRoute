@@ -1,10 +1,4 @@
-import { useApp } from "../contexto.js";
 import { GRAVIDADE } from "../utils/rotulos.js";
-
-export function EtiquetaStatus({ status }) {
-  const { rotulo } = useApp();
-  return <span className={`etiqueta-status etiqueta-status--${status}`}>{rotulo("status", status)}</span>;
-}
 
 /** Cinco marcas, preenchidas até a gravidade informada. */
 export function Gravidade({ valor }) {

@@ -1,186 +1,63 @@
 ---
-title: "Pacote model: entidades, enums e interface (getters e setters omitidos)"
+title: "model: os dados do sistema (getters e setters omitidos)"
 ---
 classDiagram
-    class Alerta {
-        -Ocorrencia ocorrencia
-        -List~Via~ viasAfetadas
-        -List~Rota~ rotasAfetadas
-        -double risco
-        -NivelRisco nivel
-        -boolean acimaDoLimite
-        +Alerta(Ocorrencia, List~Via~, List~Rota~, double, NivelRisco, boolean)
-    }
-    class AvaliavelRisco {
-        <<interface>>
-        +calcularRisco(Modal) double
-    }
+    direction LR
     class Cidadao {
+        +String MODAL_PADRAO$
         -Long id
         -String nome
         -String email
         -String senhaHash
-        -Modal modal
+        -String modal
         -LocalDateTime dataCadastro
-        +Modal MODAL_PADRAO_RISCO$
-        +Cidadao()
-        +Cidadao(Long, String, String, Modal)
-        +getDescricaoPerfil() String
-        +modalParaRisco() Modal
-    }
-    class CriterioRota {
-        <<enumeration>>
-        RAPIDA
-        SEGURA
-        -String rotulo
-        -String descricao
-    }
-    class Endereco {
-        -Long id
-        -Long idCidadao
-        -String apelido
-        -TipoEndereco tipo
-        -PontoRota local
-        -LocalDateTime dataCriacao
-        +Endereco()
-        +Endereco(Long, Long, String, TipoEndereco, PontoRota)
-    }
-    class Modal {
-        <<enumeration>>
-        CARRO
-        MOTO
-        ONIBUS
-        APP
-        PEDESTRE
-        BIKE
-        -String rotulo
-        -double velocidadeMediaKmh
-        -boolean motorizado
-    }
-    class NivelImpacto {
-        <<enumeration>>
-        BLOQUEIO_TOTAL
-        PARCIAL
-        LENTIDAO
-        SEM_INTERDICAO
-        -String rotulo
-    }
-    class NivelRisco {
-        <<enumeration>>
-        BAIXO
-        MODERADO
-        ALTO
-        CRITICO
-        -String rotulo
-    }
-    class Ocorrencia {
-        -Long id
-        -String titulo
-        -String descricao
-        -TipoOcorrencia tipo
-        -int gravidade
-        -StatusOcorrencia status
-        -LocalDateTime dataRegistro
-        -LocalDateTime dataAtualizacao
-        -Cidadao autor
-        -List~OcorrenciaVia~ vias
-        +Ocorrencia()
-        +calcularRisco(Modal) double
-        +isAtiva() boolean
-        +afetaVia(Long) boolean
-    }
-    class OcorrenciaVia {
-        -Via via
-        -NivelImpacto nivelImpacto
-        +OcorrenciaVia()
-        +OcorrenciaVia(Via, NivelImpacto)
-    }
-    class PontoRota {
-        <<record>>
-        -String descricao
-        -double x
-        -double y
-        +PontoRota(String, double, double)
-    }
-    class Regiao {
-        -Long id
-        -String nome
-        +Regiao()
-        +Regiao(Long, String)
+        +modalParaRisco() String
     }
     class Rota {
         -Long id
         -Long idCidadao
         -String nome
-        -PontoRota origem
-        -PontoRota destino
-        -CriterioRota criterio
+        -String origemDescricao
+        -double origemX
+        -double origemY
+        -String destinoDescricao
+        -double destinoX
+        -double destinoY
         -int distanciaMetros
         -LocalDateTime dataCriacao
         -List~Via~ vias
-        +Rota()
-        +Rota(Long, Long, String, PontoRota, PontoRota, CriterioRota, int)
-        +passaPelaVia(Long) boolean
-    }
-    class StatusOcorrencia {
-        <<enumeration>>
-        ABERTA
-        CONFIRMADA
-        EM_ATENDIMENTO
-        RESOLVIDA
-        DESCARTADA
-        -String rotulo
-        -boolean ativa
-    }
-    class TipoEndereco {
-        <<enumeration>>
-        CASA
-        TRABALHO
-        ESTUDO
-        OUTRO
-        -String rotulo
-        -boolean unico
-    }
-    class TipoOcorrencia {
-        <<enumeration>>
-        ACIDENTE
-        ALAGAMENTO
-        QUEDA_ARVORE
-        SEMAFORO_APAGADO
-        DESLIZAMENTO
-        VIA_BLOQUEADA
-        INSEGURANCA
-        -String rotulo
-        -double peso
-        -Map~Modal‚Double~ fatorPorModal
-        +fatorExposicao(Modal) double
+        +passaPor(Long idVia) boolean
     }
     class Via {
         -Long id
         -String nome
-        -Regiao regiao
-        +Via()
-        +Via(Long, String, Regiao)
+        -String zona
     }
-    Alerta --> Ocorrencia : ocorrencia
-    Alerta --> "*" Via : viasAfetadas
-    Alerta --> "*" Rota : rotasAfetadas
-    Alerta --> NivelRisco : nivel
-    Cidadao --> Modal : modal
-    Endereco --> TipoEndereco : tipo
-    Endereco --> PontoRota : local
-    AvaliavelRisco <|.. Ocorrencia
-    Ocorrencia --> TipoOcorrencia : tipo
-    Ocorrencia --> StatusOcorrencia : status
-    Ocorrencia --> Cidadao : autor
-    Ocorrencia --> "*" OcorrenciaVia : vias
-    OcorrenciaVia --> Via : via
-    OcorrenciaVia --> NivelImpacto : nivelImpacto
-    Rota --> PontoRota : origem
-    Rota --> PontoRota : destino
-    Rota --> CriterioRota : criterio
-    Rota --> "*" Via : vias
-    TipoOcorrencia --> "*" Modal : fatorPorModal
-    Via --> Regiao : regiao
-    AvaliavelRisco ..> Modal
-    Ocorrencia ..> Modal
+    class Endereco {
+        +List~String~ TIPOS$
+        -Long id
+        -Long idCidadao
+        -String apelido
+        -String tipo
+        -String descricao
+        -double x
+        -double y
+        +isTipoUnico() boolean
+    }
+    class Ocorrencia {
+        +List~String~ MODAIS$
+        +double LIMITE_ALERTA$
+        -Long id
+        -String titulo
+        -String descricao
+        -String tipo
+        -int gravidade
+        -LocalDateTime dataRegistro
+        -Via via
+        +calcularRisco(String modal) double
+        +nivel(double risco)$ String
+    }
+    Cidadao "1" --> "0..10" Rota : salva
+    Cidadao "1" --> "0..10" Endereco : guarda
+    Rota "*" --> "1..*" Via : passa por
+    Ocorrencia "*" --> "1" Via : acontece em

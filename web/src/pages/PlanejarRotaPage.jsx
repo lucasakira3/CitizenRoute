@@ -213,7 +213,7 @@ export default function PlanejarRotaPage() {
     [origem, destino],
   );
   const ocorrenciasNaRota = useMemo(
-    () => (escolhida ? escolhida.alertas.map((alerta) => ({ ...alerta.ocorrencia, risco: alerta.risco })) : []),
+    () => (escolhida ? escolhida.alertas : []),
     [escolhida],
   );
 

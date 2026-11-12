@@ -135,7 +135,7 @@ risco = gravidade (1 a 5) × peso do tipo (1,0 a 2,0) × exposição do modal (0
 
 > **Exemplo dos dados de demonstração:** o alagamento de gravidade 3 na Radial Leste vale **3,6 (baixo)** para o Bruno, que passa de carro, e **8,1 (alto)** para a Ana, que passa de moto.
 
-A matriz completa está em [`TipoOcorrencia.java`](backend/src/main/java/br/com/citizenlife/model/TipoOcorrencia.java). Quem não informou o meio de transporte recebe o risco calculado para quem anda a pé, o caso mais exposto: na dúvida, o sistema avisa mais.
+Os pesos e a matriz de exposição estão em [`Ocorrencia.java`](backend/src/main/java/br/com/citizenlife/model/Ocorrencia.java). Quem não informou o meio de transporte recebe o risco calculado para quem anda a pé, o caso mais exposto: na dúvida, o sistema avisa mais.
 
 ---
 
@@ -186,7 +186,7 @@ Se o `JAVA_HOME` sair vazio, defina com o caminho onde o JDK foi instalado e **f
 2. Abra o arquivo [`sql/script.sql`](sql/script.sql).
 3. Execute com **Executar Script (F5)**.
 
-O script cria as **8 tabelas**, insere os dados de demonstração e, no fim, mostra a contagem de linhas de cada tabela. Pode ser executado de novo a qualquer momento: o bloco inicial apaga só as tabelas do projeto (prefixo `CL_`).
+O script cria as **6 tabelas**, insere os dados de demonstração e, no fim, mostra a contagem de linhas de cada tabela. Pode ser executado de novo a qualquer momento: o bloco inicial apaga só as tabelas do projeto (prefixo `CL_`).
 
 > **Oracle da FIAP:** host `oracle.fiap.com.br`, porta `1521`, SID `ORCL`, usuário `rm` + seu número. Algumas redes (de empresa ou universidade) bloqueiam a porta 1521; se a conexão der *timeout* (ORA-12170), teste de outra rede.
 
@@ -211,7 +211,7 @@ cd backend
 
 No Linux ou no macOS, use `./mvnw compile exec:java`. Na primeira execução, o Maven Wrapper baixa o Maven sozinho.
 
-O terminal mostra `Citizen Life API no ar em http://127.0.0.1:8080/api` e, logo abaixo, se o banco está conectado. Se algo estiver errado (senha, URL, tabelas ausentes), a mensagem diz o que corrigir. No IntelliJ, também dá para rodar a classe `CitizenLifeApplication`, com a pasta `backend` como diretório de trabalho.
+O terminal mostra `Citizen Life API no ar em http://127.0.0.1:8080/api` e, logo abaixo, se o banco está conectado. Se algo estiver errado (senha, URL, tabelas ausentes), a mensagem diz o que corrigir. No IntelliJ, também dá para rodar a classe `CitizenLife`, com a pasta `backend` como diretório de trabalho.
 
 ### 5. Subir o site (porta 5173)
 
@@ -251,12 +251,13 @@ A única dependência do backend é o driver JDBC do Oracle. O JSON da API é li
 
 ```
 React (fetch /api/...)
-  → Roteador (api)      encontra a rota e converte exceções em respostas HTTP
-  → Controller (api)    lê o JSON e chama a service
-  → Service             valida, confere permissões e aplica as regras
-  → DAO                 executa o SQL com PreparedStatement
+  → Servidor (api)   lê o JSON, escolhe a operação pelo caminho e devolve a resposta
+  → Service          valida, confere o dono e aplica as regras
+  → DAO              executa o SQL com PreparedStatement
   → Oracle
 ```
+
+São **20 classes** em 6 pacotes, cada uma com uma responsabilidade clara.
 
 <details>
 <summary><b>Estrutura de pastas</b></summary>
@@ -267,14 +268,12 @@ backend/                          API Java
 ├── mvnw, mvnw.cmd                Maven Wrapper
 ├── db.properties.example         modelo de configuração do banco
 └── src/main/java/br/com/citizenlife/
-    ├── CitizenLifeApplication.java   monta as camadas e sobe o HttpServer
-    ├── model/        entidades, enums e a interface AvaliavelRisco
-    ├── dao/          JDBC: SQL parametrizado e transações
-    ├── service/      regras de negócio, validação e permissões
-    ├── api/          interface HTTP: roteador, JSON, conversores
-    │   └── controller/   uma classe por recurso da API
-    ├── exception/    exceções da aplicação
-    └── config/       conexão com o Oracle
+    ├── CitizenLife.java   main: liga as camadas e sobe o HttpServer
+    ├── model/        Cidadao, Rota, Via, Endereco, Ocorrencia (com a regra do risco)
+    ├── dao/          CrudDao<T>, um DAO por tabela principal e a Conexao (JDBC)
+    ├── service/      Cidadao, Rota, Endereco e Ocorrencia: validação, dono e limites
+    ├── api/          Servidor (todas as rotas HTTP num switch) e Json
+    └── exception/    CitizenLifeException (com o status HTTP) e ValidacaoException
 web/                              React + Vite
 └── src/
     ├── pages/        uma página por rota
@@ -295,11 +294,10 @@ integrantes.txt
 
 <br />
 
-- **Interfaces:** `AvaliavelRisco` (implementada por `Ocorrencia`) e `CrudDao<T>` (inserir, listar, buscar, atualizar e excluir, implementado por `CidadaoDao`, `RotaDao` e `EnderecoDao`).
-- **Herança:** as exceções da aplicação herdam de `CitizenLifeException`, e o `Roteador` trata cada subclasse com o código HTTP certo.
-- **Polimorfismo:** o `RiscoService` calcula o risco de qualquer `AvaliavelRisco`, sem saber que é uma ocorrência.
-- **Encapsulamento:** atributos privados com getters e setters; regras no service, nunca no controller.
-- **Relacionamentos:** `Cidadao` 1:N `Rota` e `Endereco`; `Rota` N:N `Via` (com a ordem); `Ocorrencia` N:N `Via` (com o impacto); `Via` N:1 `Regiao`.
+- **Interface:** `CrudDao<T>` (inserir, listar, buscar, atualizar e excluir), implementada por `CidadaoDao`, `RotaDao` e `EnderecoDao`. O `Servidor` implementa `HttpHandler`, do próprio JDK.
+- **Herança:** `ValidacaoException` herda de `CitizenLifeException`, que herda de `RuntimeException` e carrega o status HTTP.
+- **Encapsulamento:** atributos privados com getters e setters; as regras ficam nas services e no próprio modelo (`Ocorrencia.calcularRisco`).
+- **Relacionamentos:** `Cidadao` 1:N `Rota` e `Endereco`; `Rota` N:N `Via` (com a ordem); `Ocorrencia` N:1 `Via`.
 
 </details>
 
@@ -308,15 +306,16 @@ integrantes.txt
 
 <br />
 
-Toda `SQLException` vira `PersistenciaException` com mensagem clara (o `TradutorErroSql` reconhece o código ORA e o nome da constraint). O `Roteador` é o único lugar que transforma exceções em respostas, então nenhum erro derruba o servidor.
+Cada erro é uma `CitizenLifeException` com o status HTTP certo. Toda `SQLException` passa pela `Conexao.traduzir`, que reconhece a constraint e devolve uma mensagem clara. O `Servidor` é o único lugar que transforma exceções em respostas `{erro, campos}`, então nenhum erro derruba a API.
 
-| Exceção | HTTP | Exemplo de mensagem |
+| Situação | HTTP | Exemplo de mensagem |
 |---|---|---|
-| `ValidacaoException` | 400 | "Nome da rota precisa ter pelo menos 2 caracteres." (com o campo) |
-| `AcessoNegadoException` | 401 ou 403 | "Você só pode ver as rotas da sua própria conta." |
-| `RecursoNaoEncontradoException` | 404 | "Rota 99 não encontrada." |
-| `RegraNegocioException` | 409 | "Você já tem 10 rotas salvas. Exclua uma antes de criar outra." |
-| `PersistenciaException` | 409 ou 503 | "Você já tem uma rota com este nome." |
+| Campo inválido (`ValidacaoException`) | 400 | "Nome da rota precisa ter pelo menos 2 caracteres." (com o campo) |
+| Sem login | 401 | "Entre no Citizen Life para continuar." |
+| Conta de outra pessoa | 403 | "Você só pode mexer na sua própria conta." |
+| Não existe | 404 | "Rota não encontrada." |
+| Registro repetido | 409 | "Você já tem uma rota com este nome." |
+| Banco fora do ar | 503 | "Não foi possível conectar ao Oracle: o servidor não respondeu." |
 
 </details>
 
@@ -329,21 +328,18 @@ Todas as respostas são JSON. Operações que exigem login recebem o id do cidad
 
 | Método | Rota | Descrição | Quem pode |
 |---|---|---|---|
-| GET | `/api/health` | Situação da API e do banco | todos |
-| GET | `/api/dominio` | Opções dos enums, matriz de risco e limites | todos |
 | POST | `/api/auth/login` | Login com e-mail e senha | todos |
 | GET | `/api/auth/sessao` | Confere a sessão guardada no navegador | logado |
 | POST | `/api/cidadaos` | Cadastro: `{nome, email, senha}` (`modal` é opcional) | todos |
-| GET, PUT, DELETE | `/api/cidadaos/{id}` | Buscar, atualizar e excluir a conta | o próprio cidadão |
+| PUT, DELETE | `/api/cidadaos/{id}` | Atualizar (nome, e-mail, modal, senha) e excluir a conta | o próprio cidadão |
 | GET, POST | `/api/cidadaos/{id}/rotas` | Listar e salvar rotas | o próprio cidadão |
-| GET, PUT, DELETE | `/api/cidadaos/{id}/rotas/{idRota}` | Rota com os alertas atuais; editar; excluir | o próprio cidadão |
-| GET | `/api/cidadaos/{id}/alertas` | Ocorrências ativas nas rotas salvas, com o risco para o modal | o próprio cidadão |
+| GET, PUT, DELETE | `/api/cidadaos/{id}/rotas/{idRota}` | Buscar, editar e excluir uma rota | o próprio cidadão |
+| GET | `/api/cidadaos/{id}/alertas` | Ocorrências nas vias das rotas salvas, com o risco para o modal | o próprio cidadão |
 | GET, POST | `/api/cidadaos/{id}/enderecos` | Listar e salvar endereços: `{apelido, tipo, local: {descricao, x, y}}` | o próprio cidadão |
 | PUT, DELETE | `/api/cidadaos/{id}/enderecos/{idEndereco}` | Editar e excluir um endereço | o próprio cidadão |
 | POST | `/api/rotas/avaliar` | Risco de um caminho recém-calculado (`{modal, vias}`) | todos |
-| GET | `/api/vias` e `/api/vias/{id}` | Vias cadastradas, com a região | todos |
-| GET | `/api/ocorrencias?ativas=true&modal=MOTO` | Ocorrências com o risco para o modal | todos |
-| GET | `/api/ocorrencias/{id}` | Detalhe com o risco para cada modal | todos |
+| GET | `/api/vias` | Vias cadastradas, com a zona | todos |
+| GET | `/api/ocorrencias?modal=MOTO` | Ocorrências com o risco para o modal, da maior para a menor | todos |
 
 </details>
 
@@ -366,33 +362,35 @@ O mapa vem do [OpenStreetMap](https://www.openstreetmap.org/copyright) (© colab
 
 ## 🗄️ Banco de dados
 
-**8 tabelas** com prefixo `CL_`, duas delas associativas N:N.
+**6 tabelas** com prefixo `CL_`, uma delas associativa N:N.
 
 | Tabela | Papel |
 |---|---|
-| `CL_REGIAO` | zonas da cidade; nome **UNIQUE** |
-| `CL_VIA` | avenidas e ruas (N:1 região) |
 | `CL_CIDADAO` | conta: e-mail **UNIQUE**, senha em hash PBKDF2, **modal** opcional (CHECK) |
-| `CL_OCORRENCIA` | evento que afeta vias; gravidade **CHECK 1–5**, status **CHECK** |
-| `CL_OCORRENCIA_VIA` | **N:N** ocorrência × via, com o nível de impacto |
-| `CL_ROTA` | rota salva: saída, destino, critério (**CHECK**), distância; nome **UNIQUE** por cidadão |
+| `CL_VIA` | avenidas e ruas; nome **UNIQUE**, zona **CHECK** (Centro, Norte, Sul, Leste, Oeste) |
+| `CL_OCORRENCIA` | problema numa via (N:1): tipo **CHECK**, gravidade **CHECK 1–5**, título **UNIQUE** |
+| `CL_ROTA` | rota salva: saída, destino e distância; nome **UNIQUE** por cidadão |
 | `CL_ROTA_VIA` | **N:N** rota × via, com a ordem no caminho |
 | `CL_ENDERECO` | casa, trabalho, estudo, outro: tipo **CHECK**, apelido **UNIQUE** por cidadão |
 
-Todas as constraints têm nome explícito (`PK_`, `FK_`, `UK_`, `CK_`), os IDs usam `GENERATED ALWAYS AS IDENTITY` e os INSERTs buscam as chaves estrangeiras por campos únicos, sem depender de IDs fixos. As ocorrências entram pela carga do script: são 32 ativas, espalhadas pelas cinco zonas da cidade.
+Todas as constraints têm nome explícito (`PK_`, `FK_`, `UK_`, `CK_`), os IDs usam `GENERATED ALWAYS AS IDENTITY` e os INSERTs buscam as chaves estrangeiras por campos únicos, sem depender de IDs fixos. Os dados de demonstração trazem 6 cidadãos, 45 vias, 32 ocorrências espalhadas pelas cinco zonas, 8 rotas e 12 endereços.
 
 ---
 
 ## 📐 Diagramas
 
 <p align="center">
-  <img src="docs/diagrama-er.png" alt="Diagrama entidade-relacionamento com as 8 tabelas" width="860" />
+  <img src="docs/diagrama-er.png" alt="Diagrama entidade-relacionamento com as 6 tabelas" width="860" />
+</p>
+
+<p align="center">
+  <img src="docs/diagrama-classes-0-visao-geral.png" alt="Visão geral das 20 classes, camada por camada" width="860" />
 </p>
 
 - [Diagrama entidade-relacionamento (PDF)](docs/diagrama-er.pdf)
-- [Diagrama de classes (PDF, 4 páginas: model, dao, service e api)](docs/diagrama-classes.pdf), com uma imagem por camada em `docs/diagrama-classes-*.png`
+- [Diagrama de classes (PDF, 5 páginas)](docs/diagrama-classes.pdf): a visão geral acima e uma página por camada ([model](docs/diagrama-classes-1-model.png), [dao](docs/diagrama-classes-2-dao.png), [service](docs/diagrama-classes-3-service.png), [api e exception](docs/diagrama-classes-4-api.png))
 
-O diagrama de classes foi **gerado a partir das classes compiladas**, então os atributos, métodos e relacionamentos são exatamente os do código (getters e setters simples omitidos). As fontes em Mermaid estão em `docs/diagramas/`.
+Os diagramas por camada mostram só o que é público e os atributos do modelo (getters e setters omitidos). As fontes em Mermaid estão em `docs/diagramas/`.
 
 ---
 
@@ -441,7 +439,7 @@ Os integrantes estão em [`integrantes.txt`](integrantes.txt).
 | Ferramenta | Para que foi usada |
 |---|---|
 | GitHub Copilot | Estrutura inicial do projeto, depois substituída integralmente. |
-| Claude Code (Anthropic) | Backend Java (camadas, JDBC, regras de risco e tratamento de erros), script Oracle, front-end React, identidade visual, geração dos diagramas a partir do código, testes da API e esta documentação. |
+| Claude Code (Anthropic) | Backend Java (camadas, JDBC, regras de risco, tratamento de erros e a simplificação para 20 classes), script Oracle, front-end React, identidade visual, geração dos diagramas a partir do código, testes da API e esta documentação. |
 
 O código produzido com apoio de IA foi revisado e testado pelo grupo, que é responsável por todo o conteúdo entregue. O [guia do código](docs/GUIA-DO-CODIGO.md) explica cada parte do sistema.
 

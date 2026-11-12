@@ -1,0 +1,54 @@
+---
+title: "Citizen Life: as 20 classes, camada por camada"
+---
+flowchart TB
+    subgraph API["api + inicio: recebe o HTTP e responde JSON"]
+        direction LR
+        CitizenLife -- sobe --> Servidor
+        Servidor --- Json
+    end
+    subgraph EXC["exception: erro com status HTTP"]
+        direction LR
+        CitizenLifeException --> ValidacaoException
+    end
+    subgraph SERVICE["service: regras de negócio"]
+        direction LR
+        CidadaoService
+        RotaService
+        EnderecoService
+        OcorrenciaService
+    end
+    subgraph DAO["dao: SQL no Oracle"]
+        direction LR
+        CrudDao(["CrudDao&lt;T&gt; interface"])
+        CidadaoDao
+        RotaDao
+        EnderecoDao
+        OcorrenciaDao
+        Conexao
+    end
+    subgraph MODEL["model: os dados"]
+        direction LR
+        Cidadao
+        Rota
+        Via
+        Endereco
+        Ocorrencia
+    end
+
+    Servidor -. responde o erro .-> CitizenLifeException
+    Servidor --> CidadaoService & RotaService & EnderecoService & OcorrenciaService
+    CidadaoService --> CidadaoDao
+    RotaService --> RotaDao
+    EnderecoService --> EnderecoDao
+    OcorrenciaService --> OcorrenciaDao
+    CidadaoDao --> Cidadao
+    RotaDao --> Rota
+    RotaDao --> Via
+    EnderecoDao --> Endereco
+    OcorrenciaDao --> Ocorrencia
+
+    classDef camada fill:#F7F4EC,stroke:#287D4D,color:#1F2A24
+    classDef classe fill:#FFFFFF,stroke:#287D4D,color:#1F2A24
+    class API,SERVICE,DAO,MODEL,EXC camada
+    class CitizenLife,Servidor,Json,CidadaoService,RotaService,EnderecoService,OcorrenciaService,CidadaoDao,RotaDao,EnderecoDao,OcorrenciaDao,CrudDao,Conexao,Cidadao,Rota,Via,Endereco,Ocorrencia,CitizenLifeException,ValidacaoException classe

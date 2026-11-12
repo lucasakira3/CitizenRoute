@@ -492,36 +492,6 @@ textarea:focus-visible {
   gap: 0.6rem 0.9rem;
 }
 
-.impacto {
-  display: inline-block;
-  padding: 0.12rem 0.45rem;
-  border: 1.5px solid;
-  border-radius: 3px;
-  font-size: 0.74rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.impacto--BLOQUEIO_TOTAL {
-  color: var(--erro);
-  background: var(--erro-fundo);
-}
-
-.impacto--PARCIAL {
-  color: #8a3f0c;
-  background: #fdece0;
-}
-
-.impacto--LENTIDAO {
-  color: #6a5000;
-  background: #fff4cf;
-}
-
-.impacto--SEM_INTERDICAO {
-  color: var(--texto-suave);
-  background: var(--concreto);
-}
-
 /* ------------------------------------ Sinal de risco (placa de advertência) */
 
 .sinal {
@@ -591,43 +561,6 @@ textarea:focus-visible {
 }
 
 /* --------------------------------------------- Status e gravidade */
-
-.etiqueta-status {
-  display: inline-block;
-  padding: 0.18rem 0.5rem;
-  border-radius: 3px;
-  font-family: var(--fonte-titulo);
-  font-weight: 700;
-  font-size: 0.74rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-}
-
-.etiqueta-status--ABERTA {
-  background: #fff1bf;
-  color: #5e4700;
-}
-
-.etiqueta-status--CONFIRMADA {
-  background: var(--placa-clara);
-  color: var(--placa-escura);
-}
-
-.etiqueta-status--EM_ATENDIMENTO {
-  background: #fde3cf;
-  color: #7c3509;
-}
-
-.etiqueta-status--RESOLVIDA {
-  background: var(--sucesso-fundo);
-  color: var(--sucesso);
-}
-
-.etiqueta-status--DESCARTADA {
-  background: var(--concreto-2);
-  color: var(--texto-suave);
-}
 
 .gravidade {
   display: inline-flex;

@@ -1,75 +1,59 @@
 ---
-title: Citizen Life · Modelo entidade-relacionamento (Oracle)
+title: "Banco Oracle do Citizen Life: 6 tabelas"
 ---
 erDiagram
-    CL_REGIAO ||--o{ CL_VIA : "possui"
-    CL_CIDADAO |o--o{ CL_OCORRENCIA : "relata"
-    CL_OCORRENCIA ||--|{ CL_OCORRENCIA_VIA : "atinge"
-    CL_VIA ||--o{ CL_OCORRENCIA_VIA : "é atingida em"
     CL_CIDADAO ||--o{ CL_ROTA : "salva"
-    CL_ROTA ||--o{ CL_ROTA_VIA : "percorre"
-    CL_VIA ||--o{ CL_ROTA_VIA : "é percorrida em"
-    CL_CIDADAO ||--o{ CL_ENDERECO : "salva"
+    CL_CIDADAO ||--o{ CL_ENDERECO : "guarda"
+    CL_ROTA ||--|{ CL_ROTA_VIA : "passa por"
+    CL_VIA ||--o{ CL_ROTA_VIA : "faz parte de"
+    CL_VIA ||--o{ CL_OCORRENCIA : "tem"
 
-    CL_REGIAO {
-        NUMBER(10) id_regiao PK "IDENTITY"
-        VARCHAR2(60) nome UK "NOT NULL"
-    }
-    CL_VIA {
-        NUMBER(10) id_via PK "IDENTITY"
-        VARCHAR2(120) nome "NOT NULL, UK com id_regiao"
-        NUMBER(10) id_regiao FK "NOT NULL"
-    }
     CL_CIDADAO {
-        NUMBER(10) id_cidadao PK "IDENTITY"
-        VARCHAR2(100) nome "NOT NULL"
-        VARCHAR2(120) email UK "NOT NULL"
-        VARCHAR2(200) senha_hash "NOT NULL, PBKDF2"
-        VARCHAR2(10) modal "opcional, CHECK CARRO, MOTO, ONIBUS, APP, PEDESTRE, BIKE"
-        DATE dt_cadastro "NOT NULL"
-    }
-    CL_OCORRENCIA {
-        NUMBER(10) id_ocorrencia PK "IDENTITY"
-        VARCHAR2(100) titulo "NOT NULL"
-        VARCHAR2(500) descricao "NOT NULL"
-        VARCHAR2(20) tipo "CHECK 7 tipos"
-        NUMBER(1) gravidade "CHECK 1 a 5"
-        VARCHAR2(15) status "CHECK, DEFAULT ABERTA"
-        DATE dt_registro "NOT NULL"
-        DATE dt_atualizacao
-        NUMBER(10) id_cidadao_autor FK "ON DELETE SET NULL"
-    }
-    CL_OCORRENCIA_VIA {
-        NUMBER(10) id_ocorrencia PK, FK "ON DELETE CASCADE"
-        NUMBER(10) id_via PK, FK
-        VARCHAR2(15) nivel_impacto "CHECK 4 níveis"
+        NUMBER id_cidadao PK
+        VARCHAR2 nome
+        VARCHAR2 email UK
+        VARCHAR2 senha_hash
+        VARCHAR2 modal "CHECK, opcional"
+        DATE dt_cadastro
     }
     CL_ROTA {
-        NUMBER(10) id_rota PK "IDENTITY"
-        NUMBER(10) id_cidadao FK "ON DELETE CASCADE"
-        VARCHAR2(60) nome "NOT NULL, UK com id_cidadao"
-        VARCHAR2(120) origem_descricao "NOT NULL"
-        NUMBER origem_x "(8,2) NOT NULL, plano do mapa"
-        NUMBER origem_y "(8,2) NOT NULL"
-        VARCHAR2(120) destino_descricao "NOT NULL"
-        NUMBER destino_x "(8,2) NOT NULL"
-        NUMBER destino_y "(8,2) NOT NULL"
-        VARCHAR2(10) criterio "CHECK RAPIDA ou SEGURA"
-        NUMBER(7) distancia_m "CHECK maior que 0"
-        DATE dt_criacao "NOT NULL"
+        NUMBER id_rota PK
+        NUMBER id_cidadao FK
+        VARCHAR2 nome "UK com id_cidadao"
+        VARCHAR2 origem_descricao
+        NUMBER origem_x
+        NUMBER origem_y
+        VARCHAR2 destino_descricao
+        NUMBER destino_x
+        NUMBER destino_y
+        NUMBER distancia_m
+        DATE dt_criacao
     }
     CL_ROTA_VIA {
-        NUMBER(10) id_rota PK, FK "ON DELETE CASCADE"
-        NUMBER(10) id_via PK, FK "ON DELETE CASCADE"
-        NUMBER(3) ordem "NOT NULL, CHECK maior ou igual a 1"
+        NUMBER id_rota PK,FK
+        NUMBER id_via PK,FK
+        NUMBER ordem
+    }
+    CL_VIA {
+        NUMBER id_via PK
+        VARCHAR2 nome UK
+        VARCHAR2 zona "CHECK"
+    }
+    CL_OCORRENCIA {
+        NUMBER id_ocorrencia PK
+        NUMBER id_via FK
+        VARCHAR2 titulo UK
+        VARCHAR2 descricao
+        VARCHAR2 tipo "CHECK"
+        NUMBER gravidade "1 a 5"
+        DATE dt_registro
     }
     CL_ENDERECO {
-        NUMBER(10) id_endereco PK "IDENTITY"
-        NUMBER(10) id_cidadao FK "ON DELETE CASCADE"
-        VARCHAR2(40) apelido "NOT NULL, UK com id_cidadao"
-        VARCHAR2(10) tipo "CHECK CASA, TRABALHO, ESTUDO, OUTRO"
-        VARCHAR2(120) descricao "NOT NULL"
-        NUMBER pos_x "(8,2) NOT NULL, plano do mapa"
-        NUMBER pos_y "(8,2) NOT NULL"
-        DATE dt_criacao "NOT NULL"
+        NUMBER id_endereco PK
+        NUMBER id_cidadao FK
+        VARCHAR2 apelido "UK com id_cidadao"
+        VARCHAR2 tipo "CHECK"
+        VARCHAR2 descricao
+        NUMBER pos_x
+        NUMBER pos_y
     }

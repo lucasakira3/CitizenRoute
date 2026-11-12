@@ -36,7 +36,7 @@ export default function MinhasRotas({ setAviso }) {
           Nova rota
         </a>
       </IntroAba>
-      <Alertas estado={alertas} temRotas={(rotas.dados ?? []).length > 0} />
+      <Alertas estado={alertas} rotas={rotas.dados ?? []} />
       <RotasSalvas
         estado={rotas}
         alertas={alertas.dados ?? []}
@@ -47,7 +47,7 @@ export default function MinhasRotas({ setAviso }) {
   );
 }
 
-function Alertas({ estado, temRotas }) {
+function Alertas({ estado, rotas }) {
   const { sessao, dominio, rotulo } = useApp();
   // Sem modal no cadastro, o Java calcula o risco para o modal padrão (quem anda a pé)
   const modalRisco = sessao.modal ?? dominio.modalPadraoRisco;
@@ -57,7 +57,8 @@ function Alertas({ estado, temRotas }) {
 
   if (estado.carregando && !estado.dados) return <Carregando texto="Conferindo as suas rotas…" />;
   if (estado.erro) return <ErroCarga erro={estado.erro} aoTentar={estado.recarregar} />;
-  if (!temRotas) return null;
+  if (rotas.length === 0) return null;
+  const nomesDasRotas = (alerta) => rotasDaVia(rotas, alerta.via.id).map((rota) => rota.nome);
 
   return (
     <div className="perfil-alertas">
@@ -65,20 +66,18 @@ function Alertas({ estado, temRotas }) {
       {alertas.length === 0 && <Vazio titulo="Caminho livre." />}
 
       {importantes.map((alerta) => (
-        <article key={alerta.ocorrencia.id} className={`alerta alerta--${alerta.risco.nivel}`}>
+        <article key={alerta.id} className={`alerta alerta--${alerta.risco.nivel}`}>
           <SinalRisco risco={alerta.risco} tamanho="grande" />
           <div className="alerta__corpo">
             <p className="alerta__nivel">
               Risco {rotulo("niveisRisco", alerta.risco.nivel).toLowerCase()}
             </p>
             <h3 className="alerta__titulo">
-              <a href={`#/mobilidade/mapa?modal=${modalRisco}&ocorrencia=${alerta.ocorrencia.id}`}>{alerta.ocorrencia.titulo}</a>
+              <a href={`#/mobilidade/mapa?modal=${modalRisco}&ocorrencia=${alerta.id}`}>{alerta.titulo}</a>
             </h3>
-            <p className="alerta__rotas">{alerta.rotas.map((rota) => rota.nome).join(" · ")}</p>
+            <p className="alerta__rotas">{nomesDasRotas(alerta).join(" · ")}</p>
             <div className="lista-placas">
-              {alerta.viasAfetadas.map((via) => (
-                <PlacaVia key={via.id} via={via} semRegiao />
-              ))}
+              <PlacaVia via={alerta.via} semRegiao />
             </div>
           </div>
         </article>
@@ -89,10 +88,10 @@ function Alertas({ estado, temRotas }) {
           <h3 className="subtitulo">Risco baixo</h3>
           <ul>
             {outros.map((alerta) => (
-              <li key={alerta.ocorrencia.id}>
+              <li key={alerta.id}>
                 <SinalRisco risco={alerta.risco} tamanho="pequeno" />
-                <a href={`#/mobilidade/mapa?modal=${modalRisco}&ocorrencia=${alerta.ocorrencia.id}`}>{alerta.ocorrencia.titulo}</a>
-                <span className="alertas-baixos__via">{alerta.rotas.map((rota) => rota.nome).join(", ")}</span>
+                <a href={`#/mobilidade/mapa?modal=${modalRisco}&ocorrencia=${alerta.id}`}>{alerta.titulo}</a>
+                <span className="alertas-baixos__via">{nomesDasRotas(alerta).join(", ")}</span>
               </li>
             ))}
           </ul>
@@ -102,11 +101,16 @@ function Alertas({ estado, temRotas }) {
   );
 }
 
+/** Rotas salvas que passam pela via. */
+function rotasDaVia(rotas, idVia) {
+  return rotas.filter((rota) => rota.vias.some((via) => via.id === idVia));
+}
+
 /** Pior alerta de cada rota, para o resumo da lista. */
-export function piorPorRota(alertas) {
+export function piorPorRota(alertas, rotas) {
   const pior = new Map();
   alertas.forEach((alerta) => {
-    alerta.rotas.forEach((rota) => {
+    rotasDaVia(rotas, alerta.via.id).forEach((rota) => {
       const atual = pior.get(rota.id);
       if (!atual || ORDEM_RISCO[alerta.risco.nivel] > ORDEM_RISCO[atual.risco.nivel]) pior.set(rota.id, alerta);
     });
@@ -118,7 +122,7 @@ function RotasSalvas({ estado, alertas, aoMudar, aoErro }) {
   const { sessao, dominio } = useApp();
   const [editando, setEditando] = useState(null);
   const rotas = estado.dados ?? [];
-  const pior = piorPorRota(alertas);
+  const pior = piorPorRota(alertas, rotas);
   const modalRota = sessao.modal ?? dominio.modalPadraoRisco;
   const velocidade = dominio.modais.find((modal) => modal.codigo === modalRota)?.velocidadeMediaKmh ?? 20;
 

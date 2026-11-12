@@ -1,148 +1,40 @@
 ---
-title: "Pacote service: regras de negócio (getters e setters omitidos)"
+title: "service: as regras de negócio"
 ---
 classDiagram
-    class AlertaService {
-        -OcorrenciaDao ocorrenciaDao
-        -RotaService rotaService
-        -CidadaoService cidadaoService
-        -RiscoService riscoService
-        -AutenticacaoService autenticacao
-        +AlertaService(OcorrenciaDao, RotaService, CidadaoService, RiscoService, AutenticacaoService)
-        +alertasDoCidadao(long, Long) List~Alerta~
-        +alertasDaRota(Rota) List~Alerta~
-        +avaliarCaminho(List~Long~, Modal) List~Alerta~
-        -avaliar(List~Via~, Modal, List~Rota~) List~Alerta~
-        -viasAtingidas(Ocorrencia, List~Via~) List~Via~
-        -criar(Ocorrencia, List~Via~, List~Rota~, Modal) Alerta
-        -ordenar(List~Alerta~) List~Alerta~
-    }
-    class AutenticacaoService {
-        -String MENSAGEM_LOGIN_INVALIDO$
-        -CidadaoDao cidadaoDao
-        -SenhaService senhaService
-        +AutenticacaoService(CidadaoDao, SenhaService)
-        +entrar(String, String) Cidadao
-        +exigirCidadao(Long) Cidadao
-        +exigirProprio(Long, long, String) Cidadao
-    }
+    direction TB
     class CidadaoService {
-        -CidadaoDao cidadaoDao
-        -SenhaService senhaService
-        -AutenticacaoService autenticacao
-        +CidadaoService(CidadaoDao, SenhaService, AutenticacaoService)
-        +buscar(long) Cidadao
-        +buscar(long, Long) Cidadao
-        +cadastrar(String, String, Modal, String) Cidadao
-        +atualizar(long, String, String, Modal, String, Long) Cidadao
-        +excluir(long, Long) void
-    }
-    class EnderecoService {
-        +int MAXIMO_ENDERECOS$
-        -EnderecoDao enderecoDao
-        -AutenticacaoService autenticacao
-        +EnderecoService(EnderecoDao, AutenticacaoService)
-        +listar(long, Long) List~Endereco~
-        +criar(long, Endereco, Long) Endereco
-        +atualizar(long, long, Endereco, Long) Endereco
-        +excluir(long, long, Long) void
-        -validar(Endereco, List~Endereco~, Long) Endereco
-        -enderecoDoCidadao(long, long) Endereco
-    }
-    class OcorrenciaService {
-        -OcorrenciaDao ocorrenciaDao
-        +OcorrenciaService(OcorrenciaDao)
-        +listar(boolean) List~Ocorrencia~
-        +buscar(long) Ocorrencia
-    }
-    class RiscoService {
-        +double LIMITE_MODERADO$
-        +double LIMITE_ALTO$
-        +double LIMITE_CRITICO$
-        +double LIMITE_ALERTA$
-        +RiscoService()
-        +calcular(AvaliavelRisco, Modal) double
-        +classificar(double) NivelRisco
-        +deveAlertar(double) boolean
-        +riscoPorModal(AvaliavelRisco) Map~Modal‚Double~
-        ~arredondar(double)$ double
+        +cadastrar(nome, email, senha) Cidadao
+        +entrar(email, senha) Cidadao
+        +exigirDono(Long idAtor, long idCidadao) Cidadao
+        +atualizar(id, nome, email, modal, senha, idAtor) Cidadao
+        +excluir(long id, Long idAtor) void
     }
     class RotaService {
         +int MAXIMO_ROTAS$
-        +int MAXIMO_VIAS_POR_ROTA$
-        +int DISTANCIA_MAXIMA_METROS$
-        +double LIMITE_PLANO$
-        -RotaDao rotaDao
-        -ViaService viaService
-        -CidadaoService cidadaoService
-        -AutenticacaoService autenticacao
-        +RotaService(RotaDao, ViaService, CidadaoService, AutenticacaoService)
-        +listar(long, Long) List~Rota~
-        ~rotasDo(long) List~Rota~
-        +buscar(long, long, Long) Rota
-        +criar(long, Rota, List~Long~, Long) Rota
-        +atualizar(long, long, Rota, List~Long~, Long) Rota
-        +excluir(long, long, Long) void
-        +viasDoCaminho(List~Long~) List~Via~
-        -validar(Rota, List~Long~) Rota
-        -validarPonto(Validador, String, String, String, PontoRota) PontoRota
-        -rotaDoCidadao(long, long) Rota
-        -exigirDono(long, Long) Cidadao
+        +listar(idCidadao, idAtor) List~Rota~
+        +buscar(idCidadao, idRota, idAtor) Rota
+        +criar(idCidadao, Rota, idsVias, idAtor) Rota
+        +atualizar(idCidadao, idRota, Rota, idsVias, idAtor) Rota
+        +excluir(idCidadao, idRota, idAtor) void
+        +listarVias() List~Via~
     }
-    class SaudeService {
-        -SaudeDao saudeDao
-        +SaudeService(SaudeDao)
-        +problemaNoBanco() Optional~String~
-        +origemConfiguracao() String
+    class EnderecoService {
+        +int MAXIMO_ENDERECOS$
+        +listar(idCidadao, idAtor) List~Endereco~
+        +criar(idCidadao, Endereco, idAtor) Endereco
+        +atualizar(idCidadao, idEndereco, Endereco, idAtor) Endereco
+        +excluir(idCidadao, idEndereco, idAtor) void
     }
-    class SenhaService {
-        -String ALGORITMO$
-        -int ITERACOES$
-        -int TAMANHO_SAL$
-        -int TAMANHO_HASH_BITS$
-        -SecureRandom aleatorio
-        +SenhaService()
-        +gerarHash(String) String
-        +confere(String, String) boolean
-        -derivar(String, byte[], int) byte[]
+    class OcorrenciaService {
+        +listar(String modal) List~Ocorrencia~
+        +noCaminho(List~Long~ idsVias, String modal) List~Ocorrencia~
+        +alertas(Cidadao) List~Ocorrencia~
     }
-    class Validador {
-        -Pattern EMAIL$
-        -Map~String‚String~ erros
-        +Validador()
-        +texto(String, String, String, int, int) String
-        +email(String, String) String
-        +senha(String, String) void
-        +intervalo(String, Integer, String, int, int) void
-        +obrigatorio(String, Object, String) void
-        +exigir(boolean, String, String) void
-        +erro(String, String) void
-        +temErro(String) boolean
-        +validar() void
-    }
-    class ViaService {
-        -ViaDao viaDao
-        +ViaService(ViaDao)
-        +listar() List~Via~
-        +buscar(long) Via
-    }
-    AlertaService --> OcorrenciaDao : ocorrenciaDao
-    AlertaService --> RotaService : rotaService
-    AlertaService --> CidadaoService : cidadaoService
-    AlertaService --> RiscoService : riscoService
-    AlertaService --> AutenticacaoService : autenticacao
-    AutenticacaoService --> CidadaoDao : cidadaoDao
-    AutenticacaoService --> SenhaService : senhaService
-    CidadaoService --> CidadaoDao : cidadaoDao
-    CidadaoService --> SenhaService : senhaService
-    CidadaoService --> AutenticacaoService : autenticacao
-    EnderecoService --> EnderecoDao : enderecoDao
-    EnderecoService --> AutenticacaoService : autenticacao
-    OcorrenciaService --> OcorrenciaDao : ocorrenciaDao
-    RotaService --> RotaDao : rotaDao
-    RotaService --> ViaService : viaService
-    RotaService --> CidadaoService : cidadaoService
-    RotaService --> AutenticacaoService : autenticacao
-    SaudeService --> SaudeDao : saudeDao
-    ViaService --> ViaDao : viaDao
-    RotaService ..> Validador
+    RotaService --> CidadaoService : exigirDono
+    EnderecoService --> CidadaoService : exigirDono
+    CidadaoService --> CidadaoDao
+    RotaService --> RotaDao
+    EnderecoService --> EnderecoDao
+    OcorrenciaService --> OcorrenciaDao
+    OcorrenciaService --> RotaDao

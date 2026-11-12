@@ -1,39 +1,9 @@
 ---
-title: "Pacotes dao e config: acesso ao Oracle via JDBC (getters e setters omitidos)"
+title: "dao: acesso ao Oracle com JDBC"
 ---
 classDiagram
-    class OracleConnectionFactory {
-        +String CHAVE_URL$
-        +String CHAVE_USUARIO$
-        +String CHAVE_SENHA$
-        -List~Path~ ARQUIVOS_CONFIGURACAO$
-        -Properties ARQUIVO$
-        -OracleConnectionFactory()
-        +abrirConexao()$ Connection
-        +descreverOrigem()$ String
-        -obter(String)$ String
-        -carregarArquivo()$ Properties
-    }
-    class CidadaoDao {
-        -String SQL_SELECT$
-        -String SQL_INSERIR$
-        -String SQL_ATUALIZAR$
-        -String SQL_EXCLUIR$
-        -String SQL_EMAIL_EM_USO$
-        +CidadaoDao()
-        +inserir(Cidadao) Cidadao
-        +listar() List~Cidadao~
-        +buscarPorId(long) Optional~Cidadao~
-        +buscarPorEmail(String) Optional~Cidadao~
-        +emailEmUso(String, Long) boolean
-        +atualizar(Cidadao) boolean
-        +excluir(long) boolean
-        -buscarUm(String, Object, String) Optional~Cidadao~
-        -mapear(ResultSet) Cidadao
-        +atualizar(Object) boolean
-        +inserir(Object) Object
-    }
-    class CrudDao {
+    direction TB
+    class CrudDao~T~ {
         <<interface>>
         +inserir(T) T
         +listar() List~T~
@@ -41,109 +11,29 @@ classDiagram
         +atualizar(T) boolean
         +excluir(long) boolean
     }
-    class EnderecoDao {
-        -String SQL_SELECT$
-        -String ORDEM$
-        -String SQL_INSERIR$
-        -String SQL_ATUALIZAR$
-        -String SQL_EXCLUIR$
-        +EnderecoDao()
-        +inserir(Endereco) Endereco
-        +listar() List~Endereco~
-        +listarPorCidadao(long) List~Endereco~
-        +buscarPorId(long) Optional~Endereco~
-        +atualizar(Endereco) boolean
-        +excluir(long) boolean
-        -consultar(String, Long) List~Endereco~
-        -mapear(ResultSet) Endereco
-        +atualizar(Object) boolean
-        +inserir(Object) Object
-    }
-    class FiltroOcorrencia {
-        <<record>>
-        -boolean apenasAtivas
-        -Long idCidadaoComRota
-        +FiltroOcorrencia(boolean, Long)
-        +todas()$ FiltroOcorrencia
-        +ativas()$ FiltroOcorrencia
-        +ativasNasRotasDo(long)$ FiltroOcorrencia
-    }
-    class JdbcUtil_OperacaoJdbc["JdbcUtil.OperacaoJdbc"] {
-        <<interface>>
-        +executar(Connection) T
-    }
-    class JdbcUtil {
-        -JdbcUtil()
-        +emTransacao(String, JdbcUtil.OperacaoJdbc~T~)$ T
-        +idGerado(PreparedStatement)$ long
-        +lerData(ResultSet, String)$ LocalDateTime
-        +paraTimestamp(LocalDateTime)$ Timestamp
-        +marcadores(int)$ String
-    }
-    class OcorrenciaDao {
-        -String ATIVAS$
-        -String SQL_SELECT$
-        -String SQL_SELECT_VIAS$
-        -int LOTE_IN$
-        +OcorrenciaDao()
-        +listar(FiltroOcorrencia) List~Ocorrencia~
-        +buscarPorId(long) Optional~Ocorrencia~
-        -carregarVias(Connection, List~Ocorrencia~) void
-        -mapear(ResultSet) Ocorrencia
+    class CidadaoDao {
+        +buscarPorEmail(String) Optional~Cidadao~
     }
     class RotaDao {
-        -String SQL_SELECT$
-        -String SQL_SELECT_VIAS$
-        -String SQL_INSERIR$
-        -String SQL_INSERIR_VIA$
-        -String SQL_ATUALIZAR$
-        -String SQL_EXCLUIR_VIAS$
-        -String SQL_EXCLUIR$
-        +RotaDao()
-        +inserir(Rota) Rota
-        +listar() List~Rota~
         +listarPorCidadao(long) List~Rota~
-        +buscarPorId(long) Optional~Rota~
-        +atualizar(Rota) boolean
-        +excluir(long) boolean
-        -preencherPontos(PreparedStatement, Rota, int) void
-        -inserirVias(Connection, Rota) void
-        -consultar(String, Long) List~Rota~
-        -carregarVias(Connection, List~Rota~) void
-        -mapear(ResultSet) Rota
-        +atualizar(Object) boolean
-        +inserir(Object) Object
+        +listarVias() List~Via~
     }
-    class SaudeDao {
-        -String SQL_VERIFICAR$
-        +SaudeDao()
-        +verificar() void
-        +origemConfiguracao() String
+    class EnderecoDao {
+        +listarPorCidadao(long) List~Endereco~
     }
-    class TradutorErroSql {
-        -int ORA_UNIQUE$
-        -int ORA_NULL$
-        -int ORA_TABELA_INEXISTENTE$
-        -int ORA_CHECK$
-        -int ORA_PAI_INEXISTENTE$
-        -int ORA_FILHOS_EXISTEM$
-        -int ORA_VALOR_GRANDE$
-        -int ORA_LOGIN_INVALIDO$
-        -int ORA_CONTA_BLOQUEADA$
-        -int ORA_SENHA_EXPIRADA$
-        -Map~String‚String~ UNICIDADE$
-        -Map~String‚String~ EXCLUSAO_BLOQUEADA$
-        -TradutorErroSql()
-        +traduzir(SQLException, String)$ PersistenciaException
-        +traduzirConexao(SQLException)$ PersistenciaException
-        -procurar(Map~String‚String~, String, String)$ String
+    class OcorrenciaDao {
+        +listar() List~Ocorrencia~
     }
-    class ViaDao {
-        -String SQL_SELECT$
-        +ViaDao()
-        +listar() List~Via~
-        +buscarPorId(long) Optional~Via~
-        ~mapear(ResultSet)$ Via
+    class Conexao {
+        <<final>>
+        +abrir()$ Connection
+        +traduzir(SQLException, String acao)$ CitizenLifeException
+        +testar()$ String
     }
-    JdbcUtil ..> JdbcUtil_OperacaoJdbc
-    OcorrenciaDao ..> FiltroOcorrencia
+    CrudDao <|.. CidadaoDao : T = Cidadao
+    CrudDao <|.. RotaDao : T = Rota
+    CrudDao <|.. EnderecoDao : T = Endereco
+    CidadaoDao ..> Conexao
+    RotaDao ..> Conexao
+    EnderecoDao ..> Conexao
+    OcorrenciaDao ..> Conexao
