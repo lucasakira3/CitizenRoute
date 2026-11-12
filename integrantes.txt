@@ -1,7 +1,7 @@
 Global Solution 2026/2 · CitizenTech · Engenharia de Software FIAP · Turma 2ESOA
 
 Grupo: (nome do grupo)
-Projeto: CitizenRoute · hub de segurança da mobilidade urbana
+Projeto: Citizen Life · hub de consulta para o dia a dia na cidade
 
 Integrantes (RM · nome completo):
 RM000000 · Nome Sobrenome

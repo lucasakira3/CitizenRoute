@@ -2,19 +2,6 @@
 title: "Pacote service: regras de negócio (getters e setters omitidos)"
 ---
 classDiagram
-    class AcaoService {
-        -AcaoDao acaoDao
-        -OcorrenciaService ocorrenciaService
-        -AutenticacaoService autenticacao
-        +AcaoService(AcaoDao, OcorrenciaService, AutenticacaoService)
-        +listarPorOcorrencia(long) List~Acao~
-        +buscar(long) Acao
-        +registrar(long, String, Long) Acao
-        +atualizar(long, String, Long) Acao
-        +excluir(long, Long) void
-        -exigirAutor(Acao, Gestor, String) void
-        -validarDescricao(String) String
-    }
     class AlertaService {
         -OcorrenciaDao ocorrenciaDao
         -RotaService rotaService
@@ -32,79 +19,41 @@ classDiagram
     }
     class AutenticacaoService {
         -String MENSAGEM_LOGIN_INVALIDO$
-        -UsuarioDao usuarioDao
+        -CidadaoDao cidadaoDao
         -SenhaService senhaService
-        +AutenticacaoService(UsuarioDao, SenhaService)
-        +entrar(String, String) Usuario
-        +exigirUsuario(Long) Usuario
-        +exigirGestor(Long, String) Gestor
-        +exigirCidadao(Long, String) Cidadao
-        +exigirProprioOuGestor(Long, long, String) Usuario
+        +AutenticacaoService(CidadaoDao, SenhaService)
+        +entrar(String, String) Cidadao
+        +exigirCidadao(Long) Cidadao
+        +exigirProprio(Long, long, String) Cidadao
     }
     class CidadaoService {
         -CidadaoDao cidadaoDao
-        -UsuarioDao usuarioDao
         -SenhaService senhaService
         -AutenticacaoService autenticacao
-        +CidadaoService(CidadaoDao, UsuarioDao, SenhaService, AutenticacaoService)
-        +listar() List~Cidadao~
+        +CidadaoService(CidadaoDao, SenhaService, AutenticacaoService)
         +buscar(long) Cidadao
+        +buscar(long, Long) Cidadao
         +cadastrar(String, String, Modal, String) Cidadao
         +atualizar(long, String, String, Modal, String, Long) Cidadao
         +excluir(long, Long) void
     }
-    class GestorService {
-        -GestorDao gestorDao
-        -UsuarioDao usuarioDao
-        -SenhaService senhaService
+    class EnderecoService {
+        +int MAXIMO_ENDERECOS$
+        -EnderecoDao enderecoDao
         -AutenticacaoService autenticacao
-        +GestorService(GestorDao, UsuarioDao, SenhaService, AutenticacaoService)
-        +listar() List~Gestor~
-        +buscar(long) Gestor
-        +cadastrar(String, String, Orgao, String, String, Long) Gestor
-        +atualizar(long, String, String, Orgao, String, String, Long) Gestor
-        +excluir(long, Long) void
-        -preencher(Validador, Gestor, Long, String, String, Orgao, String) void
+        +EnderecoService(EnderecoDao, AutenticacaoService)
+        +listar(long, Long) List~Endereco~
+        +criar(long, Endereco, Long) Endereco
+        +atualizar(long, long, Endereco, Long) Endereco
+        +excluir(long, long, Long) void
+        -validar(Endereco, List~Endereco~, Long) Endereco
+        -enderecoDoCidadao(long, long) Endereco
     }
     class OcorrenciaService {
-        +int MAXIMO_VIAS$
-        -Map~StatusOcorrencia‚Set‹StatusOcorrencia›~ TRANSICOES$
         -OcorrenciaDao ocorrenciaDao
-        -ViaDao viaDao
-        -AutenticacaoService autenticacao
-        +OcorrenciaService(OcorrenciaDao, ViaDao, AutenticacaoService)
-        +proximosStatus(StatusOcorrencia)$ Set~StatusOcorrencia~
-        +podeMudar(StatusOcorrencia, StatusOcorrencia)$ boolean
-        +tiposAtendidosPor(Orgao)$ Set~TipoOcorrencia~
-        +listar(StatusOcorrencia, TipoOcorrencia, Orgao, Long, Long, Long, boolean) List~Ocorrencia~
+        +OcorrenciaService(OcorrenciaDao)
+        +listar(boolean) List~Ocorrencia~
         +buscar(long) Ocorrencia
-        +registrar(Ocorrencia, Long) Ocorrencia
-        +atualizar(long, Ocorrencia, Long) Ocorrencia
-        +excluir(long, Long) void
-        +alterarStatus(long, StatusOcorrencia, String, Long) Ocorrencia
-        -validar(Ocorrencia) Ocorrencia
-    }
-    class RegiaoService {
-        -RegiaoDao regiaoDao
-        -AutenticacaoService autenticacao
-        +RegiaoService(RegiaoDao, AutenticacaoService)
-        +listar() List~Regiao~
-        +buscar(long) Regiao
-        +cadastrar(String, Long) Regiao
-        +atualizar(long, String, Long) Regiao
-        +excluir(long, Long) void
-        -validarNome(String) String
-    }
-    class RelatorioService {
-        -RelatorioDao relatorioDao
-        -OcorrenciaDao ocorrenciaDao
-        -RiscoService riscoService
-        +RelatorioService(RelatorioDao, OcorrenciaDao, RiscoService)
-        +resumo() ResumoPainel
-        +viasCriticas() List~ViaCritica~
-        +ocorrenciasPorRegiao() List~OcorrenciasPorRegiao~
-        +tempoRespostaPorOrgao() List~TempoRespostaOrgao~
-        +exposicaoPorModal() List~ExposicaoModal~
     }
     class RiscoService {
         +double LIMITE_MODERADO$
@@ -122,7 +71,7 @@ classDiagram
         +int MAXIMO_ROTAS$
         +int MAXIMO_VIAS_POR_ROTA$
         +int DISTANCIA_MAXIMA_METROS$
-        -double LIMITE_PLANO$
+        +double LIMITE_PLANO$
         -RotaDao rotaDao
         -ViaService viaService
         -CidadaoService cidadaoService
@@ -173,49 +122,27 @@ classDiagram
     }
     class ViaService {
         -ViaDao viaDao
-        -RegiaoService regiaoService
-        -AutenticacaoService autenticacao
-        +ViaService(ViaDao, RegiaoService, AutenticacaoService)
-        +listar(Long, String) List~Via~
+        +ViaService(ViaDao)
+        +listar() List~Via~
         +buscar(long) Via
-        +cadastrar(String, Long, Long) Via
-        +atualizar(long, String, Long, Long) Via
-        +excluir(long, Long) void
-        -validar(Long, String, Long) Via
     }
-    AcaoService --> AcaoDao : acaoDao
-    AcaoService --> OcorrenciaService : ocorrenciaService
-    AcaoService --> AutenticacaoService : autenticacao
     AlertaService --> OcorrenciaDao : ocorrenciaDao
     AlertaService --> RotaService : rotaService
     AlertaService --> CidadaoService : cidadaoService
     AlertaService --> RiscoService : riscoService
     AlertaService --> AutenticacaoService : autenticacao
-    AutenticacaoService --> UsuarioDao : usuarioDao
+    AutenticacaoService --> CidadaoDao : cidadaoDao
     AutenticacaoService --> SenhaService : senhaService
     CidadaoService --> CidadaoDao : cidadaoDao
-    CidadaoService --> UsuarioDao : usuarioDao
     CidadaoService --> SenhaService : senhaService
     CidadaoService --> AutenticacaoService : autenticacao
-    GestorService --> GestorDao : gestorDao
-    GestorService --> UsuarioDao : usuarioDao
-    GestorService --> SenhaService : senhaService
-    GestorService --> AutenticacaoService : autenticacao
+    EnderecoService --> EnderecoDao : enderecoDao
+    EnderecoService --> AutenticacaoService : autenticacao
     OcorrenciaService --> OcorrenciaDao : ocorrenciaDao
-    OcorrenciaService --> ViaDao : viaDao
-    OcorrenciaService --> AutenticacaoService : autenticacao
-    RegiaoService --> RegiaoDao : regiaoDao
-    RegiaoService --> AutenticacaoService : autenticacao
-    RelatorioService --> RelatorioDao : relatorioDao
-    RelatorioService --> OcorrenciaDao : ocorrenciaDao
-    RelatorioService --> RiscoService : riscoService
     RotaService --> RotaDao : rotaDao
     RotaService --> ViaService : viaService
     RotaService --> CidadaoService : cidadaoService
     RotaService --> AutenticacaoService : autenticacao
     SaudeService --> SaudeDao : saudeDao
     ViaService --> ViaDao : viaDao
-    ViaService --> RegiaoService : regiaoService
-    ViaService --> AutenticacaoService : autenticacao
-    GestorService ..> Validador
     RotaService ..> Validador

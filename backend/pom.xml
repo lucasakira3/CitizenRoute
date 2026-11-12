@@ -4,17 +4,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>br.com.citizenroute</groupId>
-    <artifactId>citizenroute-api</artifactId>
+    <groupId>br.com.citizenlife</groupId>
+    <artifactId>citizenlife-api</artifactId>
     <version>1.0.0</version>
-    <name>CitizenRoute API</name>
+    <name>Citizen Life API</name>
     <description>API em Java puro (JDBC + HttpServer do JDK) do hub de segurança da mobilidade urbana</description>
 
     <properties>
         <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <exec.mainClass>br.com.citizenroute.CitizenRouteApplication</exec.mainClass>
+        <exec.mainClass>br.com.citizenlife.CitizenLifeApplication</exec.mainClass>
     </properties>
 
     <dependencies>

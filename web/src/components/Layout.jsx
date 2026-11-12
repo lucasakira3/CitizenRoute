@@ -1,28 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
 import { useApp } from "../contexto.js";
+import { PILARES } from "../utils/pilares.js";
+import Logo from "./Logo.jsx";
 import { api } from "../services/api.js";
 
-/** Itens do menu principal. É o mesmo menu em todas as páginas. */
-const ITENS_MENU = [
-  { caminho: "/", rotulo: "Painel" },
-  { caminho: "/rota", rotulo: "Rota" },
-  { caminho: "/minhas-rotas", rotulo: "Minhas rotas" },
-  { caminho: "/mapa", rotulo: "Mapa de riscos" },
-  { caminho: "/ocorrencias", rotulo: "Ocorrências" },
-  { caminho: "/gestao", rotulo: "Gestão" },
-  { caminho: "/relatorios", rotulo: "Relatórios" },
-  { caminho: "/cadastros", rotulo: "Cadastros" },
-];
+/**
+ * Menu principal: os seis pilares do hub, o mesmo em todas as páginas.
+ * O início fica na logo, e o perfil (rotas, endereços, meio de transporte) no bloco do cidadão logado.
+ */
+const ITENS_MENU = PILARES.map((pilar) => ({ caminho: `/${pilar.id}`, rotulo: pilar.nome, cor: pilar.cor }));
 
 function estaAtivo(caminho, rota) {
-  if (caminho === "/") {
-    return rota === "/";
-  }
   return rota === caminho || rota.startsWith(`${caminho}/`);
 }
 
 // Páginas que ocupam a tela inteira abaixo do cabeçalho (sem rodapé e sem margens)
-const TELA_CHEIA = new Set(["/mapa", "/rota"]);
+const TELA_CHEIA = new Set(["/mobilidade/mapa", "/mobilidade/rota"]);
 
 export default function Layout({ rota, children }) {
   const { sessao, sair } = useApp();
@@ -46,9 +39,8 @@ export default function Layout({ rota, children }) {
 
       <header className="cabecalho">
         <div className="cabecalho__interno">
-          <a className="marca" href="#/" aria-label="CitizenRoute, ir para o painel">
-            <span className="marca__sinal" aria-hidden="true" />
-            <span className="marca__nome">CitizenRoute</span>
+          <a className="marca" href="#/" aria-label="Citizen Life, ir para o início">
+            <Logo tamanho={38} />
           </a>
 
           <button
@@ -69,7 +61,9 @@ export default function Layout({ rota, children }) {
                     className="menu__link"
                     href={`#${item.caminho}`}
                     aria-current={estaAtivo(item.caminho, rota) ? "page" : undefined}
+                    style={{ "--cor-pilar": item.cor }}
                   >
+                    <span className="menu__ponto" aria-hidden="true" />
                     {item.rotulo}
                   </a>
                 </li>
@@ -79,20 +73,30 @@ export default function Layout({ rota, children }) {
             <div className="sessao">
               {sessao ? (
                 <>
-                  <span className="sessao__quem">
-                    <span className="sessao__nome">{sessao.nome.split(" ")[0]}</span>
-                    <span className="sessao__perfil">{sessao.perfil}</span>
-                  </span>
+                  <a
+                    className="sessao__conta"
+                    href="#/perfil"
+                    aria-current={rota === "/perfil" || rota.startsWith("/perfil/") ? "page" : undefined}
+                  >
+                    <span className="sessao__avatar" aria-hidden="true">
+                      {sessao.nome.charAt(0).toUpperCase()}
+                    </span>
+                    <span className="sessao__quem">
+                      <span className="sessao__nome">{sessao.nome.split(" ")[0]}</span>
+                      <span className="sessao__perfil">Meu perfil</span>
+                    </span>
+                  </a>
                   <button type="button" className="sessao__sair" onClick={sair}>
                     Sair
                   </button>
                 </>
               ) : (
                 <a
-                  className="botao botao--sinal"
+                  className="botao botao--entrar"
                   href="#/entrar"
                   aria-current={rota === "/entrar" ? "page" : undefined}
                 >
+                  <span className="botao--entrar__icone" aria-hidden="true" />
                   Entrar
                 </a>
               )}
@@ -110,10 +114,25 @@ export default function Layout({ rota, children }) {
       {!telaCheia && (
         <footer className="rodape">
           <div className="rodape__interno">
-            <p>
-              <strong>CitizenRoute</strong> · o cidadão se protege, a gestão age.
+            <div className="rodape__marca">
+              <Logo tamanho={34} />
+              <p>O seu dia a dia na cidade, num lugar só.</p>
+            </div>
+            <nav className="rodape__pilares" aria-label="Pilares">
+              <h2 className="rodape__titulo">Pilares</h2>
+              <ul>
+                {PILARES.map((pilar) => (
+                  <li key={pilar.id}>
+                    <a href={`#/${pilar.id}`}>{pilar.nome}</a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <p className="rodape__credito">
+              Global Solution 2026/2 · CitizenTech
+              <br />
+              Engenharia de Software FIAP
             </p>
-            <p>Global Solution 2026/2 · CitizenTech · Engenharia de Software FIAP</p>
           </div>
         </footer>
       )}

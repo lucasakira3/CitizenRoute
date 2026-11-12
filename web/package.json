@@ -1,8 +1,8 @@
 {
-  "name": "citizenroute-web",
+  "name": "citizenlife-web",
   "private": true,
   "version": "1.0.0",
-  "description": "Interface web do CitizenRoute em React",
+  "description": "Interface web do Citizen Life em React",
   "type": "module",
   "scripts": {
     "dev": "vite",

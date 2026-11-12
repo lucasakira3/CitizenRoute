@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { prefereMenosMovimento } from "../utils/movimento.js";
 
-// Navegação por hash (#/ocorrencias): funciona sem configurar o servidor e sem biblioteca extra.
+// Navegação por hash (#/mobilidade): funciona sem configurar o servidor e sem biblioteca extra.
 
 function lerRota() {
   const hash = window.location.hash.replace(/^#/, "");
@@ -36,7 +36,7 @@ export function navegar(caminho) {
 }
 
 /**
- * Compara a rota atual com um padrão como "/ocorrencias/:id".
+ * Compara a rota atual com um padrão como "/:pilar".
  * Devolve os parâmetros ({ id: "12" }) ou null se não combinar.
  */
 export function combinar(padrao, rota) {

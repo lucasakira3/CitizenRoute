@@ -4,6 +4,8 @@ import App from "./App.jsx";
 import "./styles/base.css";
 import "./styles/componentes.css";
 import "./styles/paginas.css";
+import "./styles/hub.css";
+import "./styles/perfil.css";
 import "./styles/mapa.css";
 import "./styles/rota.css";
 import "./styles/movimento.css";

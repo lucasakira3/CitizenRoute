@@ -20,38 +20,18 @@ export const MODAL_FRASE = {
   BIKE: "anda de bicicleta",
 };
 
-/** O que cada mudança de status significa para o gestor. */
-export const ACAO_STATUS = {
-  CONFIRMADA: {
-    botao: "Confirmar",
-    feito: "Ocorrência confirmada.",
-    pergunta: "O que foi verificado?",
-    exemplo: "Ex.: Confirmado pelas câmeras da CET.",
-  },
-  EM_ATENDIMENTO: {
-    botao: "Iniciar atendimento",
-    feito: "Atendimento iniciado.",
-    pergunta: "Quem está atendendo e como?",
-    exemplo: "Ex.: Equipe de poda a caminho do local.",
-  },
-  RESOLVIDA: {
-    botao: "Marcar como resolvida",
-    feito: "Ocorrência marcada como resolvida.",
-    pergunta: "O que foi feito para resolver?",
-    exemplo: "Ex.: Pista limpa e faixas liberadas.",
-  },
-  DESCARTADA: {
-    botao: "Descartar",
-    feito: "Ocorrência descartada.",
-    pergunta: "Por que o relato não procede?",
-    exemplo: "Ex.: Relato duplicado de outra ocorrência.",
-  },
-};
-
 export const GRAVIDADE = {
   1: "Leve",
   2: "Moderada",
   3: "Séria",
   4: "Grave",
   5: "Muito grave",
+};
+
+/** Ícone de cada tipo de endereço salvo. */
+export const ICONE_ENDERECO = {
+  CASA: "HABITACAO",
+  TRABALHO: "TRABALHO",
+  ESTUDO: "EDUCACAO",
+  OUTRO: "PIN",
 };

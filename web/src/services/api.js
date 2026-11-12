@@ -2,7 +2,7 @@
 // Em desenvolvimento, o Vite repassa /api para http://127.0.0.1:8080 (veja vite.config.js).
 
 const BASE = "/api";
-const CHAVE_SESSAO = "citizenroute.sessao";
+const CHAVE_SESSAO = "citizenlife.sessao";
 
 const SEM_CONEXAO =
   "Não foi possível falar com a API. Confira se o servidor Java está rodando (mvn compile exec:java, na pasta backend).";
@@ -111,6 +111,5 @@ export const api = {
   buscar: (caminho) => requisitar("GET", caminho),
   criar: (caminho, corpo) => requisitar("POST", caminho, corpo),
   atualizar: (caminho, corpo) => requisitar("PUT", caminho, corpo),
-  alterar: (caminho, corpo) => requisitar("PATCH", caminho, corpo),
   excluir: (caminho) => requisitar("DELETE", caminho),
 };

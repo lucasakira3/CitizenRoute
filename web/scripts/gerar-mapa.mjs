@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const SAIDA = join(AQUI, "..", "public", "mapa", "sao-paulo.json");
 const SAIDA_ROTAS = join(AQUI, "..", "public", "mapa", "sao-paulo-rotas.json");
-const CACHE = process.env.CACHE_MAPA ?? join(tmpdir(), "citizenroute-osm");
+const CACHE = process.env.CACHE_MAPA ?? join(tmpdir(), "citizenlife-osm");
 // Servidores públicos da Overpass API: se o primeiro estiver ocupado, tenta o segundo
 const SERVIDORES = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
 const AREA_SP = "area(3600298285)->.sp;"; // relação 298285 = município de São Paulo
@@ -64,7 +64,7 @@ async function baixar(nome) {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        "User-Agent": "CitizenRoute-gerador-de-mapa/1.0 (trabalho academico FIAP)",
+        "User-Agent": "CitizenLife-gerador-de-mapa/1.0 (trabalho academico FIAP)",
       },
       body: new URLSearchParams({ data: consulta }),
     });

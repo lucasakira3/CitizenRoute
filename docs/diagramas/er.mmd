@@ -1,46 +1,34 @@
 ---
-title: CitizenRoute · Modelo entidade-relacionamento (Oracle)
+title: Citizen Life · Modelo entidade-relacionamento (Oracle)
 ---
 erDiagram
-    CR_REGIAO ||--o{ CR_VIA : "possui"
-    CR_USUARIO ||--o| CR_CIDADAO : "é um"
-    CR_USUARIO ||--o| CR_GESTOR : "é um"
-    CR_CIDADAO ||--o{ CR_OCORRENCIA : "reporta"
-    CR_OCORRENCIA ||--|{ CR_OCORRENCIA_VIA : "atinge"
-    CR_VIA ||--o{ CR_OCORRENCIA_VIA : "é atingida em"
-    CR_CIDADAO ||--o{ CR_ROTA : "salva"
-    CR_ROTA ||--o{ CR_ROTA_VIA : "percorre"
-    CR_VIA ||--o{ CR_ROTA_VIA : "é percorrida em"
-    CR_OCORRENCIA ||--o{ CR_ACAO : "recebe"
-    CR_GESTOR ||--o{ CR_ACAO : "registra"
+    CL_REGIAO ||--o{ CL_VIA : "possui"
+    CL_CIDADAO |o--o{ CL_OCORRENCIA : "relata"
+    CL_OCORRENCIA ||--|{ CL_OCORRENCIA_VIA : "atinge"
+    CL_VIA ||--o{ CL_OCORRENCIA_VIA : "é atingida em"
+    CL_CIDADAO ||--o{ CL_ROTA : "salva"
+    CL_ROTA ||--o{ CL_ROTA_VIA : "percorre"
+    CL_VIA ||--o{ CL_ROTA_VIA : "é percorrida em"
+    CL_CIDADAO ||--o{ CL_ENDERECO : "salva"
 
-    CR_REGIAO {
+    CL_REGIAO {
         NUMBER(10) id_regiao PK "IDENTITY"
         VARCHAR2(60) nome UK "NOT NULL"
     }
-    CR_VIA {
+    CL_VIA {
         NUMBER(10) id_via PK "IDENTITY"
         VARCHAR2(120) nome "NOT NULL, UK com id_regiao"
         NUMBER(10) id_regiao FK "NOT NULL"
     }
-    CR_USUARIO {
-        NUMBER(10) id_usuario PK "IDENTITY"
+    CL_CIDADAO {
+        NUMBER(10) id_cidadao PK "IDENTITY"
         VARCHAR2(100) nome "NOT NULL"
         VARCHAR2(120) email UK "NOT NULL"
         VARCHAR2(200) senha_hash "NOT NULL, PBKDF2"
-        VARCHAR2(10) tipo "CHECK CIDADAO ou GESTOR"
+        VARCHAR2(10) modal "opcional, CHECK CARRO, MOTO, ONIBUS, APP, PEDESTRE, BIKE"
         DATE dt_cadastro "NOT NULL"
     }
-    CR_CIDADAO {
-        NUMBER(10) id_usuario PK, FK "ON DELETE CASCADE"
-        VARCHAR2(10) modal "CHECK CARRO, MOTO, ONIBUS, APP, PEDESTRE, BIKE"
-    }
-    CR_GESTOR {
-        NUMBER(10) id_usuario PK, FK "ON DELETE CASCADE"
-        VARCHAR2(15) orgao "CHECK CET, DEFESA_CIVIL, SPTRANS, SUBPREFEITURA, GCM"
-        VARCHAR2(20) matricula UK "NOT NULL"
-    }
-    CR_OCORRENCIA {
+    CL_OCORRENCIA {
         NUMBER(10) id_ocorrencia PK "IDENTITY"
         VARCHAR2(100) titulo "NOT NULL"
         VARCHAR2(500) descricao "NOT NULL"
@@ -49,14 +37,14 @@ erDiagram
         VARCHAR2(15) status "CHECK, DEFAULT ABERTA"
         DATE dt_registro "NOT NULL"
         DATE dt_atualizacao
-        NUMBER(10) id_cidadao_autor FK "NOT NULL"
+        NUMBER(10) id_cidadao_autor FK "ON DELETE SET NULL"
     }
-    CR_OCORRENCIA_VIA {
+    CL_OCORRENCIA_VIA {
         NUMBER(10) id_ocorrencia PK, FK "ON DELETE CASCADE"
         NUMBER(10) id_via PK, FK
         VARCHAR2(15) nivel_impacto "CHECK 4 níveis"
     }
-    CR_ROTA {
+    CL_ROTA {
         NUMBER(10) id_rota PK "IDENTITY"
         NUMBER(10) id_cidadao FK "ON DELETE CASCADE"
         VARCHAR2(60) nome "NOT NULL, UK com id_cidadao"
@@ -70,16 +58,18 @@ erDiagram
         NUMBER(7) distancia_m "CHECK maior que 0"
         DATE dt_criacao "NOT NULL"
     }
-    CR_ROTA_VIA {
+    CL_ROTA_VIA {
         NUMBER(10) id_rota PK, FK "ON DELETE CASCADE"
         NUMBER(10) id_via PK, FK "ON DELETE CASCADE"
         NUMBER(3) ordem "NOT NULL, CHECK maior ou igual a 1"
     }
-    CR_ACAO {
-        NUMBER(10) id_acao PK "IDENTITY"
-        NUMBER(10) id_ocorrencia FK "ON DELETE CASCADE"
-        NUMBER(10) id_gestor FK "NOT NULL"
-        VARCHAR2(500) descricao "NOT NULL"
-        VARCHAR2(15) status_novo "CHECK, nulo se for só andamento"
-        DATE dt_acao "NOT NULL"
+    CL_ENDERECO {
+        NUMBER(10) id_endereco PK "IDENTITY"
+        NUMBER(10) id_cidadao FK "ON DELETE CASCADE"
+        VARCHAR2(40) apelido "NOT NULL, UK com id_cidadao"
+        VARCHAR2(10) tipo "CHECK CASA, TRABALHO, ESTUDO, OUTRO"
+        VARCHAR2(120) descricao "NOT NULL"
+        NUMBER pos_x "(8,2) NOT NULL, plano do mapa"
+        NUMBER pos_y "(8,2) NOT NULL"
+        DATE dt_criacao "NOT NULL"
     }

@@ -1,4 +1,4 @@
-# Guia do código do CitizenRoute
+# Guia do código do Citizen Life
 
 Este guia é para o grupo estudar o projeto antes da entrega e da apresentação. A regra da Global Solution é clara: código gerado com IA só vale se o grupo entende e consegue explicar. Leia com o código aberto ao lado.
 
@@ -6,28 +6,29 @@ Este guia é para o grupo estudar o projeto antes da entrega e da apresentação
 
 ## 1. O sistema em um minuto
 
-- **Cidadão** reporta uma ocorrência numa ou mais vias e planeja rotas: digita a saída e o destino, vê o risco de cada ocorrência no caminho e salva as rotas do dia a dia.
-- **Gestor** de um órgão público confirma ou descarta o relato, registra o que está sendo feito e marca como resolvido.
-- O sistema calcula o **risco** de cada ocorrência para cada **modal** (carro, moto, ônibus, app, a pé, bike). Quem tem uma rota salva recebe alerta quando surge, numa via da rota, uma ocorrência cujo risco para o seu modal passa de 4.
+- A **página inicial** é um hub com seis pilares da vida na cidade (mobilidade, lazer, alimentação, segurança, educação e habitação). Cada card leva a uma primeira consulta.
+- O pilar de **mobilidade** está pronto. O cidadão digita a saída e o destino, escolhe o modal (carro, moto, ônibus, app, a pé, bike) e recebe a rota mais rápida e a mais segura, com o **risco** de cada ocorrência no caminho calculado para aquele modal. O **mapa de riscos** mostra todas as ocorrências ativas da cidade.
+- Com uma conta, o cidadão salva as rotas do dia a dia e recebe alerta quando surge, numa via da rota, uma ocorrência cujo risco para o seu modal passa de 4.
+- Os outros cinco pilares mostram uma página "em breve" com o que a primeira consulta vai trazer.
 
-Tudo é CRUD em Java com JDBC no Oracle. O React só mostra e envia dados: as regras ficam no Java.
+O CRUD é em Java com JDBC no Oracle: o do cidadão (cadastro, ver, editar, excluir a conta) e o das rotas (salvar, listar, abrir, renomear, excluir). O React só mostra e envia dados: as regras ficam no Java.
 
 ---
 
 ## 2. O caminho de uma requisição
 
-Exemplo: a Ana (moto) reporta um alagamento.
+Exemplo: a Ana (moto) salva a rota "Casa para o trabalho".
 
 | Passo | Onde | O que acontece |
 |---|---|---|
-| 1 | `web/src/pages/OcorrenciaFormPage.jsx` | O formulário valida no navegador (título, tipo, gravidade, vias). Se estiver tudo certo, chama `api.criar("/ocorrencias", corpo)`. |
-| 2 | `web/src/services/api.js` | Faz o `fetch` para `/api/ocorrencias`, com o cabeçalho `X-Usuario-Id` da Ana. |
+| 1 | `web/src/pages/PlanejarRotaPage.jsx` | Com a rota calculada, o formulário valida o nome no navegador e chama `api.criar("/cidadaos/1/rotas", corpo)`. O corpo tem saída, destino, critério, distância e os ids das vias do banco que o caminho percorre. |
+| 2 | `web/src/services/api.js` | Faz o `fetch` com o cabeçalho `X-Usuario-Id` da Ana. |
 | 3 | `web/vite.config.js` | Em desenvolvimento, o Vite repassa `/api` para `http://127.0.0.1:8080`. |
-| 4 | `api/Roteador.java` | Descobre que `POST /api/ocorrencias` pertence ao `OcorrenciaController`. Se qualquer exceção acontecer daqui em diante, é aqui que ela vira uma resposta HTTP com mensagem. |
-| 5 | `api/controller/OcorrenciaController.java` | Lê o JSON com `CorpoJson` e monta um objeto `Ocorrencia`. Não valida regra nenhuma. |
-| 6 | `service/OcorrenciaService.java` | Confere se quem está pedindo é cidadão (`AutenticacaoService.exigirCidadao`), valida os campos com o `Validador`, confere se as vias existem, define status `ABERTA` e a data. |
-| 7 | `dao/OcorrenciaDao.java` | Abre uma transação: `INSERT` em `CR_OCORRENCIA`, lê o id gerado e faz um `INSERT` em lote em `CR_OCORRENCIA_VIA`. Se algo falhar, `rollback`. |
-| 8 | volta | O controller converte a ocorrência em mapa (`Conversor`), o `Roteador` escreve o JSON (`Json`) e responde **201**. O React vai para a página de detalhe. |
+| 4 | `api/Roteador.java` | Descobre que `POST /api/cidadaos/{id}/rotas` pertence ao `RotaController`. Se qualquer exceção acontecer daqui em diante, é aqui que ela vira uma resposta HTTP com mensagem. |
+| 5 | `api/controller/RotaController.java` | Lê o JSON com `CorpoJson` e monta um objeto `Rota`. Não valida regra nenhuma. |
+| 6 | `service/RotaService.java` | Confere se quem pede é a dona da conta (`AutenticacaoService`), valida nome, saída, destino e distância com o `Validador`, confere se as vias existem e se ela ainda não tem 10 rotas. |
+| 7 | `dao/RotaDao.java` | Abre uma transação: `INSERT` em `CL_ROTA`, lê o id gerado e faz um `INSERT` em lote em `CL_ROTA_VIA` (com a ordem de cada via). Se algo falhar, `rollback`. |
+| 8 | volta | O controller converte a rota em mapa (`Conversor`), o `Roteador` escreve o JSON (`Json`) e responde **201**. O React vai para o perfil (Mobilidade › Minhas rotas), que já mostra a rota e os alertas dela. |
 
 ---
 
@@ -37,57 +38,54 @@ Exemplo: a Ana (moto) reporta um alagamento.
 
 | Classe | Para que serve |
 |---|---|
-| `Usuario` (abstrata) | Dados comuns. Métodos abstratos `getTipo()` e `getDescricaoPerfil()`. |
-| `Cidadao`, `Gestor` | Herdam de `Usuario`. O cidadão tem `modal`; o gestor tem `orgao` e `matricula`. |
+| `Cidadao` | Conta de quem usa o hub: nome, e-mail, hash da senha e o `modal`, que muda o risco de cada ocorrência. |
 | `Regiao`, `Via` | Zona da cidade e logradouro. A via guarda o objeto `Regiao` (associação). |
 | `Ocorrencia` | Implementa `AvaliavelRisco`. O método `calcularRisco(Modal)` é a fórmula do projeto. |
 | `OcorrenciaVia` | Associação N:N entre ocorrência e via, com o nível de impacto. |
-| `Rota`, `PontoRota`, `CriterioRota` | Rota salva pelo cidadão: saída e destino (`PontoRota`, um `record` com o nome e a posição no mapa), o critério (mais rápida ou mais segura) e a lista ordenada de vias que ela percorre (a associação N:N `CR_ROTA_VIA`). |
-| `Acao` | Resposta do gestor. `statusNovo` é nulo quando é só um andamento. |
+| `Endereco`, `TipoEndereco` | Endereço salvo pelo cidadão (casa, trabalho, estudo, outro). Reaproveita o `PontoRota` para o local. O enum diz quais tipos são únicos (casa e trabalho). |
+| `Rota`, `PontoRota`, `CriterioRota` | Rota salva pelo cidadão: saída e destino (`PontoRota`, um `record` com o nome e a posição no mapa), o critério (mais rápida ou mais segura) e a lista ordenada de vias que ela percorre (a associação N:N `CL_ROTA_VIA`). |
 | `Alerta` | Não é tabela: é o resultado do cruzamento entre uma ocorrência ativa e um caminho (as rotas salvas ou uma rota recém-calculada). |
-| Enums | `Modal` (também guarda a velocidade média e se é motorizado, usados no cálculo da rota), `Orgao`, `TipoOcorrencia`, `StatusOcorrencia`, `NivelImpacto`, `NivelRisco`, `TipoUsuario`, `CriterioRota`. |
-| `relatorio/*` | `record`s com uma linha de cada relatório. |
+| Enums | `Modal` (também guarda a velocidade média e se é motorizado, usados no cálculo da rota), `TipoOcorrencia`, `StatusOcorrencia`, `NivelImpacto`, `NivelRisco`, `CriterioRota`. |
 
 **A matriz de risco** fica em `TipoOcorrencia`: cada tipo tem um peso e um fator para cada modal. Está escrita como uma tabela no código para ser fácil de ler e defender na apresentação.
 
 ### `dao`: SQL e JDBC
 
-- Um DAO por tabela principal. Os que têm CRUD completo implementam `CrudDao<T>` (`inserir`, `listar`, `buscarPorId`, `atualizar`, `excluir`).
+- `CidadaoDao`, `RotaDao` e `EnderecoDao` têm o CRUD completo e implementam `CrudDao<T>` (`inserir`, `listar`, `buscarPorId`, `atualizar`, `excluir`). `ViaDao` e `OcorrenciaDao` são de consulta: o mapa e as rotas leem essas tabelas.
 - Todo acesso usa `try-with-resources` (a conexão, o `PreparedStatement` e o `ResultSet` fecham sozinhos) e `PreparedStatement` com `?` (sem concatenar valores do usuário no SQL, o que evita SQL injection).
-- `JdbcUtil.emTransacao(...)` desliga o auto-commit, executa, faz `commit` ou `rollback`. É usado quando uma operação mexe em mais de uma tabela (cidadão = `CR_USUARIO` + `CR_CIDADAO`; ocorrência = `CR_OCORRENCIA` + `CR_OCORRENCIA_VIA`; mudança de status = `UPDATE` + `INSERT` em `CR_ACAO`).
-- `TradutorErroSql` converte o erro do Oracle em mensagem clara. Exemplo: `ORA-02292` na constraint `FK_CR_OCVIA_VIA` vira "Não é possível excluir a via: existem ocorrências registradas nela."
-- `RelatorioDao` tem as quatro consultas com JOIN e agregação.
+- `JdbcUtil.emTransacao(...)` desliga o auto-commit, executa, faz `commit` ou `rollback`. É usado quando uma operação mexe em mais de uma tabela: salvar ou editar uma rota grava `CL_ROTA` e `CL_ROTA_VIA` juntas.
+- `OcorrenciaDao.listar` faz os JOINs com via e região e, para os alertas, um `EXISTS` que cruza `CL_OCORRENCIA_VIA` com `CL_ROTA_VIA` e `CL_ROTA`: as ocorrências ativas que atingem alguma via das rotas de um cidadão.
+- `TradutorErroSql` converte o erro do Oracle em mensagem clara. Exemplo: `ORA-00001` na constraint `UK_CL_ROTA_NOME` vira "Você já tem uma rota com este nome."
 
 ### `service`: regras de negócio
 
 | Classe | Regras principais |
 |---|---|
 | `Validador` | Junta todos os erros do formulário e lança uma `ValidacaoException` com o erro de cada campo. |
-| `AutenticacaoService` | Login (confere o hash da senha) e os métodos `exigirCidadao`, `exigirGestor` e `exigirProprioOuGestor`. |
+| `AutenticacaoService` | Login (confere o hash da senha), `exigirCidadao` (há alguém logado?) e `exigirProprio` (a conta é dele?). |
 | `SenhaService` | Gera e confere hashes PBKDF2. A senha nunca é gravada. |
 | `RiscoService` | Arredonda o risco, classifica em baixo, moderado, alto ou crítico e decide quando alertar (≥ 4). |
-| `OcorrenciaService` | Transições de status, quem pode editar e excluir, validação das vias. |
-| `AcaoService` | Andamentos: só em ocorrência ativa; só o gestor autor corrige; ação que mudou status não pode ser apagada. |
-| `AlertaService` | Cruza as ocorrências ativas com um caminho e calcula o risco para o modal: os alertas das rotas salvas e a avaliação de uma rota antes de salvar. |
+| `CidadaoService` | Cadastro simples (nome, e-mail e senha) e edição com validação e e-mail único; cada cidadão só vê, edita e exclui a própria conta. O modal é opcional: sem ele, `Cidadao.modalParaRisco()` usa o de quem anda a pé, o caso mais exposto. |
+| `EnderecoService` | CRUD dos endereços: apelido único por cidadão, casa e trabalho no máximo uma vez cada, local dentro do mapa e no máximo 10 endereços; cada cidadão só mexe nos próprios. |
 | `RotaService` | CRUD das rotas: valida nome, saída, destino, distância e as vias do caminho; cada cidadão só altera as próprias rotas (máximo de 10). |
-| `RelatorioService` | Repassa os relatórios e completa a exposição por modal com o risco médio. |
-| `CidadaoService`, `GestorService`, `RegiaoService`, `ViaService` | CRUD com validação, e-mail e matrícula únicos e permissões. |
+| `AlertaService` | Cruza as ocorrências ativas com um caminho e calcula o risco para o modal: os alertas das rotas salvas e a avaliação de uma rota antes de salvar. |
+| `OcorrenciaService`, `ViaService` | Consultas usadas pelo mapa e pelo cálculo de rotas. |
 
 ### `api`: a camada de interface
 
-- `Roteador` transforma `/api/vias/{id}` numa expressão regular, encontra a rota e chama o método certo. O `try/catch` central converte cada exceção no status HTTP adequado (tabela no README).
+- `Roteador` transforma `/api/cidadaos/{id}/rotas` numa expressão regular, encontra a rota e chama o método certo. O `try/catch` central converte cada exceção no status HTTP adequado (tabela no README).
 - `Requisicao` separa parâmetros da rota, da URL, o corpo JSON e o cabeçalho do usuário.
 - `Json` é um leitor e escritor de JSON feito à mão, para não depender de biblioteca externa.
-- `CorpoJson` lê campos com o tipo certo e acusa o campo errado ("O campo gravidade deve ser um número inteiro").
+- `CorpoJson` lê campos com o tipo certo e acusa o campo errado ("O campo distanciaMetros deve ser um número inteiro").
 - `Conversor` transforma objetos do model em mapas para virar JSON. A senha nunca sai.
 - `controller/*`: uma classe por recurso, cada uma com o método `registrar(Roteador)` que declara as suas rotas.
 
 ### `exception` e `config`
 
-- Todas as exceções herdam de `CitizenRouteException`, que é `RuntimeException`. Assim as assinaturas ficam limpas e um único lugar, o `Roteador`, decide a resposta.
+- Todas as exceções herdam de `CitizenLifeException`, que é `RuntimeException`. Assim as assinaturas ficam limpas e um único lugar, o `Roteador`, decide a resposta.
 - `OracleConnectionFactory` lê as credenciais das variáveis de ambiente ou do `db.properties` e explica o que falta quando não estão configuradas.
 
-### `CitizenRouteApplication`
+### `CitizenLifeApplication`
 
 Cria os objetos na ordem DAO, depois Service, depois Controller, passando cada um pelo construtor (injeção de dependência feita à mão). Depois sobe o `HttpServer` do JDK com 8 threads.
 
@@ -95,10 +93,9 @@ Cria os objetos na ordem DAO, depois Service, depois Controller, passando cada u
 
 ## 4. Banco de dados
 
-- **Prefixo `CR_`**: o usuário Oracle da FIAP é usado em várias disciplinas. O prefixo evita apagar ou colidir com uma tabela `USUARIO` de outro trabalho.
-- **Herança no banco** (tabela por subclasse): `CR_USUARIO` guarda o comum; `CR_CIDADAO` e `CR_GESTOR` usam o mesmo id como PK e FK.
-- **`ON DELETE CASCADE`** só onde faz sentido apagar junto: as vias e ações de uma ocorrência excluída, as rotas de um cidadão excluído e as vias de uma rota excluída. Não há cascade de cidadão para ocorrência: o histórico não pode sumir, então o Oracle bloqueia e o sistema explica.
-- **`DATE`** guarda data e hora no Oracle. `DATE - DATE` dá dias; vezes 1440 dá minutos. É assim que o relatório calcula o tempo de resposta.
+- **Prefixo `CL_`**: o usuário Oracle da FIAP é usado em várias disciplinas. O prefixo evita apagar ou colidir com uma tabela de outro trabalho.
+- **Duas associativas N:N**: `CL_OCORRENCIA_VIA` (com o nível de impacto) e `CL_ROTA_VIA` (com a ordem da via no caminho).
+- **`ON DELETE CASCADE`** só onde faz sentido apagar junto: as rotas de um cidadão que exclui a conta e as vias de uma rota excluída. A ocorrência relatada por quem excluiu a conta continua no mapa, sem autor (`ON DELETE SET NULL`): o risco na rua não some porque a pessoa saiu do app.
 - **Dados de demonstração** com datas relativas (`SYSDATE - 3/24` é três horas atrás), para a demo parecer sempre atual.
 
 ---
@@ -107,29 +104,34 @@ Cria os objetos na ordem DAO, depois Service, depois Controller, passando cada u
 
 | Arquivo | Papel |
 |---|---|
-| `App.jsx` | Lista de rotas, sessão do usuário e carregamento do `/api/dominio` (rótulos e opções vindos do Java). |
-| `hooks/useRota.js` | Navegação por hash (`#/ocorrencias`), sem biblioteca de rotas. |
+| `App.jsx` | Lista de rotas, sessão do cidadão e carregamento do `/api/dominio` (rótulos e opções vindos do Java). |
+| `utils/pilares.js` | Os seis pilares do hub: nome, ícone, cor, primeira consulta e o que cada um vai trazer. |
+| `components/Logo.jsx` | A marca: o cidadão de braços abertos (SVG próprio), usado no cabeçalho, no rodapé e na página inicial. |
+| `pages/InicioPage.jsx` | O hub: o painel de abertura com o cidadão no centro e os seis pilares em órbita (posicionados com `rotate` e `translateX` em CSS) e os seis cards. Mobilidade aparece em destaque, como "Disponível". |
+| `pages/MobilidadePage.jsx` | As duas consultas do pilar (Planejar rota e Mapa de riscos) e a regra do risco. |
+| `pages/EmBrevePage.jsx` | Página dos pilares que ainda não têm consulta (`/lazer`, `/alimentacao`...). Um caminho que não é pilar cai na página "não encontrada". |
+| `hooks/useRota.js` | Navegação por hash (`#/mobilidade`), sem biblioteca de rotas. |
 | `hooks/useCarregar.js` | Busca dados e guarda `carregando`, `erro` e `dados`. |
 | `hooks/useFormulario.js` | Valores, erros por campo, envio e exibição dos erros vindos do Java. |
 | `utils/validacao.js` | As mesmas regras de tamanho, e-mail e senha do `Validador` Java. |
 | `components/Layout.jsx` | Menu igual em todas as páginas e a faixa que avisa quando a API ou o banco caem. |
-| `components/PlacaVia.jsx` | Mostra a via como uma placa de rua azul de São Paulo. |
+| `components/PlacaVia.jsx` | Mostra a via como uma placa de rua. |
 | `components/SinalRisco.jsx` | Mostra o risco como uma placa de advertência (losango) colorida pela faixa. |
-| `components/MapaCidade.jsx` | O mapa. Carrega os dados da cidade, desenha o chão num `<canvas>` e põe por cima as placas 3D das ocorrências (HTML + CSS 3D), cada uma na via atingida, na cor do risco. Destaca as vias atingidas e, na página de rotas, desenha a rota calculada e os marcadores A e B. Tem dois modos: `tela` (câmera livre) e `previa` (Painel, câmera parada). |
+| `components/MapaCidade.jsx` | O mapa. Carrega os dados da cidade, desenha o chão num `<canvas>` e põe por cima as placas 3D das ocorrências (HTML + CSS 3D), cada uma na via atingida, na cor do risco. Destaca as vias atingidas e, na página de rotas, desenha a rota calculada e os marcadores A e B. |
 | `utils/mapaCidade.js` | Carrega `public/mapa/sao-paulo.json`, decodifica as linhas e monta o índice de ruas por nome. É por esse índice que uma via do banco ("Avenida Paulista") acha o seu traçado; a comparação ignora acentos, títulos ("Doutor", "Professor") e o que vem entre parênteses ("Marginal Tietê (Expressa)"). |
 | `utils/desenhoMapa.js` | Desenha o mapa a cada quadro, como um app de mapa: chão, verde, água, trilhos, ruas (da menor para a maior), vias com ocorrência, prédios em 3D e os nomes, escolhidos para não se sobreporem. |
 | `utils/projecao.js` | As contas da perspectiva (`projetar` e `desprojetar`), usadas pela câmera e pelo desenho. |
 | `scripts/gerar-mapa.mjs` | Script que baixa os dados do OpenStreetMap (Overpass API), projeta as coordenadas, emenda os trechos de cada rua, simplifica as linhas e grava o arquivo do mapa e a rede de ruas para as rotas. Só roda quando alguém quer atualizar o mapa; o site não depende dele. |
 | `utils/rotas.js` | O cálculo de rotas: carrega a rede (`public/mapa/sao-paulo-rotas.json`), acha o cruzamento mais próximo de um ponto, roda o A\*, descobre quais vias do banco a rota percorre, monta as penalidades da rota mais segura e faz a busca de ruas e bairros. |
 | `pages/PlanejarRotaPage.jsx` | Página Planejar rota: saída e destino (`components/CampoLugar.jsx`, com sugestões e marcação no mapa), modal, as opções mais rápida e mais segura lado a lado, as ocorrências no caminho e o formulário para salvar. |
-| `pages/MinhasRotasPage.jsx` | Alertas das rotas salvas, lista das rotas (abrir no mapa, renomear, excluir) e os dados do cidadão. |
+| `pages/PerfilPage.jsx` | O perfil, no estilo das contas de loja on-line: barra lateral (Minha conta e uma linha por pilar) e o conteúdo ao centro; dentro do pilar, as funções ficam em abas. O caminho escolhe o que abrir: `#/perfil`, `#/perfil/dados`, `#/perfil/<pilar>` (abre a primeira aba) e `#/perfil/mobilidade/rotas`, `.../locomocao` ou `.../enderecos`. Os pilares em breve mostram as abas futuras desativadas. |
+| `components/perfil/*` | As seções do perfil: `ResumoConta` (cartão do cidadão e três números), `DadosConta`, `MinhasRotas` (alertas e CRUD das rotas), `Locomocao` (cards de modal: um clique escolhe e já salva) e `Enderecos` (CRUD dos endereços, usando o mesmo `CampoLugar` da tela de rotas). |
 | `hooks/useCameraMapa.js` | A câmera do mapa: arrastar, roda e pinça para zoom, botão direito ou dois dedos para girar, teclado, voos animados com `requestAnimationFrame` e enquadramento automático. A cada quadro escreve a câmera em variáveis CSS (para as placas) e redesenha o canvas, sem re-renderizar o React. |
-| `pages/MapaPage.jsx` | Página Mapa de riscos em tela cheia (visão da gestão pública): painel com o seletor de modal, a lista de ocorrências (clicar voa até a placa) e o detalhe da ocorrência escolhida. No celular o painel vira uma gaveta. |
-| `components/Icone.jsx` | Ícones próprios em SVG para os 7 tipos de ocorrência e os 6 modais. |
-| `components/Esqueleto.jsx` | Formas cinzentas que aparecem enquanto os dados carregam. |
-| `hooks/useContagem.js` | Faz os números do painel "contarem" até o valor, com `requestAnimationFrame`. |
-| `hooks/useReordenacao.js` | Quando o modal muda e a lista reordena, cada item desliza da posição antiga para a nova (técnica FLIP, com a Web Animations API). |
-| `styles/movimento.css`, `styles/mapa.css` e `styles/rota.css` | Animações de entrada, troca de página (View Transitions API), esqueletos, o visual do mapa (placas 3D com espessura, poste e sombra, painel lateral e controles) e o painel de rotas. |
+| `pages/MapaPage.jsx` | Página Mapa de riscos em tela cheia: painel com o seletor de modal, a lista de ocorrências (clicar voa até a placa) e o detalhe da ocorrência escolhida. Aceita `?ocorrencia=3` na URL, que é como os alertas abrem o mapa já na ocorrência. No celular o painel vira uma gaveta. |
+| `components/Icone.jsx` | Ícones próprios em SVG para os 6 pilares, os 7 tipos de ocorrência e os 6 modais. |
+| `styles/base.css` | Os tokens da paleta (cores, fontes, raios e sombras) e a estrutura da página. |
+| `styles/hub.css` | O painel de abertura com a órbita, os cards dos pilares, o cabeçalho de cada pilar (tingido com a cor dele, definida em `--pilar-*` no `base.css`) e a página "em breve". |
+| `styles/movimento.css`, `styles/mapa.css` e `styles/rota.css` | Animações de entrada e troca de página (View Transitions API), o visual do mapa (placas 3D com espessura, poste e sombra, painel lateral e controles) e o painel de rotas. |
 
 ### Como o mapa funciona (sem biblioteca)
 
@@ -155,32 +157,38 @@ Cria os objetos na ordem DAO, depois Service, depois Controller, passando cada u
 
 ## 6. Perguntas que a banca pode fazer
 
+**Por que um hub com seis pilares, se só um funciona?**
+O Citizen Life é pensado para crescer: cada pilar é uma consulta que ajuda no dia a dia. Para o MVP, o grupo escolheu fazer um pilar inteiro e bem feito (mobilidade, com banco, regras e mapa) em vez de seis pela metade. Os outros cards já dizem o que a primeira consulta de cada um vai trazer.
+
 **Por que não usaram Spring?**
 A disciplina pede Java puro com JDBC. O `HttpServer` já vem no JDK e o roteamento é uma lista de expressões regulares.
 
 **Como o risco é calculado?**
 `gravidade × peso do tipo × fator do modal`, em `Ocorrencia.calcularRisco`. Os pesos estão em `TipoOcorrencia`. As faixas e o limite de alerta estão em `RiscoService`.
 
-**Onde está a herança? E a interface?**
-`Usuario` → `Cidadao` e `Gestor`. Interfaces: `AvaliavelRisco` e `CrudDao<T>`.
+**Onde estão as interfaces? E a herança?**
+Interfaces: `AvaliavelRisco` (o `RiscoService` calcula o risco de qualquer coisa que a implemente) e `CrudDao<T>` (o contrato do CRUD, implementado por `CidadaoDao`, `RotaDao` e `EnderecoDao`). Herança: as exceções da aplicação herdam de `CitizenLifeException`, e o `Roteador` trata cada uma com o código HTTP certo.
 
 **Por que `Ocorrencia` não tem subclasses por tipo?**
-Os tipos só mudam dados (peso, fatores, órgão), não comportamento. Um enum com esses dados é mais simples e mantém uma tabela só no banco.
+Os tipos só mudam dados (peso e fatores), não comportamento. Um enum com esses dados é mais simples e mantém uma tabela só no banco.
+
+**De onde vêm as ocorrências?**
+Da carga do `sql/script.sql`. Na versão completa, viriam dos relatos dos cidadãos e dos órgãos da cidade (CET, Defesa Civil), o que está na visão de futuro.
 
 **Como funciona o login? Por que não JWT?**
-A senha é conferida contra o hash PBKDF2. Depois, o front envia o id no cabeçalho `X-Usuario-Id` e cada service confere o perfil. Num produto real, esse id seria trocado por um token assinado; isso ficou fora do MVP.
+A senha é conferida contra o hash PBKDF2. Depois, o front envia o id no cabeçalho `X-Usuario-Id` e cada service confere se a conta é de quem pede. Num produto real, esse id seria trocado por um token assinado; isso ficou fora do MVP.
 
 **O que acontece se o banco cair?**
-A conexão lança `PersistenciaException` marcada como indisponível; a API responde 503 com a explicação, e o front mostra uma faixa amarela e preta no topo de todas as páginas.
+A conexão lança `PersistenciaException` marcada como indisponível; a API responde 503 com a explicação, e o front mostra uma faixa de aviso no topo de todas as páginas.
 
 **De onde vem o mapa? O site depende de algum serviço?**
-Os dados são do OpenStreetMap (licença ODbL, com crédito no canto do mapa). Eles foram baixados uma vez pelo script `scripts/gerar-mapa.mjs` e ficam no projeto, em `public/mapa/sao-paulo.json`. O site não acessa nenhum serviço externo: funciona sem internet. O banco guarda só o nome e a região de cada via; o front encontra a via no mapa pelo nome. Guardar coordenadas no banco fica para a visão de futuro.
+Os dados são do OpenStreetMap (licença ODbL, com crédito no canto do mapa). Eles foram baixados uma vez pelo script `scripts/gerar-mapa.mjs` e ficam no projeto, em `public/mapa/sao-paulo.json`. O site não acessa nenhum serviço externo: funciona sem internet. O banco guarda só o nome e a região de cada via; o front encontra a via no mapa pelo nome.
 
 **Por que não usaram Leaflet, Mapbox ou Three.js?**
 Seriam tecnologia fora do conteúdo, e a regra da entrega zera o requisito nesse caso. O chão é desenhado com a API Canvas 2D e as placas com transformações CSS, que são recursos nativos do navegador.
 
 **Por que a rota é calculada no navegador e não no Java?**
-A rede de ruas já está no front (sai do mesmo script do mapa) e o cálculo leva poucos milissegundos. O Java continua dono das regras: ele recebe as vias do caminho, calcula o risco para o modal e grava a rota com validação. Num produto real, o cálculo do caminho poderia ir para um serviço próprio.
+A rede de ruas já está no front (sai do mesmo script do mapa) e o cálculo leva poucos milissegundos. O Java continua dono das regras: ele recebe as vias do caminho, calcula o risco para o modal e grava a rota com validação.
 
 **Por que não usaram Google Maps ou um serviço de rotas?**
 Seria um serviço externo e uma tecnologia fora do conteúdo. Além disso, a solução precisa continuar útil fora do cenário ideal de conectividade: aqui a rota sai mesmo sem internet. O preço é não ter número de casa: o cidadão escolhe a rua, a avenida ou o bairro, ou marca o ponto no mapa.
@@ -194,15 +202,13 @@ Ele foi gerado a partir das classes compiladas (`javap`). As fontes Mermaid est�
 
 Antes de gravar, rode `sql/script.sql` de novo para os horários ficarem recentes.
 
-1. **Painel com "Moto" selecionado:** mostrar quantas ocorrências ativas pedem atenção. Trocar para "Carro": as placas do mapa mudam de cor e se levantam de novo, a lista se reordena e o número cai. Clicar em "Abrir o mapa 3D".
-2. **Entrar como Ana (moto) e planejar uma rota:** do Tatuapé até a Sé. A rota mais rápida passa pelo alagamento da Radial Leste (risco alto para moto, trecho pintado de laranja); a rota mais segura desvia. Trocar o modal para Carro: o risco cai.
-3. **Minhas rotas:** o alerta alto da Radial Leste na rota "Casa para o trabalho". Abrir a ocorrência e mostrar o risco para cada modal.
-4. **Entrar como Bruno (carro):** a rota dele passa pela mesma Radial Leste, com risco baixo.
-5. **Mapa de riscos (visão da gestão):** girar e inclinar a cidade, clicar numa placa (a câmera voa até ela e o painel mostra o detalhe) e clicar numa zona para filtrar.
-6. **Como Ana, reportar uma ocorrência nova** com duas vias e mostrar a validação (enviar com erro primeiro).
-7. **Entrar como Henrique (Defesa Civil):** a ocorrência nova está na fila. Confirmar com uma descrição. Abrir o detalhe e mostrar a linha do tempo.
-8. **No SQL Developer:** `SELECT` em `CR_OCORRENCIA`, `CR_ACAO` e `CR_ROTA` mostrando que os dados novos estão no Oracle.
-9. **Relatórios:** vias críticas e tempo de resposta por órgão.
+1. **Início:** os seis pilares. Abrir um pilar "em breve" (Alimentação, por exemplo) para mostrar o que vem, e voltar.
+2. **Mobilidade → Mapa de riscos com "Moto":** quantas ocorrências ativas pedem atenção. Trocar para "Carro": as placas mudam de cor e o número cai. Girar e inclinar a cidade, clicar numa placa (a câmera voa até ela e o painel mostra o detalhe).
+3. **Mobilidade → Planejar rota:** do Tatuapé até a Sé, de moto. A rota mais rápida passa pelo alagamento da Radial Leste (risco alto, trecho laranja); a mais segura desvia. Trocar para Carro: o risco cai.
+4. **Entrar como Ana (ana.souza@exemplo.com, senha Citizen@2026) e salvar a rota.** Mostrar a validação (tentar salvar sem nome primeiro). Se der tempo, mostrar também que criar uma conta pede só nome, e-mail e senha.
+5. **Perfil (clicar no nome):** o resumo com o alerta alto da Radial Leste. Em Mobilidade, na aba Minhas rotas, renomear uma rota e excluir outra; na aba Meus endereços, cadastrar um endereço novo; na aba Como me locomovo, trocar de Moto para Carro e ver o alerta mudar.
+6. **No SQL Developer:** `SELECT` em `CL_ROTA` e `CL_ROTA_VIA` mostrando que a rota nova e as vias dela estão no Oracle.
+7. **Entrar como Bruno (carro):** a rota dele passa pela mesma Radial Leste, com risco baixo.
 
 Para o dado real da abertura do pitch, consulte fontes oficiais, como o Infosiga SP (acidentes de trânsito) e o CGE da Prefeitura de São Paulo (alagamentos), e cite a fonte no vídeo.
 

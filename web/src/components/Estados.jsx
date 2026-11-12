@@ -52,7 +52,7 @@ export function Vazio({ titulo, children }) {
  * Mostra o conteúdo só para quem tem o perfil certo.
  * Sem login, convida a entrar; com o perfil errado, explica de quem é a área.
  */
-export function ExigirPerfil({ tipo, motivo, children }) {
+export function ExigirPerfil({ motivo, children }) {
   const { sessao } = useApp();
   if (!sessao) {
     return (
@@ -60,21 +60,6 @@ export function ExigirPerfil({ tipo, motivo, children }) {
         <p>{motivo}</p>
         <a className="botao botao--primario" href="#/entrar">
           Entrar
-        </a>
-      </Vazio>
-    );
-  }
-  if (tipo && sessao.tipo !== tipo) {
-    return (
-      <Vazio titulo={tipo === "GESTOR" ? "Esta área é dos gestores públicos" : "Esta área é dos cidadãos"}>
-        <p>
-          Você entrou como {sessao.perfil.toLowerCase()}.{" "}
-          {tipo === "GESTOR"
-            ? "Entre com uma conta de gestor para confirmar ocorrências e registrar ações."
-            : "Entre com uma conta de cidadão para salvar rotas e receber alertas."}
-        </p>
-        <a className="botao botao--secundario" href="#/entrar">
-          Trocar de conta
         </a>
       </Vazio>
     );

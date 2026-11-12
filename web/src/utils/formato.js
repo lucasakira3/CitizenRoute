@@ -1,22 +1,5 @@
 // Formatação de datas e números no padrão brasileiro.
 
-const DATA_HORA = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-const DATA = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
-
-export function formatarDataHora(iso) {
-  return iso ? DATA_HORA.format(new Date(iso)) : "—";
-}
-
-export function formatarData(iso) {
-  return iso ? DATA.format(new Date(iso)) : "—";
-}
-
 /** "há 40 min", "há 3 h", "há 5 dias". */
 export function tempoRelativo(iso) {
   if (!iso) {

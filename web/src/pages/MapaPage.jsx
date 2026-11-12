@@ -22,25 +22,22 @@ const ZONAS = [
 ];
 const CELULAR = "(max-width: 860px)";
 
-/** Modal pedido na URL (#/mapa?modal=MOTO), usado quando a pessoa vem do Painel. */
-function modalDaUrl() {
+/** Parâmetros da URL: #/mobilidade/mapa?modal=MOTO&ocorrencia=3 (vindo de um alerta, por exemplo). */
+function parametroDaUrl(nome) {
   const busca = new URLSearchParams(window.location.hash.split("?")[1] ?? "");
-  return busca.get("modal");
+  return busca.get(nome);
 }
 
 export default function MapaPage() {
   useTitulo("Mapa de riscos");
   const { sessao, dominio, rotulo } = useApp();
-  const modalInicial = modalDaUrl();
+  const modalInicial = parametroDaUrl("modal");
   const [modal, setModal] = useState(
-    dominio.modais.some((item) => item.codigo === modalInicial)
-      ? modalInicial
-      : sessao?.tipo === "CIDADAO"
-        ? sessao.modal
-        : "MOTO",
+    dominio.modais.some((item) => item.codigo === modalInicial) ? modalInicial : (sessao?.modal ?? "MOTO"),
   );
   const [zona, setZona] = useState(null);
-  const [selecionada, setSelecionada] = useState(null);
+  const [focoInicial] = useState(() => Number(parametroDaUrl("ocorrencia")) || null);
+  const [selecionada, setSelecionada] = useState(focoInicial);
   const [celular, setCelular] = useState(() => window.matchMedia(CELULAR).matches);
   const [painelAberto, setPainelAberto] = useState(() => !window.matchMedia(CELULAR).matches);
   const [folga, setFolga] = useState({ esquerda: 0, inferior: 0 });
@@ -48,6 +45,17 @@ export default function MapaPage() {
   const refPainel = useRef(null);
 
   const ativas = useCarregar(() => api.buscar(`/ocorrencias${consulta({ ativas: true, modal })}`), [modal]);
+
+  // Vindo de um alerta: assim que o mapa e as placas carregam, a câmera voa até a ocorrência.
+  useEffect(() => {
+    if (!focoInicial || !ativas.dados) return undefined;
+    let tentativas = 0;
+    const relogio = setInterval(() => {
+      tentativas += 1;
+      if (refMapa.current?.focarOcorrencia(focoInicial) || tentativas > 60) clearInterval(relogio);
+    }, 200);
+    return () => clearInterval(relogio);
+  }, [focoInicial, ativas.dados]);
 
   // Celular: o painel vira uma gaveta embaixo; computador: uma coluna à esquerda.
   useEffect(() => {
@@ -135,7 +143,7 @@ export default function MapaPage() {
               <span className="visualmente-oculto">{painelAberto ? "Recolher o painel" : "Abrir o painel"}</span>
             </button>
           )}
-          <p className="sobretitulo">Mapa de riscos · São Paulo ao vivo</p>
+          <p className="sobretitulo">Mapa de riscos</p>
           <h1 id="mapa-titulo" className="mapa-painel__titulo">
             A cidade calculada para quem {MODAL_FRASE[modal]}
           </h1>
@@ -207,8 +215,7 @@ export default function MapaPage() {
               </ol>
 
               <p className="mapa-painel__dica">
-                Arraste para mover, use a roda ou a pinça para aproximar e o botão direito (ou dois dedos) para girar
-                e inclinar. Toque numa placa para ver a ocorrência.
+                Arraste para mover · role para aproximar · toque numa placa.
               </p>
             </>
           )}
@@ -253,12 +260,9 @@ function DetalheNoMapa({ ocorrencia, rotulo, aoVoltar }) {
         ))}
       </div>
       <p className="mapa-detalhe__quando">
-        Registrada {tempoRelativo(ocorrencia.dataRegistro)} por {ocorrencia.autor.nome.split(" ")[0]} · responsável:{" "}
-        {rotulo("orgaos", ocorrencia.orgaoResponsavel)}
+        Registrada {tempoRelativo(ocorrencia.dataRegistro)}
+        {ocorrencia.autor ? ` por ${ocorrencia.autor.nome.split(" ")[0]}` : ""}.
       </p>
-      <a className="botao botao--primario" href={`#/ocorrencias/${ocorrencia.id}`}>
-        Ver detalhes e ações
-      </a>
     </article>
   );
 }

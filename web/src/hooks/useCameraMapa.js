@@ -30,7 +30,7 @@ function suavizarCurva(t) {
 
 /**
  * @param refVista elemento que recebe as variáveis CSS e os eventos
- * @param opcoes.interativo se false (prévia do painel), só enquadra e não responde a arraste nem roda
+ * @param opcoes.interativo se false (prévia), só enquadra e não responde a arraste nem roda
  * @param opcoes.folga espaço ocupado por painéis por cima do mapa ({ esquerda, inferior } em px)
  * @param opcoes.area caixa {x0,y0,x1,y1} enquadrada em verCidade() (null enquanto o mapa carrega)
  * @param opcoes.plano tamanho do plano ({ largura, altura }), para a câmera não sair do mapa

@@ -2,17 +2,6 @@
 title: "Pacote model: entidades, enums e interface (getters e setters omitidos)"
 ---
 classDiagram
-    class Acao {
-        -Long id
-        -Long idOcorrencia
-        -Gestor gestor
-        -String descricao
-        -StatusOcorrencia statusNovo
-        -LocalDateTime dataAcao
-        +Acao()
-        +Acao(Long, Gestor, String, StatusOcorrencia)
-        +isMudancaDeStatus() boolean
-    }
     class Alerta {
         -Ocorrencia ocorrencia
         -List~Via~ viasAfetadas
@@ -27,11 +16,17 @@ classDiagram
         +calcularRisco(Modal) double
     }
     class Cidadao {
+        -Long id
+        -String nome
+        -String email
+        -String senhaHash
         -Modal modal
+        -LocalDateTime dataCadastro
+        +Modal MODAL_PADRAO_RISCO$
         +Cidadao()
         +Cidadao(Long, String, String, Modal)
-        +getTipo() TipoUsuario
         +getDescricaoPerfil() String
+        +modalParaRisco() Modal
     }
     class CriterioRota {
         <<enumeration>>
@@ -40,13 +35,15 @@ classDiagram
         -String rotulo
         -String descricao
     }
-    class Gestor {
-        -Orgao orgao
-        -String matricula
-        +Gestor()
-        +Gestor(Long, String, String, Orgao, String)
-        +getTipo() TipoUsuario
-        +getDescricaoPerfil() String
+    class Endereco {
+        -Long id
+        -Long idCidadao
+        -String apelido
+        -TipoEndereco tipo
+        -PontoRota local
+        -LocalDateTime dataCriacao
+        +Endereco()
+        +Endereco(Long, Long, String, TipoEndereco, PontoRota)
     }
     class Modal {
         <<enumeration>>
@@ -98,16 +95,6 @@ classDiagram
         +OcorrenciaVia()
         +OcorrenciaVia(Via, NivelImpacto)
     }
-    class Orgao {
-        <<enumeration>>
-        CET
-        DEFESA_CIVIL
-        SPTRANS
-        SUBPREFEITURA
-        GCM
-        -String rotulo
-        -String atribuicao
-    }
     class PontoRota {
         <<record>>
         -String descricao
@@ -145,6 +132,15 @@ classDiagram
         -String rotulo
         -boolean ativa
     }
+    class TipoEndereco {
+        <<enumeration>>
+        CASA
+        TRABALHO
+        ESTUDO
+        OUTRO
+        -String rotulo
+        -boolean unico
+    }
     class TipoOcorrencia {
         <<enumeration>>
         ACIDENTE
@@ -156,26 +152,8 @@ classDiagram
         INSEGURANCA
         -String rotulo
         -double peso
-        -Orgao orgaoResponsavel
         -Map~Modal‚Double~ fatorPorModal
         +fatorExposicao(Modal) double
-    }
-    class TipoUsuario {
-        <<enumeration>>
-        CIDADAO
-        GESTOR
-    }
-    class Usuario {
-        <<abstract>>
-        -Long id
-        -String nome
-        -String email
-        -String senhaHash
-        -LocalDateTime dataCadastro
-        #Usuario()
-        #Usuario(Long, String, String)
-        +getTipo()* TipoUsuario
-        +getDescricaoPerfil()* String
     }
     class Via {
         -Long id
@@ -184,65 +162,13 @@ classDiagram
         +Via()
         +Via(Long, String, Regiao)
     }
-    class ExposicaoModal {
-        <<record>>
-        -Modal modal
-        -int cidadaos
-        -int rotas
-        -int ocorrenciasAtivasNasVias
-        -double riscoMedioAtual
-        +ExposicaoModal(Modal, int, int, int, double)
-        +comRiscoMedio(double) ExposicaoModal
-    }
-    class OcorrenciasPorRegiao {
-        <<record>>
-        -String regiao
-        -TipoOcorrencia tipo
-        -int total
-        -int ativas
-        +OcorrenciasPorRegiao(String, TipoOcorrencia, int, int)
-    }
-    class ResumoPainel {
-        <<record>>
-        -int ocorrenciasAtivas
-        -int aguardandoConfirmacao
-        -int emAtendimento
-        -int gravesAtivas
-        -int resolvidasUltimos30Dias
-        -Double tempoMedioRespostaMinutos
-        -int cidadaos
-        -int rotasSalvas
-        +ResumoPainel(int, int, int, int, int, Double, int, int)
-    }
-    class TempoRespostaOrgao {
-        <<record>>
-        -Orgao orgao
-        -int ocorrenciasAtendidas
-        -double minutosMedios
-        -int resolvidas
-        +TempoRespostaOrgao(Orgao, int, double, int)
-    }
-    class ViaCritica {
-        <<record>>
-        -long idVia
-        -String via
-        -String regiao
-        -int totalOcorrencias
-        -int ocorrenciasAtivas
-        -double gravidadeMedia
-        -int gravidadeMaxima
-        +ViaCritica(long, String, String, int, int, double, int)
-    }
-    Acao --> Gestor : gestor
-    Acao --> StatusOcorrencia : statusNovo
     Alerta --> Ocorrencia : ocorrencia
     Alerta --> "*" Via : viasAfetadas
     Alerta --> "*" Rota : rotasAfetadas
     Alerta --> NivelRisco : nivel
-    Usuario <|-- Cidadao
     Cidadao --> Modal : modal
-    Usuario <|-- Gestor
-    Gestor --> Orgao : orgao
+    Endereco --> TipoEndereco : tipo
+    Endereco --> PontoRota : local
     AvaliavelRisco <|.. Ocorrencia
     Ocorrencia --> TipoOcorrencia : tipo
     Ocorrencia --> StatusOcorrencia : status
@@ -254,14 +180,7 @@ classDiagram
     Rota --> PontoRota : destino
     Rota --> CriterioRota : criterio
     Rota --> "*" Via : vias
-    TipoOcorrencia --> Orgao : orgaoResponsavel
     TipoOcorrencia --> "*" Modal : fatorPorModal
     Via --> Regiao : regiao
-    ExposicaoModal --> Modal : modal
-    OcorrenciasPorRegiao --> TipoOcorrencia : tipo
-    TempoRespostaOrgao --> Orgao : orgao
     AvaliavelRisco ..> Modal
-    Cidadao ..> TipoUsuario
-    Gestor ..> TipoUsuario
     Ocorrencia ..> Modal
-    Usuario ..> TipoUsuario

@@ -26,8 +26,8 @@ const COR = {
   bairro: "#6f7b86",
   aguaTexto: "#3b78b5",
   verdeTexto: "#3d7a37",
-  zonaTexto: "#1d2730",
-  selecao: "#0f4c9b",
+  zonaTexto: "#1f2a24",
+  selecao: "#287d4d",
 };
 
 // Classes: 0 expressa, 1 arterial, 2 principal, 3 secundária, 4 terciária, 5 local, 6 pedestre, 7 acesso
@@ -60,7 +60,7 @@ const ZOOM_NOME = [0.45, 0.55, 0.85, 1.4, 2.2, 3.4, 5, Infinity];
 const ORDEM_DESENHO = [6, 5, 7, 4, 3, 2, 1, 0];
 const FONTE_NOME = [12.5, 12.5, 12, 11.5, 11, 10.5, 10.5, 10];
 
-const COR_RISCO = { BAIXO: "#2f7d4e", MODERADO: "#e2a400", ALTO: "#e2681c", CRITICO: "#c42b2b" };
+const COR_RISCO = { BAIXO: "#3f9a5c", MODERADO: "#e2a400", ALTO: "#e2681c", CRITICO: "#c42b2b" };
 
 function interpolar(tabela, zoom) {
   const posicao = Math.min(Math.max((Math.log2(zoom) + 2) / 2, 0), 3);
@@ -359,7 +359,7 @@ export function desenharMapa(ctx, estado) {
 
 // -------------------------------------------------------------------- rota
 
-const COR_ROTA = { linha: "#1a66d6", contorno: "#0b3f8f", acesso: "#1a66d6" };
+const COR_ROTA = { linha: "#2f93c8", contorno: "#1e6f99", acesso: "#2f93c8" };
 
 /**
  * rota: { pontos: Float32Array [x, y, ...], acessos: [[x1, y1, x2, y2]], trechos: [{ pontos, nivel }] }

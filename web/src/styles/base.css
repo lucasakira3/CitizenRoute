@@ -1,50 +1,69 @@
 /* ==========================================================================
    Tokens, base e estrutura da página
-   Vocabulário visual: placas de rua azuis de São Paulo, placas de advertência
-   amarelas, faixas de asfalto e a tipografia Overpass (derivada da fonte das
-   placas rodoviárias).
+   Paleta do Citizen Life: base neutra e quente (creme, branco, areia e um
+   grafite esverdeado no lugar do preto), o verde #287D4D como cor principal,
+   o "sol" #F4C34F como destaque e uma cor alegre para cada pilar do hub.
+   As cores de risco (verde, amarelo, laranja e vermelho) continuam as de
+   sinalização, porque carregam significado.
    ========================================================================== */
 
 :root {
-  --asfalto: #1d2730;
-  --asfalto-2: #2b3741;
-  --asfalto-3: #44525e;
-  --texto: #1d2730;
-  --texto-suave: #4f5d68;
-  --concreto: #e9ecec;
-  --concreto-2: #dde2e3;
+  /* Neutros */
+  --asfalto: #1f2a24;
+  --asfalto-2: #2c3a33;
+  --asfalto-3: #4a5a51;
+  --texto: #1f2a24;
+  --texto-suave: #5b665f;
+  --concreto: #faf7f0;
+  --concreto-2: #f1ece1;
   --papel: #ffffff;
-  --linha: #ccd3d7;
-  --linha-forte: #97a3ab;
+  --linha: #e6e0d4;
+  --linha-forte: #b9b2a3;
 
-  --placa: #0f4c9b;
-  --placa-escura: #0a3a78;
-  --placa-clara: #e2ebf7;
-  --sinal: #f5b301;
+  /* Marca */
+  --placa: #287d4d;
+  --placa-escura: #1f6640;
+  --placa-clara: #e3f3e8;
+  --sinal: #f4c34f;
+  --sinal-claro: #fdf1d2;
+  --folha: #5bb37a;
+  --petroleo: #2a9d8f;
 
-  --risco-BAIXO: #2f7d4e;
+  /* Um tom alegre por pilar */
+  --pilar-mobilidade: #287d4d;
+  --pilar-lazer: #2f93c8;
+  --pilar-alimentacao: #f4b740;
+  --pilar-seguranca: #2a9d8f;
+  --pilar-educacao: #8b7be8;
+  --pilar-habitacao: #e06c4f;
+
+  --risco-BAIXO: #3f9a5c;
   --risco-MODERADO: #f5b301;
   --risco-ALTO: #e2681c;
   --risco-CRITICO: #c42b2b;
 
-  --sucesso: #1f6b3e;
-  --sucesso-fundo: #e2f2e7;
-  --erro: #a3231f;
-  --erro-fundo: #fbe8e6;
-  --info-fundo: #e2ebf7;
+  --sucesso: #1f6640;
+  --sucesso-fundo: #e3f3e8;
+  --erro: #b3261e;
+  --erro-fundo: #fdecea;
+  --info-fundo: #e3f3e8;
 
+  /* Títulos e interface: geométrica e arredondada. Overpass fica só na sinalização (placas de rua e risco). */
+  --fonte-titulo: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
   --fonte-placa: "Overpass", "Arial Narrow", "Segoe UI", system-ui, sans-serif;
   --fonte-texto: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
   --fonte-dado: "Overpass Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
 
-  --raio: 6px;
-  --raio-grande: 10px;
-  --sombra: 0 1px 2px rgb(29 39 48 / 0.06), 0 8px 20px -12px rgb(29 39 48 / 0.25);
+  --raio: 10px;
+  --raio-grande: 18px;
+  --sombra: 0 1px 2px rgb(31 42 36 / 0.05), 0 10px 28px -16px rgb(31 42 36 / 0.28);
+  --sombra-alta: 0 2px 4px rgb(31 42 36 / 0.06), 0 24px 44px -22px rgb(31 42 36 / 0.45);
   --largura: 1200px;
   --margem: clamp(16px, 4vw, 40px);
 
-  /* Faixa tracejada amarela, como a sinalização que divide as pistas */
-  --faixa-pista: repeating-linear-gradient(90deg, var(--sinal) 0 30px, transparent 30px 54px);
+  /* Linha sob o cabeçalho: as cores da paleta em degradê, como os pilares do hub */
+  --faixa-pista: linear-gradient(90deg, var(--pilar-mobilidade), var(--pilar-lazer), var(--pilar-alimentacao),
+    var(--pilar-seguranca), var(--pilar-educacao), var(--pilar-habitacao));
 
   color-scheme: light;
 }
@@ -81,7 +100,7 @@ body {
 h1,
 h2,
 h3 {
-  font-family: var(--fonte-placa);
+  font-family: var(--fonte-titulo);
   line-height: 1.1;
   margin: 0 0 0.6rem;
   text-wrap: balance;
@@ -90,12 +109,13 @@ h3 {
 h1 {
   font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem);
   font-weight: 800;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.022em;
 }
 
 h2 {
   font-size: 1.35rem;
   font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 h3 {
@@ -163,10 +183,15 @@ code {
 
 /* ------------------------------------------------------------- Cabeçalho */
 
+/* Claro e translúcido; a linha de baixo junta as cores dos seis pilares */
 .cabecalho {
-  position: relative;
-  background: var(--asfalto);
-  color: #e8edf0;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgb(255 255 255 / 0.88);
+  backdrop-filter: saturate(1.4) blur(10px);
+  color: var(--texto);
+  box-shadow: 0 1px 0 var(--linha);
 }
 
 .cabecalho::after {
@@ -174,15 +199,15 @@ code {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 4px;
+  bottom: -3px;
+  height: 3px;
   background: var(--faixa-pista);
 }
 
 .cabecalho__interno {
   max-width: var(--largura);
   margin: 0 auto;
-  padding: 0.85rem var(--margem) 1.05rem;
+  padding: 0.7rem var(--margem);
   display: flex;
   align-items: center;
   gap: 1.5rem;
@@ -190,31 +215,53 @@ code {
 
 .marca {
   display: inline-flex;
-  align-items: center;
-  gap: 0.65rem;
-  color: #fff;
-  text-decoration: none;
   flex-shrink: 0;
+  color: var(--texto);
+  text-decoration: none;
+  border-radius: 12px;
 }
 
 .marca:hover {
-  color: #fff;
+  color: var(--texto);
 }
 
-.marca__sinal {
-  width: 1.35rem;
-  height: 1.35rem;
-  background: var(--sinal);
-  border-radius: 3px;
-  transform: rotate(45deg);
-  box-shadow: inset 0 0 0 2px var(--sinal), inset 0 0 0 3.5px var(--asfalto);
+.marca:hover .marca-cidadao__corpo {
+  transform-box: fill-box;
+  animation: aceno 700ms ease-in-out;
 }
 
-.marca__nome {
-  font-family: var(--fonte-placa);
+@keyframes aceno {
+  30% {
+    transform: translateY(-1.5px);
+  }
+  60% {
+    transform: translateY(0.5px);
+  }
+}
+
+/* Logo: símbolo + nome */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.marca-cidadao {
+  flex-shrink: 0;
+  display: block;
+}
+
+.logo__nome {
+  font-family: var(--fonte-titulo);
   font-weight: 800;
-  font-size: 1.3rem;
-  letter-spacing: -0.01em;
+  font-size: 1.32rem;
+  letter-spacing: -0.015em;
+  line-height: 1;
+}
+
+.logo__destaque {
+  margin-left: 0.22em;
+  color: var(--placa);
 }
 
 .menu {
@@ -227,96 +274,152 @@ code {
 
 .menu__lista {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.15rem;
+  flex-wrap: nowrap;
+  gap: 0.1rem;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
 .menu__link {
-  display: block;
-  padding: 0.45rem 0.7rem;
-  border-radius: var(--raio);
-  color: #c9d3da;
-  font-family: var(--fonte-placa);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.7rem;
+  white-space: nowrap;
+  border-radius: 999px;
+  color: var(--texto-suave);
+  font-family: var(--fonte-titulo);
   font-weight: 700;
-  font-size: 0.97rem;
+  font-size: 0.95rem;
   text-decoration: none;
+  transition: background 150ms ease, color 150ms ease;
 }
 
 .menu__link:hover {
-  color: #fff;
-  background: var(--asfalto-2);
+  color: var(--texto);
+  background: var(--concreto-2);
 }
 
 .menu__link[aria-current="page"] {
-  color: #fff;
-  box-shadow: inset 0 -3px 0 var(--sinal);
-  border-radius: var(--raio) var(--raio) 0 0;
+  color: var(--texto);
+  background: color-mix(in srgb, var(--cor-pilar) 16%, white);
 }
 
-.menu a:focus-visible,
-.menu button:focus-visible,
-.menu-botao:focus-visible,
-.marca:focus-visible {
-  outline-color: var(--sinal);
+/* Bolinha com a cor do pilar */
+.menu__ponto {
+  flex-shrink: 0;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--cor-pilar);
 }
 
 .sessao {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.7rem;
+}
+
+.sessao__conta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.25rem 0.8rem 0.25rem 0.25rem;
+  border-radius: 999px;
+  color: var(--texto);
+  text-decoration: none;
+  transition: background 150ms ease;
+}
+
+.sessao__conta:hover,
+.sessao__conta[aria-current="page"] {
+  color: var(--texto);
+  background: var(--concreto-2);
+}
+
+.sessao__avatar {
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 50%;
+  background: var(--sinal);
+  color: var(--asfalto);
+  font-family: var(--fonte-titulo);
+  font-weight: 800;
+  font-size: 1rem;
 }
 
 .sessao__quem {
   display: grid;
   line-height: 1.2;
-  text-align: right;
+  white-space: nowrap;
 }
 
 .sessao__nome {
   font-weight: 700;
-  color: #fff;
 }
 
 .sessao__perfil {
   font-size: 0.78rem;
-  color: #aebac3;
+  color: var(--texto-suave);
 }
 
 .sessao__sair {
+  margin-left: 0.3rem;
   background: none;
-  border: 1.5px solid var(--asfalto-3);
-  color: #e8edf0;
+  border: 1.5px solid var(--linha);
+  color: var(--texto);
   font: inherit;
   font-weight: 600;
   font-size: 0.88rem;
-  padding: 0.35rem 0.8rem;
-  border-radius: var(--raio);
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
   cursor: pointer;
 }
 
 .sessao__sair:hover {
-  border-color: #c9d3da;
+  border-color: var(--linha-forte);
+  background: var(--concreto);
+}
+
+/* Botão Entrar do cabeçalho, com o bonequinho */
+.botao--entrar {
+  gap: 0.5rem;
+  background: var(--placa);
+  color: #fff;
+  padding-inline: 1.1rem 1.25rem;
+}
+
+.botao--entrar:hover {
+  background: var(--placa-escura);
+  color: #fff;
+}
+
+.botao--entrar__icone {
+  width: 1.1rem;
+  height: 1.1rem;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='8 6 32 36'%3E%3Ccircle cx='24' cy='13' r='5' fill='%23f4c34f'/%3E%3Cpath d='M11 20.5c4.5 4 8.5 5.5 13 5.5s8.5-1.5 13-5.5M24 26v6.5M24 32.5l-5.5 6.5M24 32.5l5.5 6.5' fill='none' stroke='%23ffffff' stroke-width='3.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
 }
 
 .menu-botao {
   display: none;
   margin-left: auto;
-  background: var(--asfalto-2);
-  color: #fff;
-  border: 1.5px solid var(--asfalto-3);
-  border-radius: var(--raio);
-  padding: 0.5rem 0.9rem;
-  font-family: var(--fonte-placa);
+  background: var(--papel);
+  color: var(--texto);
+  border: 1.5px solid var(--linha);
+  border-radius: 999px;
+  padding: 0.5rem 1.1rem;
+  font-family: var(--fonte-titulo);
   font-weight: 700;
   font-size: 0.95rem;
   min-height: 44px;
   cursor: pointer;
 }
 
-@media (max-width: 920px) {
+@media (max-width: 1200px) {
   .cabecalho__interno {
     flex-wrap: wrap;
     gap: 0.8rem;
@@ -340,26 +443,27 @@ code {
 
   .menu__lista {
     flex-direction: column;
+    flex-wrap: wrap;
   }
 
   .menu__link {
-    padding: 0.75rem 0.6rem;
+    padding: 0.8rem 1rem;
     font-size: 1.05rem;
-  }
-
-  .menu__link[aria-current="page"] {
-    box-shadow: inset 4px 0 0 var(--sinal);
     border-radius: var(--raio);
   }
 
   .sessao {
-    justify-content: space-between;
-    border-top: 1px solid var(--asfalto-3);
+    justify-content: flex-start;
+    border-top: 1px solid var(--linha);
     padding-top: 0.8rem;
   }
 
-  .sessao__quem {
-    text-align: left;
+  .sessao__sair {
+    margin-left: auto;
+  }
+
+  .botao--entrar {
+    width: 100%;
   }
 }
 
@@ -409,24 +513,75 @@ code {
 }
 
 .rodape {
-  border-top: 1px solid var(--linha);
+  margin-top: 1.5rem;
   background: var(--concreto-2);
+  border-top: 1px solid var(--linha);
   color: var(--texto-suave);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
 }
 
 .rodape__interno {
   max-width: var(--largura);
   margin: 0 auto;
-  padding: 1.2rem var(--margem);
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.4rem 1.5rem;
+  padding: 2.2rem var(--margem) 2rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) auto;
+  gap: 1.5rem 2.5rem;
+  align-items: start;
 }
 
-.rodape p {
+.rodape__marca {
+  display: grid;
+  gap: 0.8rem;
+  color: var(--texto);
+}
+
+.rodape__titulo {
+  margin: 0 0 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--placa);
+}
+
+.rodape__pilares ul {
+  list-style: none;
   margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, max-content));
+  gap: 0.35rem 1.8rem;
+}
+
+.rodape a {
+  color: var(--texto);
+  text-decoration: none;
+}
+
+.rodape a:hover {
+  color: var(--placa);
+  text-decoration: underline;
+}
+
+.rodape__credito {
+  margin: 0;
+  text-align: right;
+  color: var(--texto-suave);
+}
+
+@media (max-width: 760px) {
+  .rodape__interno {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rodape__pilares ul {
+    grid-template-columns: repeat(2, minmax(0, max-content));
+  }
+
+  .rodape__credito {
+    text-align: left;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

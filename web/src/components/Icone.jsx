@@ -1,7 +1,78 @@
-// Ícones desenhados para o CitizenRoute (SVG próprio, sem biblioteca).
-// Grade de 24 × 24, traço de 2 px e pontas arredondadas, como sinalização de trânsito.
+// Ícones desenhados para o Citizen Life (SVG próprio, sem biblioteca).
+// Grade de 24 × 24, traço de 2 px e pontas arredondadas.
 
 const DESENHOS = {
+  // ---------------------------------------------------------------- pilares do hub
+  MOBILIDADE: (
+    <>
+      <circle cx="6" cy="19" r="2" />
+      <circle cx="18" cy="5" r="2" />
+      <path d="M8 19h7.5a3.5 3.5 0 0 0 0-7h-7a3.5 3.5 0 0 1 0-7H16" />
+    </>
+  ),
+  LAZER: (
+    <>
+      <path d="M12 3l-6 9h4l-4 6h12l-4-6h4z" />
+      <path d="M12 18v3" />
+    </>
+  ),
+  ALIMENTACAO: (
+    <>
+      <path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3" />
+      <path d="M7 11v10" />
+      <path d="M17 21V3c-2 1.5-3 4-3 7v3h3" />
+    </>
+  ),
+  SEGURANCA: (
+    <>
+      <path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z" />
+      <path d="M9 12l2 2 4-4" />
+    </>
+  ),
+  EDUCACAO: (
+    <>
+      <path d="M2 9l10-5 10 5-10 5z" />
+      <path d="M6 11v5c3.5 2.5 8.5 2.5 12 0v-5" />
+      <path d="M22 9v6" />
+    </>
+  ),
+  HABITACAO: (
+    <>
+      <path d="M3 11l9-7 9 7" />
+      <path d="M5 9.5V20h14V9.5" />
+      <path d="M10 20v-6h4v6" />
+    </>
+  ),
+  SETA: <path d="M5 12h14M13 6l6 6-6 6" />,
+
+  // ---------------------------------------------------------------- perfil
+  PESSOA: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4.2 3.6-7 8-7s8 2.8 8 7" />
+    </>
+  ),
+  TRABALHO: (
+    <>
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M3 13h18" />
+    </>
+  ),
+  PIN: (
+    <>
+      <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
+      <circle cx="12" cy="9.5" r="2.5" />
+    </>
+  ),
+  RESUMO: (
+    <>
+      <rect x="3" y="3" width="7.5" height="7.5" rx="1.8" />
+      <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.8" />
+      <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.8" />
+      <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.8" />
+    </>
+  ),
+
   // ---------------------------------------------------------------- modais
   CARRO: (
     <>

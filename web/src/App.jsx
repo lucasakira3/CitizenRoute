@@ -4,33 +4,26 @@ import { Carregando, ErroCarga } from "./components/Estados.jsx";
 import { AppContext } from "./contexto.js";
 import { combinar, useRota } from "./hooks/useRota.js";
 import { api, definirAoSessaoInvalida, lerSessao, salvarSessao } from "./services/api.js";
-import CadastrosPage from "./pages/CadastrosPage.jsx";
+import EmBrevePage from "./pages/EmBrevePage.jsx";
 import EntrarPage from "./pages/EntrarPage.jsx";
-import GestaoPage from "./pages/GestaoPage.jsx";
+import InicioPage from "./pages/InicioPage.jsx";
 import MapaPage from "./pages/MapaPage.jsx";
-import MinhasRotasPage from "./pages/MinhasRotasPage.jsx";
+import MobilidadePage from "./pages/MobilidadePage.jsx";
 import NaoEncontradaPage from "./pages/NaoEncontradaPage.jsx";
-import OcorrenciaDetalhePage from "./pages/OcorrenciaDetalhePage.jsx";
-import OcorrenciaFormPage from "./pages/OcorrenciaFormPage.jsx";
-import OcorrenciasPage from "./pages/OcorrenciasPage.jsx";
-import PainelPage from "./pages/PainelPage.jsx";
+import PerfilPage from "./pages/PerfilPage.jsx";
 import PlanejarRotaPage from "./pages/PlanejarRotaPage.jsx";
-import RelatoriosPage from "./pages/RelatoriosPage.jsx";
 
-// A ordem importa: "/ocorrencias/nova" precisa vir antes de "/ocorrencias/:id".
+// Os caminhos fixos vêm antes de "/:pilar", que atende os pilares ainda em construção.
 const ROTAS = [
-  ["/", PainelPage],
-  ["/rota", PlanejarRotaPage],
-  ["/mapa", MapaPage],
-  ["/ocorrencias", OcorrenciasPage],
-  ["/ocorrencias/nova", OcorrenciaFormPage],
-  ["/ocorrencias/:id/editar", OcorrenciaFormPage],
-  ["/ocorrencias/:id", OcorrenciaDetalhePage],
-  ["/minhas-rotas", MinhasRotasPage],
-  ["/gestao", GestaoPage],
-  ["/relatorios", RelatoriosPage],
-  ["/cadastros", CadastrosPage],
+  ["/", InicioPage],
+  ["/mobilidade", MobilidadePage],
+  ["/mobilidade/rota", PlanejarRotaPage],
+  ["/mobilidade/mapa", MapaPage],
+  ["/perfil", PerfilPage],
+  ["/perfil/:secao", PerfilPage],
+  ["/perfil/:pilar/:secao", PerfilPage],
   ["/entrar", EntrarPage],
+  ["/:pilar", EmBrevePage],
 ];
 
 function resolverRota(rota) {
@@ -97,7 +90,7 @@ export default function App() {
       return {};
     }
     const mapa = {};
-    ["modais", "orgaos", "tiposOcorrencia", "status", "niveisImpacto", "niveisRisco", "criteriosRota"].forEach((grupo) => {
+    ["modais", "tiposOcorrencia", "status", "niveisImpacto", "niveisRisco", "criteriosRota", "tiposEndereco"].forEach((grupo) => {
       mapa[grupo] = Object.fromEntries(dominio[grupo].map((item) => [item.codigo, item.rotulo]));
     });
     return mapa;
@@ -122,12 +115,12 @@ export default function App() {
   } else if (erroDominio) {
     conteudo = (
       <section className="secao">
-        <h1>Não foi possível abrir o CitizenRoute</h1>
+        <h1>Não foi possível abrir o Citizen Life</h1>
         <ErroCarga erro={erroDominio} aoTentar={() => setTentativa((n) => n + 1)} />
       </section>
     );
   } else {
-    conteudo = <Carregando texto="Abrindo o CitizenRoute…" />;
+    conteudo = <Carregando texto="Abrindo o Citizen Life…" />;
   }
 
   return (

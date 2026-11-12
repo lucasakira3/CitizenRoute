@@ -27,14 +27,14 @@ import {
   trechosComRisco,
   viasNaRota,
 } from "../utils/rotas.js";
-import { MODAL_FRASE } from "../utils/rotulos.js";
+import { ICONE_ENDERECO, MODAL_FRASE } from "../utils/rotulos.js";
 import { criarValidador } from "../utils/validacao.js";
 
 const CELULAR = "(max-width: 860px)";
 const ORDEM_RISCO = { BAIXO: 1, MODERADO: 2, ALTO: 3, CRITICO: 4 };
-const MARCADOR = { origem: { texto: "A", cor: "#1d2730" }, destino: { texto: "B", cor: "#1a66d6" } };
+const MARCADOR = { origem: { texto: "A", cor: "#1f2a24" }, destino: { texto: "B", cor: "#2f93c8" } };
 
-/** Rota salva pedida na URL (#/rota?id=3), quando o cidadão abre uma rota de "Minhas rotas". */
+/** Rota salva pedida na URL (#/mobilidade/rota?id=3), quando o cidadão abre uma rota de "Minhas rotas". */
 function idDaUrl() {
   const busca = new URLSearchParams(window.location.hash.split("?")[1] ?? "");
   const id = Number(busca.get("id"));
@@ -51,12 +51,12 @@ function piorNivel(alertas) {
 export default function PlanejarRotaPage() {
   useTitulo("Planejar rota");
   const { sessao, dominio, rotulo } = useApp();
-  const cidadao = sessao?.tipo === "CIDADAO";
+  const cidadao = Boolean(sessao);
   const [idRota] = useState(idDaUrl);
 
   const [origem, setOrigem] = useState(null);
   const [destino, setDestino] = useState(null);
-  const [modal, setModal] = useState(cidadao ? sessao.modal : "CARRO");
+  const [modal, setModal] = useState(sessao?.modal ?? "CARRO");
   const [criterio, setCriterio] = useState("SEGURA");
   const [marcando, setMarcando] = useState(null);
   const [rotaSalva, setRotaSalva] = useState(null);
@@ -92,6 +92,23 @@ export default function PlanejarRotaPage() {
       ativo = false;
     };
   }, []);
+
+  // Endereços salvos no perfil (casa, trabalho...) viram atalhos para a saída e o destino
+  const [enderecos, setEnderecos] = useState([]);
+  useEffect(() => {
+    if (!cidadao) return;
+    api
+      .buscar(`/cidadaos/${sessao.id}/enderecos`)
+      .then(setEnderecos)
+      .catch(() => setEnderecos([]));
+  }, [cidadao, sessao?.id]);
+
+  /** Preenche a saída se ela estiver vazia; senão, o destino. */
+  function usarEndereco(endereco) {
+    const ponto = { ...endereco.local };
+    if (!origem) setOrigem(ponto);
+    else setDestino(ponto);
+  }
 
   // Rota salva aberta pela URL: preenche saída, destino, critério e o nome
   useEffect(() => {
@@ -223,7 +240,7 @@ export default function PlanejarRotaPage() {
     setResultado(null);
     setErroRota(null);
     setRotaSalva(null);
-    if (idRota) navegar("/rota");
+    if (idRota) navegar("/mobilidade/rota");
   }
 
   return (
@@ -265,7 +282,7 @@ export default function PlanejarRotaPage() {
               <span className="visualmente-oculto">{painelAberto ? "Recolher o painel" : "Abrir o painel"}</span>
             </button>
           )}
-          <p className="sobretitulo">{rotaSalva ? "Rota salva" : "Para quem circula"}</p>
+          {rotaSalva && <p className="sobretitulo">Rota salva</p>}
           <h1 id="rota-titulo" className="mapa-painel__titulo">
             {rotaSalva ? rotaSalva.nome : "Para onde você vai?"}
           </h1>
@@ -310,6 +327,28 @@ export default function PlanejarRotaPage() {
             />
           </div>
 
+          {enderecos.length > 0 && (
+            <div className="atalhos-endereco" role="group" aria-label="Seus endereços salvos">
+              {enderecos.map((endereco) => {
+                const emUso = [origem, destino].some(
+                  (ponto) => ponto && ponto.x === endereco.local.x && ponto.y === endereco.local.y,
+                );
+                return (
+                  <button
+                    key={endereco.id}
+                    type="button"
+                    aria-pressed={emUso}
+                    title={`${endereco.local.descricao}: usar como ${origem ? "destino" : "saída"}`}
+                    onClick={() => usarEndereco(endereco)}
+                  >
+                    <Icone nome={ICONE_ENDERECO[endereco.tipo]} tamanho={14} />
+                    {endereco.apelido}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           <SeletorModal valor={modal} aoMudar={setModal} legenda="Como você vai" />
 
           {!base && !erroBase && <p className="mapa-painel__carregando">Carregando o mapa e a rede de ruas…</p>}
@@ -322,8 +361,7 @@ export default function PlanejarRotaPage() {
 
           {!origem || !destino ? (
             <p className="rota-dica">
-              Digite a saída e o destino, ou use o botão de alvo para marcar no mapa. A rota é calculada aqui mesmo,
-              sem internet, e o risco de cada ocorrência no caminho depende de como você vai.
+              Escolha a saída e o destino, ou marque no mapa.
             </p>
           ) : (
             resultado && (
@@ -345,7 +383,7 @@ export default function PlanejarRotaPage() {
               destino={destino}
               criterio={criterio}
               escolhida={escolhida}
-              modalDiferente={cidadao && modal !== sessao.modal}
+              modalDiferente={cidadao && modal !== (sessao.modal ?? dominio.modalPadraoRisco)}
               aoSalvar={(rota, texto) => {
                 setRotaSalva(rota);
                 setAviso({ tipo: "sucesso", texto });
@@ -434,7 +472,7 @@ function Resultado({ resultado, criterio, aoEscolher, modal, rotulo }) {
                 <p className="rota-alerta__nivel">
                   Risco {rotulo("niveisRisco", alerta.risco.nivel).toLowerCase()} para quem {frase}
                 </p>
-                <a className="rota-alerta__titulo" href={`#/ocorrencias/${alerta.ocorrencia.id}`}>
+                <a className="rota-alerta__titulo" href={`#/mobilidade/mapa?modal=${modal}&ocorrencia=${alerta.ocorrencia.id}`}>
                   {alerta.ocorrencia.titulo}
                 </a>
                 <div className="lista-placas">
@@ -514,7 +552,7 @@ function SalvarRota({ cidadao, rotaSalva, origem, destino, criterio, escolhida, 
     if (ok && salva) {
       if (!rotaSalva) {
         avisarNaProximaPagina("sucesso", `Rota "${salva.nome}" salva. Os alertas dela aparecem aqui.`);
-        navegar("/minhas-rotas");
+        navegar("/perfil/mobilidade/rotas");
         return;
       }
       aoSalvar(salva, "Rota atualizada.");
@@ -527,8 +565,8 @@ function SalvarRota({ cidadao, rotaSalva, origem, destino, criterio, escolhida, 
       <p className="texto-apoio">
         Você recebe alerta quando surgir ocorrência numa das {escolhida.vias.length} vias do caminho acompanhadas pelo sistema.
         {modalDiferente &&
-          ` Os alertas usam o seu modal do cadastro (${dominio.modais
-            .find((item) => item.codigo === sessao.modal)
+          ` Os alertas usam ${sessao.modal ? "o seu modal do cadastro" : "o modal padrão, já que você ainda não informou o seu"} (${dominio.modais
+            .find((item) => item.codigo === (sessao.modal ?? dominio.modalPadraoRisco))
             ?.rotulo.toLowerCase()}).`}
       </p>
       <Aviso aviso={form.aviso} />

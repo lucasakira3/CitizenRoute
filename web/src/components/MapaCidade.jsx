@@ -22,9 +22,9 @@ export { zonaDaRegiao };
  *   num canvas a cada quadro (utils/desenhoMapa.js).
  * - Cada ocorrência é uma placa de advertência 3D (HTML + CSS 3D) em cima da via
  *   atingida, na cor do risco para o modal escolhido. As vias atingidas acendem.
- * - Na página de rotas, a rota calculada aparece em azul, com os marcadores de saída (A) e destino (B).
+ * - Na página de rotas, a rota calculada aparece em azul-céu, com os marcadores de saída (A) e destino (B).
  *
- * modo "tela": página Mapa, câmera livre. modo "previa": quadro do Painel, câmera parada.
+ * modo "tela": página Mapa, câmera livre. modo "previa": quadro pequeno, câmera parada.
  */
 
 const ORDEM_RISCO = { BAIXO: 1, MODERADO: 2, ALTO: 3, CRITICO: 4 };
@@ -246,9 +246,11 @@ export default function MapaCidade({
   useImperativeHandle(
     ref,
     () => ({
+      /** Voa até a placa da ocorrência. Devolve false enquanto o mapa ainda não carregou. */
       focarOcorrencia(id) {
         const sinal = sinais.find((item) => item.ocorrencia.id === id);
         if (sinal) focar(sinal.x, sinal.y, 6);
+        return Boolean(sinal);
       },
       verZona,
       verCidade: () => verCidade(),
@@ -498,7 +500,7 @@ const SinalMapa = memo(function SinalMapa({ sinal, indice, tela, ativo, rotulo, 
               {faces}
             </button>
           ) : (
-            <a className="sinal3d__placa" href={`#/ocorrencias/${ocorrencia.id}`} aria-label={descricao}>
+            <a className="sinal3d__placa" href={`#/mobilidade/mapa?ocorrencia=${ocorrencia.id}`} aria-label={descricao}>
               {faces}
             </a>
           )}

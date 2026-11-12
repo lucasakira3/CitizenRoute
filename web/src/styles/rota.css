@@ -99,7 +99,7 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  font-family: var(--fonte-placa);
+  font-family: var(--fonte-titulo);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -120,7 +120,7 @@
 }
 
 .campo-lugar__letra--B {
-  background: #1a66d6;
+  background: var(--pilar-lazer);
 }
 
 .campo-lugar__linha {
@@ -181,7 +181,7 @@
   border: 1px solid var(--linha);
   border-radius: var(--raio-grande);
   background: var(--papel);
-  box-shadow: 0 16px 32px -16px rgb(29 39 48 / 0.55);
+  box-shadow: 0 16px 32px -16px rgb(31 42 36 / 0.55);
 }
 
 .campo-lugar__opcao {
@@ -272,7 +272,7 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-family: var(--fonte-placa);
+  font-family: var(--fonte-titulo);
   font-size: 0.8rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -284,7 +284,7 @@
 }
 
 .rota-opcao__tempo {
-  font-family: var(--fonte-placa);
+  font-family: var(--fonte-titulo);
   font-size: 1.45rem;
   font-weight: 800;
   line-height: 1.1;
@@ -372,7 +372,7 @@
 
 .rota-alerta__nivel {
   margin: 0;
-  font-family: var(--fonte-placa);
+  font-family: var(--fonte-titulo);
   font-size: 0.72rem;
   font-weight: 800;
   text-transform: uppercase;

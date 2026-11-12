@@ -4,7 +4,8 @@ import Icone from "./Icone.jsx";
 
 /**
  * Campo de endereço com sugestões (combobox acessível): o cidadão digita o nome de uma rua,
- * avenida ou bairro de São Paulo e escolhe uma das opções. Também pode marcar o ponto no mapa.
+ * avenida ou bairro de São Paulo e escolhe uma das opções. Na tela de rotas também pode marcar o ponto
+ * no mapa (quando aoMarcarNoMapa é informado).
  * As sugestões vêm do mapa do OpenStreetMap que já está no projeto: nada é buscado na internet.
  */
 export default function CampoLugar({
@@ -61,9 +62,11 @@ export default function CampoLugar({
   return (
     <div className={`campo-lugar ${erro ? "campo-lugar--erro" : ""}`}>
       <label className="campo-lugar__rotulo" htmlFor={id}>
-        <span className={`campo-lugar__letra campo-lugar__letra--${letra}`} aria-hidden="true">
-          {letra}
-        </span>
+        {letra && (
+          <span className={`campo-lugar__letra campo-lugar__letra--${letra}`} aria-hidden="true">
+            {letra}
+          </span>
+        )}
         {rotulo}
       </label>
       <div className="campo-lugar__linha">
@@ -91,16 +94,18 @@ export default function CampoLugar({
           onBlur={() => setTimeout(() => setAberto(false), 150)}
           onKeyDown={aoTeclar}
         />
-        <button
-          type="button"
-          className={`campo-lugar__mapa ${marcandoNoMapa ? "campo-lugar__mapa--ativo" : ""}`}
-          aria-pressed={marcandoNoMapa}
-          onClick={aoMarcarNoMapa}
-          title="Marcar no mapa"
-        >
-          <Icone nome="ALVO" tamanho={18} />
-          <span className="visualmente-oculto">Marcar {rotulo.toLowerCase()} no mapa</span>
-        </button>
+        {aoMarcarNoMapa && (
+          <button
+            type="button"
+            className={`campo-lugar__mapa ${marcandoNoMapa ? "campo-lugar__mapa--ativo" : ""}`}
+            aria-pressed={marcandoNoMapa}
+            onClick={aoMarcarNoMapa}
+            title="Marcar no mapa"
+          >
+            <Icone nome="ALVO" tamanho={18} />
+            <span className="visualmente-oculto">Marcar {rotulo.toLowerCase()} no mapa</span>
+          </button>
+        )}
       </div>
       <ul id={idLista} role="listbox" className="campo-lugar__lista" hidden={!sugestoes.length} aria-label={rotulo}>
         {sugestoes.map((sugestao, indice) => (
@@ -124,7 +129,7 @@ export default function CampoLugar({
       </ul>
       {aberto && dados && texto.length >= 2 && !sugestoes.length && (
         <p className="campo-lugar__nada" role="status">
-          Nenhuma rua ou bairro com esse nome. Tente outra grafia ou marque no mapa.
+          Nenhuma rua ou bairro com esse nome. Tente outra grafia{aoMarcarNoMapa ? " ou marque no mapa" : ""}.
         </p>
       )}
       {erro && (

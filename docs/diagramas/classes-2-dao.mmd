@@ -14,37 +14,22 @@ classDiagram
         -obter(String)$ String
         -carregarArquivo()$ Properties
     }
-    class AcaoDao {
+    class CidadaoDao {
         -String SQL_SELECT$
         -String SQL_INSERIR$
         -String SQL_ATUALIZAR$
         -String SQL_EXCLUIR$
-        +AcaoDao()
-        +inserir(Acao) Acao
-        ~inserir(Connection, Acao) Acao
-        +listar() List~Acao~
-        +listarPorOcorrencia(long) List~Acao~
-        +buscarPorId(long) Optional~Acao~
-        +atualizar(Acao) boolean
-        +excluir(long) boolean
-        -consultar(String, Long, String) List~Acao~
-        -mapear(ResultSet) Acao
-        +atualizar(Object) boolean
-        +inserir(Object) Object
-    }
-    class CidadaoDao {
-        -String SQL_SELECT$
-        -String SQL_INSERIR_USUARIO$
-        -String SQL_INSERIR_CIDADAO$
-        -String SQL_ATUALIZAR_USUARIO$
-        -String SQL_ATUALIZAR_CIDADAO$
-        -String SQL_EXCLUIR$
+        -String SQL_EMAIL_EM_USO$
         +CidadaoDao()
         +inserir(Cidadao) Cidadao
         +listar() List~Cidadao~
         +buscarPorId(long) Optional~Cidadao~
+        +buscarPorEmail(String) Optional~Cidadao~
+        +emailEmUso(String, Long) boolean
         +atualizar(Cidadao) boolean
         +excluir(long) boolean
+        -buscarUm(String, Object, String) Optional~Cidadao~
+        -mapear(ResultSet) Cidadao
         +atualizar(Object) boolean
         +inserir(Object) Object
     }
@@ -56,37 +41,36 @@ classDiagram
         +atualizar(T) boolean
         +excluir(long) boolean
     }
+    class EnderecoDao {
+        -String SQL_SELECT$
+        -String ORDEM$
+        -String SQL_INSERIR$
+        -String SQL_ATUALIZAR$
+        -String SQL_EXCLUIR$
+        +EnderecoDao()
+        +inserir(Endereco) Endereco
+        +listar() List~Endereco~
+        +listarPorCidadao(long) List~Endereco~
+        +buscarPorId(long) Optional~Endereco~
+        +atualizar(Endereco) boolean
+        +excluir(long) boolean
+        -consultar(String, Long) List~Endereco~
+        -mapear(ResultSet) Endereco
+        +atualizar(Object) boolean
+        +inserir(Object) Object
+    }
     class FiltroOcorrencia {
         <<record>>
-        -StatusOcorrencia status
-        -Set~TipoOcorrencia~ tipos
-        -Long idRegiao
-        -Long idVia
-        -Long idAutor
-        -Long idCidadaoComRota
         -boolean apenasAtivas
-        +FiltroOcorrencia(StatusOcorrencia, Set~TipoOcorrencia~, Long, Long, Long, Long, boolean)
+        -Long idCidadaoComRota
+        +FiltroOcorrencia(boolean, Long)
         +todas()$ FiltroOcorrencia
         +ativas()$ FiltroOcorrencia
         +ativasNasRotasDo(long)$ FiltroOcorrencia
     }
-    class GestorDao {
-        -String SQL_SELECT$
-        -String SQL_INSERIR_USUARIO$
-        -String SQL_INSERIR_GESTOR$
-        -String SQL_ATUALIZAR_USUARIO$
-        -String SQL_ATUALIZAR_GESTOR$
-        -String SQL_EXCLUIR$
-        -String SQL_MATRICULA_EM_USO$
-        +GestorDao()
-        +inserir(Gestor) Gestor
-        +listar() List~Gestor~
-        +buscarPorId(long) Optional~Gestor~
-        +atualizar(Gestor) boolean
-        +excluir(long) boolean
-        +matriculaEmUso(String, Long) boolean
-        +atualizar(Object) boolean
-        +inserir(Object) Object
+    class JdbcUtil_OperacaoJdbc["JdbcUtil.OperacaoJdbc"] {
+        <<interface>>
+        +executar(Connection) T
     }
     class JdbcUtil {
         -JdbcUtil()
@@ -96,65 +80,16 @@ classDiagram
         +paraTimestamp(LocalDateTime)$ Timestamp
         +marcadores(int)$ String
     }
-    class JdbcUtil_OperacaoJdbc["JdbcUtil.OperacaoJdbc"] {
-        <<interface>>
-        +executar(Connection) T
-    }
     class OcorrenciaDao {
         -String ATIVAS$
         -String SQL_SELECT$
         -String SQL_SELECT_VIAS$
-        -String SQL_INSERIR$
-        -String SQL_INSERIR_VIA$
-        -String SQL_EXCLUIR_VIAS$
-        -String SQL_ATUALIZAR$
-        -String SQL_ATUALIZAR_STATUS$
-        -String SQL_EXCLUIR$
         -int LOTE_IN$
-        -AcaoDao acaoDao
-        +OcorrenciaDao(AcaoDao)
-        +inserir(Ocorrencia) Ocorrencia
-        +listar() List~Ocorrencia~
+        +OcorrenciaDao()
         +listar(FiltroOcorrencia) List~Ocorrencia~
         +buscarPorId(long) Optional~Ocorrencia~
-        +atualizar(Ocorrencia) boolean
-        +alterarStatus(Ocorrencia, StatusOcorrencia, Acao) boolean
-        +excluir(long) boolean
-        -inserirVias(Connection, Ocorrencia) void
         -carregarVias(Connection, List~Ocorrencia~) void
         -mapear(ResultSet) Ocorrencia
-        +atualizar(Object) boolean
-        +inserir(Object) Object
-    }
-    class RegiaoDao {
-        -String SQL_INSERIR$
-        -String SQL_LISTAR$
-        -String SQL_BUSCAR$
-        -String SQL_ATUALIZAR$
-        -String SQL_EXCLUIR$
-        +RegiaoDao()
-        +inserir(Regiao) Regiao
-        +listar() List~Regiao~
-        +buscarPorId(long) Optional~Regiao~
-        +atualizar(Regiao) boolean
-        +excluir(long) boolean
-        -mapear(ResultSet) Regiao
-        +atualizar(Object) boolean
-        +inserir(Object) Object
-    }
-    class RelatorioDao {
-        -String SQL_VIAS_CRITICAS$
-        -String SQL_POR_REGIAO$
-        -String SQL_TEMPO_RESPOSTA$
-        -String SQL_EXPOSICAO_MODAL$
-        -String SQL_RESUMO$
-        -String SQL_TEMPO_MEDIO_GERAL$
-        +RelatorioDao()
-        +viasCriticas() List~ViaCritica~
-        +ocorrenciasPorRegiao() List~OcorrenciasPorRegiao~
-        +tempoRespostaPorOrgao() List~TempoRespostaOrgao~
-        +exposicaoPorModal() List~ExposicaoModal~
-        +resumo() ResumoPainel
     }
     class RotaDao {
         -String SQL_SELECT$
@@ -203,41 +138,12 @@ classDiagram
         +traduzirConexao(SQLException)$ PersistenciaException
         -procurar(Map~String‚String~, String, String)$ String
     }
-    class UsuarioDao {
-        -String SQL_SELECT$
-        -String SQL_EMAIL_EM_USO$
-        +UsuarioDao()
-        +buscarPorId(long) Optional~Usuario~
-        +buscarPorEmail(String) Optional~Usuario~
-        +emailEmUso(String, Long) boolean
-        -buscarUm(String, Object, String) Optional~Usuario~
-        ~mapear(ResultSet)$ Usuario
-    }
     class ViaDao {
         -String SQL_SELECT$
-        -String SQL_INSERIR$
-        -String SQL_ATUALIZAR$
-        -String SQL_EXCLUIR$
         +ViaDao()
-        +inserir(Via) Via
         +listar() List~Via~
-        +listar(Long, String) List~Via~
         +buscarPorId(long) Optional~Via~
-        +atualizar(Via) boolean
-        +excluir(long) boolean
         ~mapear(ResultSet)$ Via
-        +atualizar(Object) boolean
-        +inserir(Object) Object
     }
-    CrudDao <|.. AcaoDao
-    CrudDao <|.. CidadaoDao
-    FiltroOcorrencia --> StatusOcorrencia : status
-    FiltroOcorrencia --> "*" TipoOcorrencia : tipos
-    CrudDao <|.. GestorDao
-    JdbcUtil *-- JdbcUtil_OperacaoJdbc : interna
-    CrudDao <|.. OcorrenciaDao
-    OcorrenciaDao --> AcaoDao : acaoDao
-    CrudDao <|.. RegiaoDao
-    CrudDao <|.. RotaDao
-    CrudDao <|.. ViaDao
+    JdbcUtil ..> JdbcUtil_OperacaoJdbc
     OcorrenciaDao ..> FiltroOcorrencia

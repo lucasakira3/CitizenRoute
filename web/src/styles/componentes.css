@@ -12,14 +12,18 @@
   min-height: 44px;
   padding: 0.6rem 1.1rem;
   border: 2px solid transparent;
-  border-radius: var(--raio);
-  font-family: var(--fonte-placa);
+  border-radius: 999px;
+  font-family: var(--fonte-titulo);
   font-weight: 700;
   font-size: 0.97rem;
   line-height: 1.1;
   text-decoration: none;
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.botao:active {
+  transform: translateY(1px);
 }
 
 .botao--primario {
@@ -30,6 +34,7 @@
 .botao--primario:hover {
   background: var(--placa-escura);
   color: #fff;
+  box-shadow: 0 8px 18px -10px rgb(47 138 87 / 0.7);
 }
 
 .botao--secundario {
@@ -72,16 +77,6 @@
   color: var(--erro);
 }
 
-.botao--sinal {
-  background: var(--sinal);
-  color: var(--asfalto);
-}
-
-.botao--sinal:hover {
-  background: #ffc933;
-  color: var(--asfalto);
-}
-
 .botao--pequeno {
   min-height: 36px;
   padding: 0.35rem 0.75rem;
@@ -110,17 +105,11 @@
   color: var(--erro);
 }
 
-.link-seta,
 .voltar {
   font-weight: 600;
   text-decoration: none;
 }
 
-.link-seta::after {
-  content: " \2192";
-}
-
-.link-seta:hover,
 .voltar:hover {
   text-decoration: underline;
 }
@@ -144,12 +133,6 @@
 
 .acoes--linha {
   gap: 0.9rem;
-}
-
-.acoes--formulario {
-  margin-top: 0.4rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--linha);
 }
 
 /* ------------------------------------------------------------ Formulários */
@@ -179,12 +162,6 @@
   display: grid;
   gap: 0.35rem;
   min-width: 0;
-}
-
-.campo--grupo {
-  border: none;
-  margin: 0;
-  padding: 0;
 }
 
 .campo__rotulo {
@@ -225,12 +202,19 @@ select,
 textarea {
   width: 100%;
   min-height: 44px;
-  padding: 0.6rem 0.75rem;
-  border: 1.5px solid var(--linha-forte);
+  padding: 0.6rem 0.85rem;
+  border: 1.5px solid #b9c0b8;
   border-radius: var(--raio);
   background: var(--papel);
   color: var(--texto);
   font: inherit;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--linha-forte);
 }
 
 textarea {
@@ -243,7 +227,7 @@ select:focus-visible,
 textarea:focus-visible {
   outline: none;
   border-color: var(--placa);
-  box-shadow: 0 0 0 3px rgb(15 76 155 / 0.25);
+  box-shadow: 0 0 0 4px rgb(47 138 87 / 0.22);
 }
 
 [aria-invalid="true"] {
@@ -273,56 +257,6 @@ textarea:focus-visible {
   gap: 0.4rem;
 }
 
-.escala__opcao {
-  position: relative;
-  display: grid;
-  justify-items: center;
-  gap: 0.1rem;
-  padding: 0.55rem 0.3rem;
-  border: 1.5px solid var(--linha-forte);
-  border-radius: var(--raio);
-  background: var(--papel);
-  cursor: pointer;
-  text-align: center;
-}
-
-.escala__opcao input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.escala__numero {
-  font-family: var(--fonte-dado);
-  font-weight: 600;
-  font-size: 1.15rem;
-}
-
-.escala__rotulo {
-  font-size: 0.75rem;
-  color: var(--texto-suave);
-  line-height: 1.2;
-}
-
-.escala__opcao:has(input:checked) {
-  background: var(--asfalto);
-  border-color: var(--asfalto);
-  color: #fff;
-}
-
-.escala__opcao:has(input:checked) .escala__rotulo {
-  color: var(--sinal);
-}
-
-.escala__opcao:has(input:focus-visible) {
-  outline: 3px solid var(--placa);
-  outline-offset: 2px;
-}
-
-.campo--erro .escala__opcao {
-  border-color: var(--erro);
-}
-
 /* Seletor de modal */
 .segmentos {
   border: none;
@@ -333,7 +267,7 @@ textarea:focus-visible {
 .segmentos__legenda {
   padding: 0;
   margin-bottom: 0.5rem;
-  font-family: var(--fonte-placa);
+  font-family: var(--fonte-titulo);
   font-weight: 700;
   font-size: 0.8rem;
   text-transform: uppercase;
@@ -367,7 +301,7 @@ textarea:focus-visible {
   border: 2px solid var(--linha-forte);
   border-radius: 999px;
   background: var(--papel);
-  font-family: var(--fonte-placa);
+  font-family: var(--fonte-titulo);
   font-weight: 700;
   font-size: 1rem;
   transition: background-color 0.15s, border-color 0.15s, color 0.15s;
@@ -480,7 +414,7 @@ textarea:focus-visible {
 }
 
 .vazio__titulo {
-  font-family: var(--fonte-placa);
+  font-family: var(--fonte-titulo);
   font-weight: 700;
   font-size: 1.1rem;
   margin-bottom: 0.3rem;
@@ -497,29 +431,17 @@ textarea:focus-visible {
 
 .cartao {
   background: var(--papel);
-  border: 1px solid var(--linha);
+  border: 1px solid transparent;
   border-radius: var(--raio-grande);
   padding: clamp(1rem, 2.5vw, 1.5rem);
   box-shadow: var(--sombra);
 }
 
 .subtitulo {
-  font-family: var(--fonte-placa);
+  font-family: var(--fonte-titulo);
   font-weight: 700;
   font-size: 0.98rem;
   margin: 1.3rem 0 0.6rem;
-}
-
-.selo {
-  display: inline-block;
-  margin-left: 0.4rem;
-  padding: 0.05rem 0.45rem;
-  border-radius: 999px;
-  background: var(--placa);
-  color: #fff;
-  font-size: 0.72rem;
-  font-weight: 700;
-  vertical-align: 0.1em;
 }
 
 /* ------------------------------------------------- Placa de rua (via) */
@@ -674,7 +596,7 @@ textarea:focus-visible {
   display: inline-block;
   padding: 0.18rem 0.5rem;
   border-radius: 3px;
-  font-family: var(--fonte-placa);
+  font-family: var(--fonte-titulo);
   font-weight: 700;
   font-size: 0.74rem;
   text-transform: uppercase;
@@ -730,100 +652,9 @@ textarea:focus-visible {
   color: var(--texto-suave);
 }
 
-.linha-etiquetas {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.6rem 1rem;
-  margin-top: 0.9rem;
-}
-
 /* ------------------------------------------------- Ocorrência em lista */
 
-.lista-ocorrencias {
-  position: relative;
-  display: grid;
-  gap: 0.8rem;
-}
-
-.item-ocorrencia {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1rem;
-  padding: 1rem 1.15rem;
-  background: var(--papel);
-  border: 1px solid var(--linha);
-  border-radius: var(--raio-grande);
-  box-shadow: var(--sombra);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, translate 0.2s ease;
-}
-
-.item-ocorrencia--com-risco {
-  grid-template-columns: auto minmax(0, 1fr);
-}
-
-.item-ocorrencia:hover {
-  border-color: var(--linha-forte);
-  translate: 0 -2px;
-  box-shadow: 0 1px 2px rgb(29 39 48 / 0.06), 0 14px 28px -14px rgb(29 39 48 / 0.35);
-}
-
-.item-ocorrencia__icone {
-  margin-right: 0.35rem;
-  vertical-align: -3px;
-  color: var(--placa);
-}
-
-.item-ocorrencia__tipo {
-  margin: 0 0 0.15rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--texto-suave);
-}
-
-.item-ocorrencia__quando {
-  text-transform: none;
-  letter-spacing: 0;
-  font-weight: 500;
-}
-
-.item-ocorrencia__titulo {
-  margin: 0 0 0.65rem;
-  font-size: 1.15rem;
-}
-
-.item-ocorrencia__titulo a {
-  color: var(--texto);
-  text-decoration: none;
-}
-
-.item-ocorrencia__titulo a:hover {
-  color: var(--placa);
-  text-decoration: underline;
-}
-
-.item-ocorrencia__vias {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 0.9rem;
-  margin-bottom: 0.7rem;
-}
-
-.item-ocorrencia__rodape {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1rem;
-}
-
 /* ---------------------------------------------------------------- Tabelas */
-
-.tabela-rolagem {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
 
 .tabela {
   width: 100%;
@@ -853,66 +684,4 @@ textarea:focus-visible {
   font-weight: 600;
 }
 
-.tabela .numero {
-  text-align: right;
-  font-family: var(--fonte-dado);
-  white-space: nowrap;
-}
-
-.numero--destaque {
-  font-weight: 600;
-  font-size: 1.05rem;
-}
-
-.tabela__linha--editando {
-  background: var(--placa-clara);
-}
-
-.barra {
-  display: block;
-  flex: 1;
-  min-width: 60px;
-  height: 10px;
-  border-radius: 2px;
-  background: var(--concreto-2);
-  overflow: hidden;
-}
-
-.barra__preenchimento {
-  display: block;
-  height: 100%;
-  border-radius: 2px;
-  background: var(--placa);
-}
-
 /* ------------------------------------------------------------------ Abas */
-
-.abas {
-  display: flex;
-  gap: 0.2rem;
-  border-bottom: 2px solid var(--linha);
-  overflow-x: auto;
-}
-
-.aba {
-  margin-bottom: -2px;
-  padding: 0.7rem 1rem;
-  background: none;
-  border: none;
-  border-bottom: 3px solid transparent;
-  font-family: var(--fonte-placa);
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--texto-suave);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.aba:hover {
-  color: var(--texto);
-}
-
-.aba[aria-selected="true"] {
-  color: var(--texto);
-  border-bottom-color: var(--placa);
-}

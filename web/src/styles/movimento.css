@@ -18,9 +18,10 @@
 }
 
 /* Itens de lista entram em sequência (style="--i: n") */
-.item-ocorrencia {
+.pilares > li,
+.opcoes-pilar > li {
   animation: entrada 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  animation-delay: calc(var(--i, 0) * 50ms);
+  animation-delay: calc(var(--i, 0) * 60ms);
 }
 
 /* O losango de risco "vira" quando aparece ou quando o valor muda */
@@ -60,91 +61,4 @@
     opacity: 0;
     transform: translateY(10px);
   }
-}
-
-/* ------------------------------------------------- Esqueletos de carregamento */
-
-.esqueleto {
-  display: block;
-  border-radius: 4px;
-  background: linear-gradient(90deg, var(--concreto-2) 25%, #f2f4f5 40%, var(--concreto-2) 60%);
-  background-size: 400% 100%;
-  animation: brilho 1.3s ease-in-out infinite;
-}
-
-@keyframes brilho {
-  from {
-    background-position: 100% 50%;
-  }
-  to {
-    background-position: 0 50%;
-  }
-}
-
-.esqueleto-lista {
-  display: grid;
-  gap: 0.8rem;
-}
-
-.esqueleto-item {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 1.1rem;
-  align-items: center;
-  padding: 1.1rem 1.2rem;
-  background: var(--papel);
-  border: 1px solid var(--linha);
-  border-radius: var(--raio-grande);
-}
-
-.esqueleto-item__linhas {
-  display: grid;
-  gap: 0.55rem;
-}
-
-.esqueleto--losango {
-  width: 2.3rem;
-  height: 2.3rem;
-  margin: 0.5rem;
-  border-radius: 5px;
-  transform: rotate(45deg);
-}
-
-.esqueleto--linha {
-  height: 0.8rem;
-}
-
-.esqueleto--curta {
-  width: 30%;
-}
-
-.esqueleto--media {
-  width: 50%;
-}
-
-.esqueleto--titulo {
-  width: 72%;
-  height: 1.15rem;
-}
-
-.esqueleto-numeros {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 1.2rem;
-}
-
-.esqueleto-numero {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.esqueleto--numero {
-  width: 55%;
-  height: 2rem;
-}
-
-/* No painel escuro, o brilho usa tons de asfalto */
-.situacao .esqueleto {
-  background: linear-gradient(90deg, var(--asfalto-2) 25%, var(--asfalto-3) 40%, var(--asfalto-2) 60%);
-  background-size: 400% 100%;
 }
