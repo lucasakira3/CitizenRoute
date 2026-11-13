@@ -2,7 +2,7 @@
    Tokens, base e estrutura da página
    Paleta do Citizen Life: base neutra e quente (creme, branco, areia e um
    grafite esverdeado no lugar do preto), o verde #287D4D como cor principal,
-   o "sol" #F4C34F como destaque e uma cor alegre para cada pilar do hub.
+   o verde #287D4D como destaque pontual.
    As cores de risco (verde, amarelo, laranja e vermelho) continuam as de
    sinalização, porque carregam significado.
    ========================================================================== */
@@ -29,7 +29,7 @@
   --folha: #5bb37a;
   --petroleo: #2a9d8f;
 
-  /* Um tom alegre por pilar */
+  /* Cores de referência dos pilares */
   --pilar-mobilidade: #287d4d;
   --pilar-lazer: #2f93c8;
   --pilar-alimentacao: #f4b740;
@@ -48,22 +48,18 @@
   --erro-fundo: #fdecea;
   --info-fundo: #e3f3e8;
 
-  /* Títulos e interface: geométrica e arredondada. Overpass fica só na sinalização (placas de rua e risco). */
+  /* Títulos e interface */
   --fonte-titulo: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
   --fonte-placa: "Overpass", "Arial Narrow", "Segoe UI", system-ui, sans-serif;
   --fonte-texto: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
   --fonte-dado: "Overpass Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
 
-  --raio: 10px;
-  --raio-grande: 18px;
+  --raio: 6px;
+  --raio-grande: 12px;
   --sombra: 0 1px 2px rgb(31 42 36 / 0.05), 0 10px 28px -16px rgb(31 42 36 / 0.28);
   --sombra-alta: 0 2px 4px rgb(31 42 36 / 0.06), 0 24px 44px -22px rgb(31 42 36 / 0.45);
   --largura: 1200px;
   --margem: clamp(16px, 4vw, 40px);
-
-  /* Linha sob o cabeçalho: as cores da paleta em degradê, como os pilares do hub */
-  --faixa-pista: linear-gradient(90deg, var(--pilar-mobilidade), var(--pilar-lazer), var(--pilar-alimentacao),
-    var(--pilar-seguranca), var(--pilar-educacao), var(--pilar-habitacao));
 
   color-scheme: light;
 }
@@ -183,31 +179,15 @@ code {
 
 /* ------------------------------------------------------------- Cabeçalho */
 
-/* Claro e translúcido; a linha de baixo junta as cores dos seis pilares */
 .cabecalho {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: rgb(255 255 255 / 0.88);
-  backdrop-filter: saturate(1.4) blur(10px);
+  background: var(--concreto);
   color: var(--texto);
-  box-shadow: 0 1px 0 var(--linha);
-}
-
-.cabecalho::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -3px;
-  height: 3px;
-  background: var(--faixa-pista);
 }
 
 .cabecalho__interno {
   max-width: var(--largura);
   margin: 0 auto;
-  padding: 0.7rem var(--margem);
+  padding: 1.1rem var(--margem) 0.6rem;
   display: flex;
   align-items: center;
   gap: 1.5rem;
@@ -218,7 +198,7 @@ code {
   flex-shrink: 0;
   color: var(--texto);
   text-decoration: none;
-  border-radius: 12px;
+  border-radius: var(--raio);
 }
 
 .marca:hover {
@@ -284,35 +264,24 @@ code {
 .menu__link {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 0.7rem;
+  padding: 0.45rem 0.55rem;
   white-space: nowrap;
-  border-radius: 999px;
+  border-radius: var(--raio);
   color: var(--texto-suave);
   font-family: var(--fonte-titulo);
   font-weight: 700;
   font-size: 0.95rem;
   text-decoration: none;
-  transition: background 150ms ease, color 150ms ease;
+  transition: color 150ms ease;
 }
 
 .menu__link:hover {
   color: var(--texto);
-  background: var(--concreto-2);
 }
 
 .menu__link[aria-current="page"] {
-  color: var(--texto);
-  background: color-mix(in srgb, var(--cor-pilar) 16%, white);
-}
-
-/* Bolinha com a cor do pilar */
-.menu__ponto {
-  flex-shrink: 0;
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  background: var(--cor-pilar);
+  color: var(--placa-escura);
+  font-weight: 800;
 }
 
 .sessao {
@@ -325,27 +294,26 @@ code {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.25rem 0.8rem 0.25rem 0.25rem;
-  border-radius: 999px;
+  padding: 0.25rem 0.4rem;
+  border-radius: var(--raio);
   color: var(--texto);
   text-decoration: none;
-  transition: background 150ms ease;
+  transition: color 150ms ease;
 }
 
 .sessao__conta:hover,
 .sessao__conta[aria-current="page"] {
   color: var(--texto);
-  background: var(--concreto-2);
 }
 
 .sessao__avatar {
   display: grid;
   place-items: center;
-  width: 2.3rem;
-  height: 2.3rem;
-  border-radius: 50%;
-  background: var(--sinal);
-  color: var(--asfalto);
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--raio);
+  background: var(--placa-clara);
+  color: var(--placa-escura);
   font-family: var(--fonte-titulo);
   font-weight: 800;
   font-size: 1rem;
@@ -375,7 +343,7 @@ code {
   font-weight: 600;
   font-size: 0.88rem;
   padding: 0.4rem 0.95rem;
-  border-radius: 999px;
+  border-radius: var(--raio);
   cursor: pointer;
 }
 
@@ -384,24 +352,16 @@ code {
   background: var(--concreto);
 }
 
-/* Botão Entrar do cabeçalho, com o bonequinho */
+/* Botão Entrar do cabeçalho */
 .botao--entrar {
-  gap: 0.5rem;
   background: var(--placa);
   color: #fff;
-  padding-inline: 1.1rem 1.25rem;
+  padding-inline: 1rem;
 }
 
 .botao--entrar:hover {
   background: var(--placa-escura);
   color: #fff;
-}
-
-.botao--entrar__icone {
-  width: 1.1rem;
-  height: 1.1rem;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='8 6 32 36'%3E%3Ccircle cx='24' cy='13' r='5' fill='%23f4c34f'/%3E%3Cpath d='M11 20.5c4.5 4 8.5 5.5 13 5.5s8.5-1.5 13-5.5M24 26v6.5M24 32.5l-5.5 6.5M24 32.5l5.5 6.5' fill='none' stroke='%23ffffff' stroke-width='3.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
-    center / contain no-repeat;
 }
 
 .menu-botao {
@@ -410,7 +370,7 @@ code {
   background: var(--papel);
   color: var(--texto);
   border: 1.5px solid var(--linha);
-  border-radius: 999px;
+  border-radius: var(--raio);
   padding: 0.5rem 1.1rem;
   font-family: var(--fonte-titulo);
   font-weight: 700;
@@ -419,7 +379,7 @@ code {
   cursor: pointer;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 980px) {
   .cabecalho__interno {
     flex-wrap: wrap;
     gap: 0.8rem;
@@ -447,15 +407,13 @@ code {
   }
 
   .menu__link {
-    padding: 0.8rem 1rem;
+    padding: 0.65rem 0;
     font-size: 1.05rem;
-    border-radius: var(--raio);
   }
 
   .sessao {
     justify-content: flex-start;
-    border-top: 1px solid var(--linha);
-    padding-top: 0.8rem;
+    padding-top: 0.4rem;
   }
 
   .sessao__sair {

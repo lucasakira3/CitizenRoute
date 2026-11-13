@@ -11,8 +11,8 @@
   gap: 0.4rem;
   min-height: 44px;
   padding: 0.6rem 1.1rem;
-  border: 2px solid transparent;
-  border-radius: 999px;
+  border: 1px solid transparent;
+  border-radius: var(--raio);
   font-family: var(--fonte-titulo);
   font-weight: 700;
   font-size: 0.97rem;
@@ -34,7 +34,6 @@
 .botao--primario:hover {
   background: var(--placa-escura);
   color: #fff;
-  box-shadow: 0 8px 18px -10px rgb(47 138 87 / 0.7);
 }
 
 .botao--secundario {

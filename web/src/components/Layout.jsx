@@ -7,7 +7,7 @@ import Logo from "./Logo.jsx";
  * Menu principal: os seis pilares do hub, o mesmo em todas as páginas.
  * O início fica na logo, e o perfil (rotas, endereços, meio de transporte) no bloco do cidadão logado.
  */
-const ITENS_MENU = PILARES.map((pilar) => ({ caminho: `/${pilar.id}`, rotulo: pilar.nome, cor: pilar.cor }));
+const ITENS_MENU = PILARES.map((pilar) => ({ caminho: `/${pilar.id}`, rotulo: pilar.nome }));
 
 function estaAtivo(caminho, rota) {
   return rota === caminho || rota.startsWith(`${caminho}/`);
@@ -60,9 +60,7 @@ export default function Layout({ rota, children }) {
                     className="menu__link"
                     href={`#${item.caminho}`}
                     aria-current={estaAtivo(item.caminho, rota) ? "page" : undefined}
-                    style={{ "--cor-pilar": item.cor }}
                   >
-                    <span className="menu__ponto" aria-hidden="true" />
                     {item.rotulo}
                   </a>
                 </li>
@@ -95,7 +93,6 @@ export default function Layout({ rota, children }) {
                   href="#/entrar"
                   aria-current={rota === "/entrar" ? "page" : undefined}
                 >
-                  <span className="botao--entrar__icone" aria-hidden="true" />
                   Entrar
                 </a>
               )}

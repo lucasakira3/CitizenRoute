@@ -4,62 +4,53 @@
 
 /* ------------------------------------------------------------- Abertura */
 
-/* Painel claro com o cidadão no centro e os seis pilares em órbita */
-.hub-abertura {
-  --tam-orbita: 380px;
-  position: relative;
-  overflow: hidden;
+.hub-apresentacao {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  align-items: center;
-  gap: 2rem;
-  margin: 0.4rem 0 0.5rem;
-  padding: clamp(1.8rem, 4vw, 3.2rem);
-  border-radius: 28px;
-  color: var(--texto);
-  background:
-    radial-gradient(circle at 80% 30%, rgb(244 195 79 / 0.32), transparent 45%),
-    radial-gradient(circle at 100% 100%, rgb(47 147 200 / 0.16), transparent 45%),
-    radial-gradient(circle at 0% 100%, rgb(91 179 122 / 0.22), transparent 50%),
-    var(--papel);
-  box-shadow: var(--sombra);
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  gap: clamp(2rem, 6vw, 5rem);
+  align-items: stretch;
+  margin: 1.5rem 0 0;
+  padding: clamp(1rem, 3vw, 2.25rem) 0 2.5rem;
+  border-bottom: 1px solid var(--linha);
 }
 
-/* Textura de pontos bem leve, como um mapa visto de cima */
-.hub-abertura::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgb(31 42 36 / 0.07) 1px, transparent 1.2px);
-  background-size: 22px 22px;
-  mask-image: linear-gradient(90deg, transparent, #000 70%);
-  pointer-events: none;
+.hub-apresentacao__texto {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.hub-abertura__texto {
-  position: relative;
+.hub-apresentacao__eyebrow {
+  margin: 0 0 0.5rem;
+  color: var(--placa-escura);
+  font-family: var(--fonte-titulo);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
-.hub-abertura h1 {
-  max-width: 15ch;
-  margin-bottom: 1rem;
-  font-size: clamp(2.2rem, 1.3rem + 3vw, 3.6rem);
-  line-height: 1.04;
+.hub-apresentacao h1 {
+  max-width: 16ch;
+  margin-bottom: 0.9rem;
+  font-size: clamp(2.3rem, 1.5rem + 2.9vw, 4rem);
+  line-height: 0.96;
+  letter-spacing: -0.06em;
 }
 
-.hub-abertura h1 em {
+.hub-apresentacao h1 em {
   font-style: normal;
   color: var(--placa);
 }
 
-.hub-abertura__lead {
-  max-width: 50ch;
-  margin-bottom: 1.6rem;
-  font-size: 1.08rem;
+.hub-apresentacao__lead {
+  max-width: 55ch;
+  margin-bottom: 1.4rem;
   color: var(--texto-suave);
+  font-size: 1.05rem;
 }
 
-.hub-abertura__acoes {
+.hub-apresentacao__acoes {
   display: flex;
   flex-wrap: wrap;
   gap: 0.7rem;
@@ -73,93 +64,65 @@
   transform: translateX(3px);
 }
 
-/* Órbita */
-.orbita {
-  position: relative;
-  justify-self: center;
-  width: var(--tam-orbita);
-  height: var(--tam-orbita);
+.hub-resumo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0;
 }
 
-.orbita__anel {
-  position: absolute;
-  inset: 12%;
-  border-radius: 50%;
-  border: 2px dashed var(--linha-forte);
-  animation: gira 80s linear infinite;
+.hub-resumo__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding-bottom: 0.45rem;
+  font-family: var(--fonte-titulo);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--texto-suave);
 }
 
-.orbita__centro {
-  position: absolute;
-  left: 50%;
-  top: 50%;
+.hub-resumo__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: grid;
-  place-items: center;
-  width: 42%;
-  height: 42%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  color: #fff;
-  background: radial-gradient(circle at 35% 30%, var(--folha), var(--placa) 70%);
-  box-shadow:
-    0 0 0 10px rgb(244 195 79 / 0.25),
-    0 0 0 22px rgb(244 195 79 / 0.12),
-    0 20px 40px -14px rgb(47 138 87 / 0.6);
+  gap: 0;
 }
 
-.orbita__pilar {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: rotate(var(--angulo)) translateX(calc(var(--tam-orbita) * 0.38)) rotate(calc(-1 * var(--angulo)));
-}
-
-.orbita__bolha {
+.hub-resumo__lista li {
   display: grid;
-  place-items: center;
-  width: 54px;
-  height: 54px;
-  margin: -27px 0 0 -27px;
-  border-radius: 50%;
-  background: var(--cor-pilar);
-  color: var(--cor-icone, #fff);
-  box-shadow: 0 0 0 4px #fff, 0 12px 22px -10px rgb(31 42 36 / 0.45);
-  animation: flutua 5s ease-in-out infinite;
-  animation-delay: calc(var(--i) * -0.8s);
+  gap: 0.15rem;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--linha);
 }
 
-.orbita__pilar--ativo .orbita__bolha {
-  width: 64px;
-  height: 64px;
-  margin: -32px 0 0 -32px;
-  box-shadow: 0 0 0 4px #fff, 0 0 0 8px var(--sinal), 0 12px 22px -10px rgb(31 42 36 / 0.45);
+.hub-resumo__lista strong {
+  font-family: var(--fonte-titulo);
+  font-size: 1rem;
 }
 
-@keyframes gira {
-  to {
-    transform: rotate(360deg);
-  }
+.hub-resumo__lista span {
+  color: var(--texto-suave);
+  font-size: 0.92rem;
 }
 
-@keyframes flutua {
-  50% {
-    transform: translateY(-6px);
-  }
-}
-
-/* Título das seções da página inicial */
 .hub-secao {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
   gap: 0.3rem 1.5rem;
-  margin: 2.6rem 0 1.1rem;
+  margin: 2rem 0 0.7rem;
 }
 
 .hub-secao h2 {
   margin: 0;
-  font-size: 1.6rem;
+  font-size: 1.8rem;
+  letter-spacing: -0.04em;
 }
 
 .hub-secao p {
@@ -167,212 +130,91 @@
   color: var(--texto-suave);
 }
 
-@media (max-width: 900px) {
-  .hub-abertura {
-    --tam-orbita: 300px;
-    grid-template-columns: minmax(0, 1fr);
-  }
+.hub-app-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: clamp(1.5rem, 5vw, 4rem);
+}
 
-  .hub-abertura::before {
-    mask-image: linear-gradient(180deg, transparent, #000 80%);
+.hub-app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.25rem 1rem;
+  min-height: 124px;
+  padding: 1.1rem 0;
+  border: 0;
+  border-top: 1px solid var(--linha);
+  border-radius: 0;
+  background: transparent;
+  color: var(--texto);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.hub-app:hover {
+  color: var(--placa-escura);
+}
+
+.hub-app__conteudo {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.hub-app__conteudo h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: -0.04em;
+}
+
+.hub-app__conteudo p {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.hub-app__rodape {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--texto-suave);
+}
+
+.hub-app--disponivel .hub-app__rodape {
+  color: var(--placa-escura);
+}
+
+@media (max-width: 900px) {
+  .hub-apresentacao {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 }
 
 @media (max-width: 420px) {
-  .hub-abertura {
-    --tam-orbita: 260px;
-    border-radius: 22px;
+  .hub-app-grid {
+    grid-template-columns: 1fr;
   }
 
-  .orbita__bolha {
-    width: 46px;
-    height: 46px;
-    margin: -23px 0 0 -23px;
+  .hub-app {
+    min-height: 0;
   }
-
-  .orbita__pilar--ativo .orbita__bolha {
-    width: 54px;
-    height: 54px;
-    margin: -27px 0 0 -27px;
-  }
-
-  .orbita__centro .icone,
-  .orbita__centro svg {
-    width: 72px;
-    height: 72px;
-  }
-}
-
-/* ------------------------------------------------------- Cards dos pilares */
-
-.pilares {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
-  gap: 1rem;
-}
-
-.pilares > li {
-  display: flex;
-}
-
-.pilar {
-  --cor-pilar: var(--placa);
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  min-height: 190px;
-  padding: 1.35rem 1.4rem 1.2rem;
-  background: var(--papel);
-  color: var(--texto);
-  border: 1px solid transparent;
-  border-radius: var(--raio-grande);
-  text-decoration: none;
-  box-shadow: var(--sombra);
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-}
-
-.pilares > li[style] .pilar {
-  --cor-pilar: inherit;
-}
-
-.pilar:hover {
-  color: var(--texto);
-  border-color: var(--cor-pilar);
-  transform: translateY(-3px);
-  box-shadow: var(--sombra-alta);
-}
-
-.pilar:focus-visible {
-  outline: 3px solid var(--placa);
-  outline-offset: 3px;
-}
-
-.pilar__topo {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  margin-bottom: 0.3rem;
-}
-
-.pilar__icone {
-  display: grid;
-  place-items: center;
-  width: 3.1rem;
-  height: 3.1rem;
-  border-radius: 15px;
-  background: var(--cor-pilar);
-  color: var(--cor-icone, #fff);
-}
-
-.pilar__selo {
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font-family: var(--fonte-titulo);
-  font-weight: 700;
-  font-size: 0.74rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  background: var(--sinal);
-  color: var(--asfalto);
-}
-
-.pilar__selo--breve {
-  background: var(--concreto);
-  color: var(--texto-suave);
-  box-shadow: inset 0 0 0 1px var(--linha);
-}
-
-.pilar__nome {
-  font-family: var(--fonte-titulo);
-  font-weight: 800;
-  font-size: 1.4rem;
-  line-height: 1.15;
-}
-
-.pilar__consulta-nome {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-top: auto;
-  padding-top: 0.9rem;
-  border-top: 1px dashed var(--linha);
-  font-weight: 700;
-  color: var(--texto-suave);
-}
-
-.pilar--disponivel .pilar__consulta-nome {
-  color: #fff;
-  border-top-color: rgb(255 255 255 / 0.28);
-}
-
-.pilar__consulta-nome .icone {
-  flex-shrink: 0;
-  transition: transform 160ms ease;
-}
-
-.pilar:hover .pilar__consulta-nome .icone {
-  transform: translateX(4px);
-}
-
-/* O pilar que já funciona ganha destaque: card verde, como uma placa de parque */
-.pilar--disponivel {
-  background: radial-gradient(circle at 100% 0%, var(--folha), var(--placa) 60%);
-  border-color: var(--placa);
-  color: #fff;
-}
-
-.pilar--disponivel:hover {
-  color: #fff;
-  border-color: var(--placa-escura);
-}
-
-.pilar--disponivel .pilar__icone {
-  background: rgb(255 255 255 / 0.14);
 }
 
 /* ------------------------------------------------------ Página de um pilar */
 
-/* Cabeçalho do pilar: painel claro, tingido pela cor do pilar */
+/* Cabeçalho do pilar: tipografia e conteúdo em uma superfície neutra */
 .pilar-cabeca {
-  --cor-pilar: var(--placa);
-  position: relative;
-  overflow: hidden;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 1.4rem;
   align-items: start;
   margin: 0.2rem 0 1.6rem;
-  padding: clamp(1.5rem, 3.5vw, 2.4rem);
-  border-radius: 26px;
-  background:
-    radial-gradient(circle at 95% 10%, color-mix(in srgb, var(--cor-pilar) 30%, transparent), transparent 50%),
-    radial-gradient(circle at 70% 120%, rgb(244 195 79 / 0.18), transparent 45%),
-    var(--papel);
-  box-shadow: var(--sombra);
-}
-
-.pilar-cabeca[style] {
-  --cor-pilar: inherit;
-}
-
-.pilar-cabeca::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgb(31 42 36 / 0.07) 1px, transparent 1.2px);
-  background-size: 22px 22px;
-  mask-image: linear-gradient(90deg, transparent 40%, #000);
-  pointer-events: none;
-}
-
-.pilar-cabeca > * {
-  position: relative;
+  padding: 1rem 0 2rem;
+  background: transparent;
 }
 
 .pilar-cabeca h1 {
@@ -385,20 +227,19 @@
   place-items: center;
   width: 4.4rem;
   height: 4.4rem;
-  border-radius: 20px;
-  background: var(--cor-pilar);
-  color: var(--cor-icone, #fff);
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--cor-pilar) 16%, transparent);
+  border-radius: var(--raio);
+  background: var(--concreto-2);
+  color: var(--asfalto-3);
+  box-shadow: none;
 }
 
 .pilar-cabeca__selo {
   display: inline-block;
   margin-left: 0.5rem;
   padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  background: var(--sinal-claro);
-  box-shadow: inset 0 0 0 1px rgb(244 195 79 / 0.6);
-  color: var(--texto);
+  border-radius: var(--raio);
+  background: var(--concreto-2);
+  color: var(--texto-suave);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
 }
@@ -427,29 +268,22 @@
     "icone acao";
   column-gap: 1rem;
   row-gap: 0.4rem;
-  padding: 1.5rem;
-  background: var(--papel);
+  padding: 1.2rem 0;
+  background: transparent;
   color: var(--texto);
-  border: 1px solid transparent;
-  border-radius: var(--raio-grande);
-  box-shadow: var(--sombra);
+  border: 0;
+  border-bottom: 1px solid var(--linha);
+  border-radius: 0;
   text-decoration: none;
-  transition: transform 160ms ease, box-shadow 160ms ease;
+  transition: color 160ms ease;
 }
 
 .opcao-pilar:hover {
-  color: var(--texto);
-  border-color: var(--placa);
-  transform: translateY(-3px);
-  box-shadow: var(--sombra-alta);
+  color: var(--placa-escura);
 }
 
 .opcoes-pilar > li:nth-child(2) .opcao-pilar:hover {
-  border-color: var(--petroleo);
-}
-
-.opcoes-pilar > li:nth-child(2) .opcao-pilar__acao {
-  color: #1d7a6f;
+  color: var(--placa-escura);
 }
 
 .opcao-pilar:focus-visible {
@@ -461,15 +295,11 @@
   grid-area: icone;
   display: grid;
   place-items: center;
-  width: 3.4rem;
-  height: 3.4rem;
-  border-radius: 16px;
-  background: var(--placa);
-  color: #fff;
-}
-
-.opcoes-pilar > li:nth-child(2) .opcao-pilar__icone {
-  background: var(--petroleo);
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: var(--raio);
+  background: var(--concreto-2);
+  color: var(--asfalto-3);
 }
 
 .opcao-pilar__titulo {

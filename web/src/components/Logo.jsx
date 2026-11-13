@@ -1,4 +1,4 @@
-// Marca do Citizen Life: o cidadão de braços abertos, com a cabeça em oliva, dentro de um quadrado verde.
+// Marca do Citizen Life: um símbolo simples em branco dentro de um quadrado verde.
 // O desenho é o mesmo do favicon (public/favicon.svg).
 
 /** Só o símbolo. Decorativo: quem usa coloca o nome ao lado ou um aria-label no link. */
@@ -12,8 +12,8 @@ export function MarcaCidadao({ tamanho = 36, className = "" }) {
       aria-hidden="true"
       focusable="false"
     >
-      <rect width="48" height="48" rx="14" fill="var(--placa)" />
-      <circle cx="24" cy="13" r="5" fill="var(--sinal)" />
+      <rect width="48" height="48" rx="8" fill="var(--placa)" />
+      <circle cx="24" cy="13" r="5" fill="#ffffff" />
       <path
         className="marca-cidadao__corpo"
         d="M11 20.5c4.5 4 8.5 5.5 13 5.5s8.5-1.5 13-5.5M24 26v6.5M24 32.5l-5.5 6.5M24 32.5l5.5 6.5"
@@ -38,7 +38,7 @@ export function Cidadao({ tamanho = 96, className = "" }) {
       aria-hidden="true"
       focusable="false"
     >
-      <circle cx="24" cy="13" r="5" fill="var(--sinal)" />
+      <circle cx="24" cy="13" r="5" fill="currentColor" />
       <path
         d="M11 20.5c4.5 4 8.5 5.5 13 5.5s8.5-1.5 13-5.5M24 26v6.5M24 32.5l-5.5 6.5M24 32.5l5.5 6.5"
         fill="none"
