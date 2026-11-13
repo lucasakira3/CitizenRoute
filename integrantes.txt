@@ -4,11 +4,11 @@ Grupo: (nome do grupo)
 Projeto: Citizen Life · hub de consulta para o dia a dia na cidade
 
 Integrantes (RM · nome completo):
-RM000000 · Nome Sobrenome
-RM000000 · Nome Sobrenome
-RM000000 · Nome Sobrenome
-RM000000 · Nome Sobrenome
-RM000000 · Nome Sobrenome
+RM563938 · Alan Carlos
+RM565159 · Fabrício Magoga
+RM566268 · Lucas Akira
+RM565026 · Joao Vitor Benedet
+RM562462 · Pedro Dalmas
 
 Vídeo pitch (link público): https://
 
