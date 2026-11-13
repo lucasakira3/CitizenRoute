@@ -4,10 +4,12 @@ import br.com.citizenlife.api.Servidor;
 import br.com.citizenlife.dao.CidadaoDao;
 import br.com.citizenlife.dao.Conexao;
 import br.com.citizenlife.dao.EnderecoDao;
+import br.com.citizenlife.dao.FeiraDao;
 import br.com.citizenlife.dao.OcorrenciaDao;
 import br.com.citizenlife.dao.RotaDao;
 import br.com.citizenlife.service.CidadaoService;
 import br.com.citizenlife.service.EnderecoService;
+import br.com.citizenlife.service.FeiraService;
 import br.com.citizenlife.service.OcorrenciaService;
 import br.com.citizenlife.service.RotaService;
 import com.sun.net.httpserver.HttpServer;
@@ -32,10 +34,11 @@ public final class CitizenLife {
         CidadaoService cidadaoService = new CidadaoService(new CidadaoDao());
         RotaService rotaService = new RotaService(rotaDao, cidadaoService);
         EnderecoService enderecoService = new EnderecoService(new EnderecoDao(), cidadaoService);
+        FeiraService feiraService = new FeiraService(new FeiraDao(), cidadaoService);
         OcorrenciaService ocorrenciaService = new OcorrenciaService(new OcorrenciaDao(), rotaDao);
 
         HttpServer servidor = HttpServer.create(new InetSocketAddress("127.0.0.1", porta), 0);
-        servidor.createContext("/api", new Servidor(cidadaoService, rotaService, enderecoService, ocorrenciaService));
+        servidor.createContext("/api", new Servidor(cidadaoService, rotaService, enderecoService, feiraService, ocorrenciaService));
         servidor.setExecutor(Executors.newFixedThreadPool(8));
         servidor.start();
 

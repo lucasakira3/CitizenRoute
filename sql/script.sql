@@ -12,8 +12,8 @@
 -- 1. Limpeza ----------------------------------------------------------
 BEGIN
     FOR tabela IN (SELECT table_name FROM user_tables
-                    WHERE table_name IN ('CL_ENDERECO', 'CL_ROTA_VIA', 'CL_ROTA', 'CL_OCORRENCIA',
-                                         'CL_CIDADAO', 'CL_VIA', 'CL_OCORRENCIA_VIA', 'CL_REGIAO'))
+                    WHERE table_name IN ('CL_CIDADAO_FEIRA', 'CL_FEIRA', 'CL_ENDERECO', 'CL_ROTA_VIA', 'CL_ROTA',
+                                         'CL_OCORRENCIA', 'CL_CIDADAO', 'CL_VIA', 'CL_OCORRENCIA_VIA', 'CL_REGIAO'))
     LOOP
         EXECUTE IMMEDIATE 'DROP TABLE ' || tabela.table_name || ' CASCADE CONSTRAINTS PURGE';
     END LOOP;
@@ -106,6 +106,29 @@ CREATE TABLE cl_endereco (
     CONSTRAINT fk_cl_endereco_cidadao FOREIGN KEY (id_cidadao) REFERENCES cl_cidadao (id_cidadao) ON DELETE CASCADE,
     CONSTRAINT uk_cl_endereco_apelido UNIQUE (id_cidadao, apelido),
     CONSTRAINT ck_cl_endereco_tipo CHECK (tipo IN ('CASA', 'TRABALHO', 'ESTUDO', 'OUTRO'))
+);
+
+-- Feiras livres do município, organizadas por dia da semana e pela zona da cidade.
+CREATE TABLE cl_feira (
+    id_feira      NUMBER(10)    GENERATED ALWAYS AS IDENTITY,
+    nome          VARCHAR2(80)  NOT NULL,
+    rua           VARCHAR2(120) NOT NULL,
+    zona          VARCHAR2(20)  NOT NULL,
+    dia_semana    VARCHAR2(12)  NOT NULL,
+    horario       VARCHAR2(40)  NOT NULL,
+    CONSTRAINT pk_cl_feira PRIMARY KEY (id_feira),
+    CONSTRAINT uk_cl_feira_rua_dia UNIQUE (rua, dia_semana),
+    CONSTRAINT ck_cl_feira_zona CHECK (zona IN ('Centro', 'Zona Norte', 'Zona Sul', 'Zona Leste', 'Zona Oeste')),
+    CONSTRAINT ck_cl_feira_dia CHECK (dia_semana IN ('SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO', 'DOMINGO'))
+);
+
+-- Feiras favoritas do cidadão. Uma feira pode ser favorita por mais de um cidadão.
+CREATE TABLE cl_cidadao_feira (
+    id_cidadao  NUMBER(10) NOT NULL,
+    id_feira    NUMBER(10) NOT NULL,
+    CONSTRAINT pk_cl_cidadao_feira PRIMARY KEY (id_cidadao, id_feira),
+    CONSTRAINT fk_cl_cidadao_feira_cidadao FOREIGN KEY (id_cidadao) REFERENCES cl_cidadao (id_cidadao) ON DELETE CASCADE,
+    CONSTRAINT fk_cl_cidadao_feira_feira FOREIGN KEY (id_feira) REFERENCES cl_feira (id_feira) ON DELETE CASCADE
 );
 
 
@@ -444,6 +467,27 @@ SELECT id_cidadao, 'Casa', 'CASA', 'Avenida Rebouças', 864.51, 1174.33 FROM cl_
 INSERT INTO cl_endereco (id_cidadao, apelido, tipo, descricao, pos_x, pos_y)
 SELECT id_cidadao, 'Trabalho', 'TRABALHO', 'Avenida Brigadeiro Faria Lima', 846.98, 1270.94 FROM cl_cidadao WHERE email = 'felipe.rocha@exemplo.com';
 
+-- 3.6 Feiras livres e favoritas
+INSERT INTO cl_feira (nome, rua, zona, dia_semana, horario) VALUES
+    ('Mercado da Rua da Consolação', 'Rua da Consolação', 'Centro', 'SEGUNDA', '08:00 às 13:00'),
+    ('Feira da Avenida Paulista', 'Avenida Paulista', 'Centro', 'QUARTA', '08:00 às 17:00'),
+    ('Mercado da Vila Mariana', 'Avenida Santo Amaro', 'Zona Sul', 'SEXTA', '09:00 às 16:00'),
+    ('Feira da Vila Prudente', 'Rua Padre Adelino', 'Zona Leste', 'SABADO', '07:30 às 14:00'),
+    ('Feira de Mandaqui', 'Avenida General Ataliba Leonel', 'Zona Norte', 'DOMINGO', '08:00 às 15:00'),
+    ('Mercado da Lapa', 'Rua da Lapa', 'Centro', 'TERCA', '08:30 às 13:30');
+
+INSERT INTO cl_cidadao_feira (id_cidadao, id_feira)
+SELECT c.id_cidadao, f.id_feira
+FROM cl_cidadao c
+JOIN cl_feira f ON f.rua = 'Rua da Consolação' AND f.dia_semana = 'SEGUNDA'
+WHERE c.email IN ('ana.souza@exemplo.com', 'elisa.ferreira@exemplo.com');
+
+INSERT INTO cl_cidadao_feira (id_cidadao, id_feira)
+SELECT c.id_cidadao, f.id_feira
+FROM cl_cidadao c
+JOIN cl_feira f ON f.rua = 'Avenida Paulista' AND f.dia_semana = 'QUARTA'
+WHERE c.email IN ('bruno.lima@exemplo.com', 'carla.mendes@exemplo.com');
+
 COMMIT;
 
 
@@ -453,4 +497,6 @@ UNION ALL SELECT 'CL_VIA', COUNT(*) FROM cl_via
 UNION ALL SELECT 'CL_OCORRENCIA', COUNT(*) FROM cl_ocorrencia
 UNION ALL SELECT 'CL_ROTA', COUNT(*) FROM cl_rota
 UNION ALL SELECT 'CL_ROTA_VIA', COUNT(*) FROM cl_rota_via
-UNION ALL SELECT 'CL_ENDERECO', COUNT(*) FROM cl_endereco;
+UNION ALL SELECT 'CL_ENDERECO', COUNT(*) FROM cl_endereco
+UNION ALL SELECT 'CL_FEIRA', COUNT(*) FROM cl_feira
+UNION ALL SELECT 'CL_CIDADAO_FEIRA', COUNT(*) FROM cl_cidadao_feira;

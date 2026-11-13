@@ -33,9 +33,9 @@ export const PILARES = [
     corIcone: "var(--asfalto)",
     nome: "Alimentação",
     icone: "ALIMENTACAO",
-    disponivel: false,
+    disponivel: true,
     resumo: "Feiras livres, restaurantes populares e bancos de alimentos da sua região.",
-    consulta: "Comida acessível perto de você",
+    consulta: "Feiras livres por dia e por zona",
     planos: [
       "Feiras livres por dia da semana e endereço",
       "Restaurantes populares com preço e horário",

@@ -12,6 +12,7 @@ export default function ResumoConta() {
   const rotas = useCarregar(() => api.buscar(`/cidadaos/${sessao.id}/rotas`), [sessao.id]);
   const alertas = useCarregar(() => api.buscar(`/cidadaos/${sessao.id}/alertas`), [sessao.id, sessao.modal]);
   const enderecos = useCarregar(() => api.buscar(`/cidadaos/${sessao.id}/enderecos`), [sessao.id]);
+  const feiraHoje = useCarregar(() => api.buscar(`/cidadaos/${sessao.id}/feira-hoje`), [sessao.id]);
 
   const importantes = (alertas.dados ?? []).filter((alerta) => alerta.risco.alerta);
   const outrosPilares = PILARES.filter((pilar) => !pilar.disponivel);
@@ -57,6 +58,12 @@ export default function ResumoConta() {
                 <Icone key={endereco.id} nome={ICONE_ENDERECO[endereco.tipo]} tamanho={16} />
               ))}
             </span>
+          </span>
+        </a>
+        <a className="quadro" href="#/perfil/alimentacao/feiras">
+          <span className="quadro__rotulo">Feira hoje</span>
+          <span className="quadro__valor">
+            {feiraHoje.dados ? feiraHoje.dados.rua : "Sem feira"}
           </span>
         </a>
       </div>

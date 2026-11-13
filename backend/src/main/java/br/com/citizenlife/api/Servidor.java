@@ -4,11 +4,13 @@ import br.com.citizenlife.exception.CitizenLifeException;
 import br.com.citizenlife.exception.ValidacaoException;
 import br.com.citizenlife.model.Cidadao;
 import br.com.citizenlife.model.Endereco;
+import br.com.citizenlife.model.Feira;
 import br.com.citizenlife.model.Ocorrencia;
 import br.com.citizenlife.model.Rota;
 import br.com.citizenlife.model.Via;
 import br.com.citizenlife.service.CidadaoService;
 import br.com.citizenlife.service.EnderecoService;
+import br.com.citizenlife.service.FeiraService;
 import br.com.citizenlife.service.OcorrenciaService;
 import br.com.citizenlife.service.RotaService;
 import com.sun.net.httpserver.HttpExchange;
@@ -39,13 +41,15 @@ public class Servidor implements HttpHandler {
     private final CidadaoService cidadaos;
     private final RotaService rotas;
     private final EnderecoService enderecos;
+    private final FeiraService feiras;
     private final OcorrenciaService ocorrencias;
 
     public Servidor(CidadaoService cidadaos, RotaService rotas, EnderecoService enderecos,
-                    OcorrenciaService ocorrencias) {
+                    FeiraService feiras, OcorrenciaService ocorrencias) {
         this.cidadaos = cidadaos;
         this.rotas = rotas;
         this.enderecos = enderecos;
+        this.feiras = feiras;
         this.ocorrencias = ocorrencias;
     }
 
@@ -118,6 +122,19 @@ public class Servidor implements HttpHandler {
                     endereco(enderecos.atualizar(ids.get(0), ids.get(1), lerEndereco(json), ator));
             case "DELETE /api/cidadaos/{id}/enderecos/{id}" -> {
                 enderecos.excluir(ids.get(0), ids.get(1), ator);
+                yield null;
+            }
+
+            // Alimentação: feiras livres e favoritas do cidadão
+            case "GET /api/feiras" -> feiras.listar(parametros.get("zona"), parametros.get("dia")).stream().map(this::feira).toList();
+            case "GET /api/cidadaos/{id}/feiras" -> feiras.listarFavoritas(ids.get(0), ator).stream().map(this::feira).toList();
+            case "GET /api/cidadaos/{id}/feira-hoje" -> {
+                Feira feiraHoje = feiras.hoje(ids.get(0), ator);
+                yield feiraHoje == null ? null : feira(feiraHoje);
+            }
+            case "POST /api/cidadaos/{id}/feiras" -> feira(feiras.favoritar(ids.get(0), longa(json, "idFeira"), ator));
+            case "DELETE /api/cidadaos/{id}/feiras/{id}" -> {
+                feiras.desfavoritar(ids.get(0), ids.get(1), ator);
                 yield null;
             }
 
@@ -197,6 +214,17 @@ public class Servidor implements HttpHandler {
         return mapa;
     }
 
+    private Map<String, Object> feira(Feira feira) {
+        Map<String, Object> mapa = new LinkedHashMap<>();
+        mapa.put("id", feira.getId());
+        mapa.put("nome", feira.getNome());
+        mapa.put("rua", feira.getRua());
+        mapa.put("zona", feira.getZona());
+        mapa.put("dia", feira.getDiaSemana());
+        mapa.put("horario", feira.getHorario());
+        return mapa;
+    }
+
     private Map<String, Object> ponto(String descricao, double x, double y) {
         Map<String, Object> mapa = new LinkedHashMap<>();
         mapa.put("descricao", descricao);
@@ -253,6 +281,10 @@ public class Servidor implements HttpHandler {
     /** Número do JSON; -1 quando o campo falta, para a service acusar o erro. */
     private double numero(Map<String, Object> json, String campo) {
         return json.get(campo) instanceof Number numero ? numero.doubleValue() : -1;
+    }
+
+    private long longa(Map<String, Object> json, String campo) {
+        return json.get(campo) instanceof Number numero ? numero.longValue() : -1L;
     }
 
     @SuppressWarnings("unchecked")

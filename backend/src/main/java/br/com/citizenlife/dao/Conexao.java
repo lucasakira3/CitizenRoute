@@ -31,7 +31,9 @@ public final class Conexao {
     private static final Map<String, String> REPETIDOS = Map.of(
             "UK_CL_CIDADAO_EMAIL", "Este e-mail já está cadastrado.",
             "UK_CL_ROTA_NOME", "Você já tem uma rota com este nome.",
-            "UK_CL_ENDERECO_APELIDO", "Você já tem um endereço com este apelido.");
+            "UK_CL_ENDERECO_APELIDO", "Você já tem um endereço com este apelido.",
+            "UK_CL_FEIRA_RUA_DIA", "Já existe uma feira para esta rua neste dia.",
+            "UK_CL_CIDADAO_FEIRA", "Esta feira já está na sua lista de favoritas.");
 
     private Conexao() {
     }

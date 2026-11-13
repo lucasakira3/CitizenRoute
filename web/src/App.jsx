@@ -4,6 +4,7 @@ import { AppContext } from "./contexto.js";
 import { combinar, useRota } from "./hooks/useRota.js";
 import { DOMINIO } from "./utils/dominio.js";
 import { api, definirAoSessaoInvalida, lerSessao, salvarSessao } from "./services/api.js";
+import AlimentacaoPage from "./pages/AlimentacaoPage.jsx";
 import EmBrevePage from "./pages/EmBrevePage.jsx";
 import EntrarPage from "./pages/EntrarPage.jsx";
 import InicioPage from "./pages/InicioPage.jsx";
@@ -19,6 +20,7 @@ const ROTAS = [
   ["/mobilidade", MobilidadePage],
   ["/mobilidade/rota", PlanejarRotaPage],
   ["/mobilidade/mapa", MapaPage],
+  ["/alimentacao", AlimentacaoPage],
   ["/perfil", PerfilPage],
   ["/perfil/:secao", PerfilPage],
   ["/perfil/:pilar/:secao", PerfilPage],
