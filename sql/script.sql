@@ -468,13 +468,12 @@ INSERT INTO cl_endereco (id_cidadao, apelido, tipo, descricao, pos_x, pos_y)
 SELECT id_cidadao, 'Trabalho', 'TRABALHO', 'Avenida Brigadeiro Faria Lima', 846.98, 1270.94 FROM cl_cidadao WHERE email = 'felipe.rocha@exemplo.com';
 
 -- 3.6 Feiras livres e favoritas
-INSERT INTO cl_feira (nome, rua, zona, dia_semana, horario) VALUES
-    ('Mercado da Rua da Consolação', 'Rua da Consolação', 'Centro', 'SEGUNDA', '08:00 às 13:00'),
-    ('Feira da Avenida Paulista', 'Avenida Paulista', 'Centro', 'QUARTA', '08:00 às 17:00'),
-    ('Mercado da Vila Mariana', 'Avenida Santo Amaro', 'Zona Sul', 'SEXTA', '09:00 às 16:00'),
-    ('Feira da Vila Prudente', 'Rua Padre Adelino', 'Zona Leste', 'SABADO', '07:30 às 14:00'),
-    ('Feira de Mandaqui', 'Avenida General Ataliba Leonel', 'Zona Norte', 'DOMINGO', '08:00 às 15:00'),
-    ('Mercado da Lapa', 'Rua da Lapa', 'Centro', 'TERCA', '08:30 às 13:30');
+INSERT INTO cl_feira (nome, rua, zona, dia_semana, horario) VALUES ('Mercado da Rua da Consolação', 'Rua da Consolação', 'Centro', 'SEGUNDA', '08:00 às 13:00');
+INSERT INTO cl_feira (nome, rua, zona, dia_semana, horario) VALUES ('Feira da Avenida Paulista', 'Avenida Paulista', 'Centro', 'QUARTA', '08:00 às 17:00');
+INSERT INTO cl_feira (nome, rua, zona, dia_semana, horario) VALUES ('Mercado da Vila Mariana', 'Avenida Santo Amaro', 'Zona Sul', 'SEXTA', '09:00 às 16:00');
+INSERT INTO cl_feira (nome, rua, zona, dia_semana, horario) VALUES ('Feira da Vila Prudente', 'Rua Padre Adelino', 'Zona Leste', 'SABADO', '07:30 às 14:00');
+INSERT INTO cl_feira (nome, rua, zona, dia_semana, horario) VALUES ('Feira de Mandaqui', 'Avenida General Ataliba Leonel', 'Zona Norte', 'DOMINGO', '08:00 às 15:00');
+INSERT INTO cl_feira (nome, rua, zona, dia_semana, horario) VALUES ('Mercado da Lapa', 'Rua da Lapa', 'Centro', 'TERCA', '08:30 às 13:30');
 
 INSERT INTO cl_cidadao_feira (id_cidadao, id_feira)
 SELECT c.id_cidadao, f.id_feira
