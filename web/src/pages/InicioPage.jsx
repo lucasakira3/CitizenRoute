@@ -1,3 +1,4 @@
+import Icone from "../components/Icone.jsx";
 import { useApp } from "../contexto.js";
 import { useTitulo } from "../hooks/useTitulo.js";
 import { PILARES } from "../utils/pilares.js";
@@ -70,7 +71,12 @@ export default function InicioPage() {
               href={`#/${pilar.id}`}
               className={`hub-app ${pilar.disponivel ? "hub-app--disponivel" : ""}`}
               aria-label={`${pilar.nome}${pilar.disponivel ? ", disponível" : ", em breve"}`}
+              style={{ "--cor-pilar": pilar.cor, "--cor-icone": pilar.corIcone }}
             >
+              <span className="hub-app__icone" aria-hidden="true">
+                <Icone nome={pilar.icone} tamanho={24} />
+              </span>
+
               <div className="hub-app__conteudo">
                 <h3>{pilar.nome}</h3>
                 <p>{pilar.resumo}</p>

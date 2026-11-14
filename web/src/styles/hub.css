@@ -138,7 +138,7 @@
 
 .hub-app {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.25rem 1rem;
   min-height: 124px;
@@ -154,6 +154,28 @@
 
 .hub-app:hover {
   color: var(--placa-escura);
+}
+
+/* Ícone do pilar, na cor dele (o amarelo da Alimentação usa ícone escuro, por contraste) */
+.hub-app__icone {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 14px;
+  background: var(--cor-pilar);
+  color: var(--cor-icone, #fff);
+  transition: transform 150ms ease;
+}
+
+.hub-app:hover .hub-app__icone {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-app:hover .hub-app__icone {
+    transform: none;
+  }
 }
 
 .hub-app__conteudo {
@@ -194,13 +216,22 @@
   }
 }
 
-@media (max-width: 420px) {
+/* Com o ícone, duas colunas só cabem em telas a partir de ~720px */
+@media (max-width: 720px) {
   .hub-app-grid {
     grid-template-columns: 1fr;
   }
 
   .hub-app {
     min-height: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .hub-app__icone {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 12px;
   }
 }
 
